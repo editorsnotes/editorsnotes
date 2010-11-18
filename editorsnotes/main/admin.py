@@ -36,6 +36,10 @@ class FootnoteInline(admin.StackedInline):
     form = FootnoteAdminForm
     formfield_overrides = { XHTMLField: { 'widget': ReadonlyXHTMLWidget } }
 
+class DocumentLinkInline(admin.StackedInline):
+    model = DocumentLink
+    extra = 0
+
 class ScanInline(admin.StackedInline):
     model = Scan
 
@@ -107,7 +111,7 @@ class NoteAdmin(VersionAdmin):
               'function/admin.js')
 
 class DocumentAdmin(VersionAdmin):
-    inlines = (ScanInline,)
+    inlines = (DocumentLinkInline, ScanInline)
     class Media:
         js = ('function/jquery-1.4.2.min.js',
               'function/wymeditor/jquery.wymeditor.pack.js',

@@ -3,6 +3,7 @@
 import re
 import utils
 import fields
+import json
 from copy import deepcopy
 from lxml import etree
 from unaccent import unaccent
@@ -60,7 +61,9 @@ class DocumentManager(models.Manager):
     def get_query_set(self):
         return super(DocumentManager, self).get_query_set()\
             .select_related('_transcript')\
-            .extra(select = { 'scan_count': '''SELECT COUNT(*) 
+            .extra(select = { 'link_count': '''SELECT COUNT(*) 
+FROM main_documentlink WHERE main_documentlink.document_id = main_document.id''',
+                              'scan_count': '''SELECT COUNT(*) 
 FROM main_scan WHERE main_scan.document_id = main_document.id''',
                               '_has_transcript': '''EXISTS ( SELECT 1 
 FROM main_transcript WHERE main_transcript.document_id = main_document.id )''' })
@@ -72,9 +75,13 @@ class Document(LastUpdateMetadata, Administered, URLAccessible):
     Documents are best defined by example: letters, newspaper articles, 
     contracts, photographs, database records, whole databases, etc. etc.
     """
+    import_id = models.CharField(max_length=32, editable=False, 
+                                 blank=True, null=True, 
+                                 unique=True, db_index=True)
     description = fields.XHTMLField()
     ordering = models.CharField(max_length=32, editable=False)
-    url = models.URLField(blank=True, verify_exists=True)
+    language = models.CharField(max_length=32, default='English')
+    topics = generic.GenericRelation('TopicAssignment')
     objects = DocumentManager()
     @property
     def transcript(self):
@@ -82,6 +89,12 @@ class Document(LastUpdateMetadata, Administered, URLAccessible):
             return self._transcript
         except Transcript.DoesNotExist:
             return None
+    def get_link_count(self):
+        if hasattr(self, 'link_count'):
+            return self.link_count
+        return self.links.count()
+    def has_links(self):
+        return self.get_link_count() > 0
     def get_scan_count(self):
         if hasattr(self, 'scan_count'):
             return self.scan_count
@@ -92,6 +105,24 @@ class Document(LastUpdateMetadata, Administered, URLAccessible):
         if hasattr(self, '_has_transcript'):
             return self._has_transcript
         return self.transcript is not None
+    def get_metadata(self):
+        metadata = {}
+        for md in self.metadata.all():
+            metadata[md.key] = json.loads(md.value)
+        return metadata
+    def set_metadata(self, metadata, user):
+        changed = False
+        for k,v in metadata.iteritems():
+            value = json.dumps(v)
+            md, created = self.metadata.get_or_create(
+                key=k, defaults={ 'value': value, 'creator': user })
+            if created:
+                changed = True
+            elif not md.value == value:
+                md.value = value
+                md.save()
+                changed = True
+        return changed
     def as_text(self):
         return utils.xhtml_to_text(self.description)
     def as_html(self):
@@ -196,7 +227,6 @@ class Document(LastUpdateMetadata, Administered, URLAccessible):
     # End workaround
     # --------------------------------------------------------------------------------
 
-
 class TranscriptManager(models.Manager):
     # Include related document in default query.
     def get_query_set(self):
@@ -263,15 +293,16 @@ class Topic(LastUpdateMetadata, Administered, URLAccessible):
     def __init__(self, *args, **kwargs):
         super(Topic, self).__init__(*args, **kwargs)
         if 'preferred_name' in kwargs:
-            self.slug = self._make_slug(kwargs['preferred_name'])
-    def _make_slug(self, preferred_name):
+            self.slug = Topic.make_slug(kwargs['preferred_name'])
+    @staticmethod
+    def make_slug(preferred_name):
         return '-'.join(
             [ x for x in re.split('\W+', unaccent(unicode(preferred_name)))
               if len(x) > 0 ]).lower()
     def __setattr__(self, key, value):
         super(Topic, self).__setattr__(key, value)
         if key == 'preferred_name':
-            self.slug = self._make_slug(value)
+            self.slug = Topic.make_slug(value)
     def has_summary(self):
         return self.summary is not None
     def get_aliases(self):
@@ -432,3 +463,22 @@ class Citation(CreationMetadata):
     content_object = generic.GenericForeignKey()
     def has_notes(self):
         return self.notes is not None
+
+class DocumentLink(CreationMetadata):
+    u"""
+    A link to an online version of or catalog entry for a document.
+    """
+    document = models.ForeignKey(Document, related_name='links')
+    url = models.URLField(verify_exists=True)
+    def __unicode__(self):
+        return self.url
+
+class DocumentMetadata(CreationMetadata):
+    u"""
+    Aribitrary metadata (key-value pair) for a document.
+    """
+    document = models.ForeignKey(Document, related_name='metadata')
+    key = models.CharField(max_length=32)
+    value = models.TextField()
+    class Meta:
+        unique_together = ('document', 'key')

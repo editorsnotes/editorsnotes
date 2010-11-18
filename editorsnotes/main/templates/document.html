@@ -61,9 +61,13 @@
         </div>
         {% else %}
         <div class="span-23 last">
-          {% if document.url %}
-          This document has not been scanned, but it is available online
-          <a href="{{ document.url }}">elsewhere</a>.
+          {% if document.has_links %}
+          This document has not been scanned, but it (or information about how to find it) is available online elsewhere:
+            <ul>
+            {% for link in document.links.all %}
+            <li><a href="{{ link.url }}">{{ link.url }}</a></li>
+            {% endfor %}
+            </ul>
           {% else %}
           This document has not been scanned.
           {% endif %}
