@@ -1,0 +1,7 @@
+Add topic assignment to Document admin.
+
+Show topic assignments on Document pages.
+
+Add 'type' (Person, Event, Organization, etc.) to Topic.
+
+Add db_index option to Topic.slug.
