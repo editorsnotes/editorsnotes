@@ -285,6 +285,12 @@ class Topic(LastUpdateMetadata, Administered, URLAccessible):
     place name, an event name, a publication name, or the name of a
     topic or theme.
     """
+    TYPE_CHOICES = (
+        ('EVT', 'Event'),
+        ('ORG', 'Organization'),
+        ('PER', 'Person'),
+        ('PUB', 'Publication'))
+    type = models.CharField(max_length=3, choices=TYPE_CHOICES, blank=True)
     preferred_name = models.CharField(max_length='80', unique=True)
     slug = models.CharField(max_length='80', unique=True, editable=False)
     related_topics = models.ManyToManyField('self', blank=True)
