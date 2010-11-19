@@ -290,9 +290,9 @@ class Topic(LastUpdateMetadata, Administered, URLAccessible):
         ('ORG', 'Organization'),
         ('PER', 'Person'),
         ('PUB', 'Publication'))
-    type = models.CharField(max_length=3, choices=TYPE_CHOICES, blank=True)
     preferred_name = models.CharField(max_length='80', unique=True)
     slug = models.CharField(max_length='80', unique=True, editable=False)
+    type = models.CharField(max_length=3, choices=TYPE_CHOICES, blank=True)
     related_topics = models.ManyToManyField('self', blank=True)
     summary = fields.XHTMLField(verbose_name='article', blank=True, null=True)
     summary_citations = generic.GenericRelation('Citation')

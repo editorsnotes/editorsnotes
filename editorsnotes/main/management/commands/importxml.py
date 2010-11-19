@@ -121,17 +121,28 @@ class Command(LabelCommand):
             # Set document topics.
             for topic_assignment in document.topics.all():
                 topic_assignment.delete()
-            for topic_name in (md['ContributorJoin::Contributors'] +
-                               md['SubjectJoin::Subject'] +
-                               md['OrganizationJoin::Organizations']):
+            def assign_topic(document, user, topic_name, topic_type=''):
                 topic, topic_created = Topic.objects.get_or_create(
                     slug=Topic.make_slug(topic_name),
                     defaults={ 'preferred_name': topic_name,
                                'creator': user, 'last_updater': user })
-                if topic_created:
-                    topics_created_count += 1
+                topic.type = topic_type
+                topic.save()
                 TopicAssignment.objects.create(
                     content_object=document, topic=topic, creator=user)
+                if topic_created:
+                    return 1
+                else:
+                    return 0
+            for topic_name in md['ContributorJoin::Contributors']:
+                topics_created_count += assign_topic(
+                    document, user, topic_name, 'PER')
+            for topic_name in md['OrganizationJoin::Organizations']:
+                topics_created_count += assign_topic(
+                    document, user, topic_name, 'ORG')
+            for topic_name in md['SubjectJoin::Subject']:
+                topics_created_count += assign_topic(
+                    document, user, topic_name)
 
             # Set document links.
             for link in document.links.all():
