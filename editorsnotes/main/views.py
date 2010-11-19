@@ -156,8 +156,10 @@ def footnote(request, footnote_id):
 def document(request, document_id):
     o = {}
     o['document'] = get_object_or_404(Document, id=document_id)
-    o['related_topics'] =[ c.content_object for c in o['document'].citations.filter(
-            content_type=ContentType.objects.get_for_model(Topic)) ]
+    o['topics'] = (
+        [ ta.topic for ta in o['document'].topics.all() ] +
+        [ c.content_object for c in o['document'].citations.filter(
+                content_type=ContentType.objects.get_for_model(Topic)) ])
     o['scans'] = o['document'].scans.all()
     o['domain'] = Site.objects.get_current().domain
     notes = [ c.content_object for c in o['document'].citations.filter(

@@ -111,7 +111,7 @@ class NoteAdmin(VersionAdmin):
               'function/admin.js')
 
 class DocumentAdmin(VersionAdmin):
-    inlines = (DocumentLinkInline, ScanInline)
+    inlines = (TopicAssignmentInline, DocumentLinkInline, ScanInline)
     class Media:
         js = ('function/jquery-1.4.2.min.js',
               'function/wymeditor/jquery.wymeditor.pack.js',
