@@ -48,11 +48,13 @@
 
       <section id="scans" class="span-23 last">
         {% if scans %}
-        <ul class="scan-list">
+        <div id="scanlist-container">
+        <ul id="scan-list">
           {% for scan in scans %}
           <li><a class="scan button" href="http://{{ domain }}{{ scan.image.url }}">{{ forloop.counter }}</a></li>
           {% endfor %}
         </ul>
+        </div>
         <br/>
         <div id="scan-viewer"></div>
         <div id="progress-notify">
