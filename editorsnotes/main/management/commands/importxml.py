@@ -123,8 +123,8 @@ class Command(LabelCommand):
                 skipped_count += 1
                 continue
 
-            description = P('Agnes Inglis card #%s, %s (%s).'
-                            % (md['CardID'], md['CardHeading'], md['CardType']))
+            description = P('%s -- %s -- Agnes Inglis card #%s'
+                            % (md['CardHeading'], md['CardType'], md['CardID']))
             document, created = Document.objects.get_or_create(
                 import_id=(ID_PREFIX + md['CardID']),
                 defaults={ 'description': description,
