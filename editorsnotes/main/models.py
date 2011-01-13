@@ -336,6 +336,12 @@ class Topic(LastUpdateMetadata, Administered, URLAccessible):
                         e.message_dict['preferred_name'] = []
                     e.message_dict['preferred_name'].append(u'Topic with a very similar Preferred name already exists.')
             raise e
+    def related_objects(self, model=None):
+        if model:
+            return [ ta.content_object for ta in self.assignments.filter(
+                    content_type=ContentType.objects.get_for_model(model)) ]
+        else:
+            return [ ta.content_object for ta in o['topic'].assignments.all() ]
     class Meta:
         ordering = ['slug']
 

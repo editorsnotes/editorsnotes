@@ -125,11 +125,11 @@ def topic(request, topic_slug):
                      'email': settings.ADMINS[0][1] }
     o['related_topics'] = o['topic'].related_topics.all()
     o['summary_cites'] = _sort_citations(o['topic'])
-    notes = [ ta.content_object for ta in o['topic'].assignments.filter(
-           content_type=ContentType.objects.get_for_model(Note)) ]
+    notes = o['topic'].related_objects(Note)
     o['notes'] = zip(notes, 
                     [ [ ta.topic for ta in n.topics.exclude(topic=o['topic']) ] for n in notes ],
                     [ _sort_citations(n) for n in notes ])
+    o['documents'] = o['topic'].related_objects(Document)
     o['thread'] = { 'id': 'topic-%s' % o['topic'].id, 'title': o['topic'].preferred_name }
     return render_to_response(
         'topic.html', o, context_instance=RequestContext(request))

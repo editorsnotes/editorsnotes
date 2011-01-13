@@ -35,6 +35,7 @@
         <li><a href="#article">Article</a></li>
         <li><a href="#discuss">Discussion</a></li>
         <li><a href="#notes">Related Notes <span class="alt">&amp;</span> Queries</a></li>
+        <li><a href="#documents">Related Documents</a></li>
       </ul>
 
       <section id="article" class="span-23 last">
@@ -85,6 +86,18 @@
           {% endfor %}
         {% else %}
           There are no notes or queries related to <em>{{ topic.preferred_name }}</em>.
+        {% endif %}
+      </section>
+
+      <section id="documents" class="span-23 last">
+        {% if documents %}
+        <ul>
+          {% for document in documents %}
+          <li>{{ document|as_link|typogrify }}</li>
+          {% endfor %}
+        </ul>
+        {% else %}
+          There are no documents related to <em>{{ topic.preferred_name }}</em>.
         {% endif %}
       </section>
     </div>
