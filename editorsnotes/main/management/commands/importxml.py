@@ -2,10 +2,11 @@ from django.core.management.base import LabelCommand, CommandError
 from django.utils.encoding import smart_str
 from django.db import transaction
 from lxml import etree
-from lxml.html.builder import P
+from lxml.html.builder import P, BR
 from os import path
 from difflib import ndiff
 from optparse import make_option
+from itertools import chain
 from main.models import User, Document, Transcript, Topic, TopicAssignment
 
 NS = { 'fmp': 'http://www.filemaker.com/fmpxmlresult' }
@@ -19,7 +20,13 @@ class Command(LabelCommand):
                     '--username',
                     action='store',
                     default='ryanshaw',
-                    help='username that will create/update documents'),)
+                    help='username that will create/update documents'),
+        make_option('-f',
+                    '--force-update',
+                    action='store_true',
+                    default=False,
+                    help='update documents whether or not they have changed'),
+        )
     def handle_label(self, filename, **options):
         if not path.isfile(filename):
             raise CommandError('%s is not a file.' % filename)
@@ -73,10 +80,16 @@ class Command(LabelCommand):
             raise CommandError(message)
 
         # Utility functions for accessing XML data.
+        def text(e):
+            text = e.text or ''
+            for child in e:
+                if not child.tag == '{%s}BR' % NS['fmp']:
+                    raise CommandError('Unexpected element: %s' % child)
+                text += ('\n%s' % (child.tail or ''))
+            return text.strip()
         def values(row, field):
-            return list(set([ 
-                        v for v in [ e.text.strip() for e in row[f.index(field)] 
-                                     if e.text is not None ] if v ]))
+            return list(set(
+                    [ v for v in [ text(e) for e in row[f.index(field)] ] if v ]))
         def value(row, field):
             v = values(row, field)
             if len(v) == 0:
@@ -157,14 +170,17 @@ class Command(LabelCommand):
             changed = document.set_metadata(md, user)
 
             # Create or update document transcript.
+            transcript_html = P(*list(chain.from_iterable(
+                        ( (line, BR()) for line 
+                          in md['Transcription'].split('\n') )))[:-1])
             if created:
                 Transcript.objects.create(
                     document=document, 
-                    content=P(md['Transcription']),
+                    content=transcript_html,
                     creator=user, last_updater=user)
                 created_count += 1
-            elif changed:
-                document.transcript.content = P(md['Transcription'])
+            elif changed or options['force_update']:
+                document.transcript.content = transcript_html
                 document.transcript.last_updater = user
                 document.transcript.save()
                 changed_count += 1
