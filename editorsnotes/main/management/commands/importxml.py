@@ -74,7 +74,9 @@ class Command(LabelCommand):
 
         # Utility functions for accessing XML data.
         def values(row, field):
-            return list(set([ v for v in [ e.text.strip() for e in row[f.index(field)] ] if v ]))
+            return list(set([ 
+                        v for v in [ e.text.strip() for e in row[f.index(field)] 
+                                     if e.text is not None ] if v ]))
         def value(row, field):
             v = values(row, field)
             if len(v) == 0:
