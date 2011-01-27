@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
   <head>
-    <title>Editors' Notes{% block title %}{% endblock %}</title>
+    <title>{% if project %}{{ project }}{% else %}Editors' Notes{% endif %}{% block title %}{% endblock %}</title>
     <link rel="stylesheet" href="/media/style/custom-theme/jquery-ui-1.8.5.custom.css" type="text/css"/>
     <link rel="stylesheet" href="/media/style/screen.css" type="text/css" media="screen, projection"/>
     <link rel="stylesheet" href="/media/style/print.css" type="text/css" media="print"/>	
@@ -19,7 +19,11 @@
     <div id="stripe-2"></div>
     <div class="container">
       <nav id="topnav">
-        <div id="logo"><a href="/"><h1>{% filter smartypants %}The Editors' Notes Project{% endfilter %}</h1></a></div>
+        <div id="logo">
+          <a href="{% if project %}{{ project.get_absolute_url }}{% else %}/{% endif %}">
+            <h1>{% filter smartypants %}{% if project %}{{ project }}{% else %}The Editors' Notes Project{% endif %}{% endfilter %}</h1>
+          </a>
+        </div>
         <div id="searchform">
           <form action="/search/" method="get" class="inline">
             <div id="searchinput">

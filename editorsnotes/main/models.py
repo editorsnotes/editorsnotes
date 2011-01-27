@@ -365,8 +365,9 @@ class Note(LastUpdateMetadata, Administered, URLAccessible):
 class Project(models.Model, URLAccessible):
     name = models.CharField(max_length='80')
     slug = models.SlugField(help_text='Used for project-specific URLs')
+    @models.permalink
     def get_absolute_url(self):
-        return ('%s_view' % self._meta.module_name, [self.slug])
+        return ('index_view', [self.slug])
     def as_text(self):
         return self.name
         

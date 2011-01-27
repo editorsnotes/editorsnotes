@@ -32,6 +32,7 @@ def index(request, project_slug=None):
     o = {}
     if project_slug:
         o['project'] = get_object_or_404(Project, slug=project_slug)
+        print o['project'].get_absolute_url()
     o['user_activity'], skip_object_ids = UserProfile.get_activity_for(
         request.user, max_count)
     for model in [Topic, Note, Document, Transcript]:
@@ -45,7 +46,7 @@ def index(request, project_slug=None):
                 .order_by('-last_updated')
         if project_slug:
             query_set = query_set.filter(
-                creator__userprofile__affiliation=o['project'])
+                last_updater__userprofile__affiliation=o['project'])
         o[listname] = list(query_set[:max_count])
     o['document_list'] = sorted(o['document_list'],
                               key=lambda x: x.last_updated, 
@@ -54,12 +55,19 @@ def index(request, project_slug=None):
         'index.html', o, context_instance=RequestContext(request))
 
 @login_required
-def all_topics(request):
+def all_topics(request, project_slug=None):
     o = {}
+    if project_slug:
+        o['project'] = get_object_or_404(Project, slug=project_slug)
     o['topics_1'] = []
     o['topics_2'] = []
     o['topics_3'] = []
-    all_topics = list(Topic.objects.all())
+    if project_slug:
+        query_set = Topic.objects.filter(
+            last_updater__userprofile__affiliation=o['project'])
+    else:
+        query_set = Topic.objects.all()
+    all_topics = list(query_set)
     prev_letter = 'A'
     topic_index = 1
     list_index = 1 
@@ -77,10 +85,17 @@ def all_topics(request):
         'all-topics.html', o, context_instance=RequestContext(request))
 
 @login_required
-def all_documents(request):
+def all_documents(request, project_slug=None):
     o = {}
+    if project_slug:
+        o['project'] = get_object_or_404(Project, slug=project_slug)
     o['documents'] = []
-    for document in Document.objects.all():
+    if project_slug:
+        query_set = Document.objects.filter(
+            last_updater__userprofile__affiliation=o['project'])
+    else:
+        query_set = Document.objects.all()
+    for document in query_set:
         first_letter = document.ordering[0].upper()
         o['documents'].append(
             { 'document': document, 'first_letter': first_letter })
@@ -88,13 +103,22 @@ def all_documents(request):
         'all-documents.html', o, context_instance=RequestContext(request))
 
 @login_required
-def all_notes(request):
+def all_notes(request, project_slug=None):
     o = {}
+    if project_slug:
+        o['project'] = get_object_or_404(Project, slug=project_slug)
+    if project_slug:
+        query_set = Note.objects.filter(
+            last_updater__userprofile__affiliation=o['project'])
+    else:
+        query_set = Note.objects.all()
     # TODO: Make this a custom manager method for Note, maybe
-    notes = dict((n.id, n) for n in Note.objects.all())
+    notes = dict((n.id, n) for n in query_set)
     o['notes_by_topic_1'] = []
     o['notes_by_topic_2'] = []
-    topic_assignments = list(TopicAssignment.objects.assigned_to_model(Note))
+    topic_assignments = [ ta for ta in 
+                          TopicAssignment.objects.assigned_to_model(Note) 
+                          if ta.object_id in notes ]
     ta_index = 1
     list_index = 1
     topic = None
