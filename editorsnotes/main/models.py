@@ -362,8 +362,17 @@ class Note(LastUpdateMetadata, Administered, URLAccessible):
     class Meta:
         ordering = ['-last_updated']  
 
+class Project(models.Model, URLAccessible):
+    name = models.CharField(max_length='80')
+    slug = models.SlugField(help_text='Used for project-specific URLs')
+    def get_absolute_url(self):
+        return ('%s_view' % self._meta.module_name, [self.slug])
+    def as_text(self):
+        return self.name
+        
 class UserProfile(models.Model, URLAccessible):
     user = models.ForeignKey(User, unique=True)
+    affiliation = models.ForeignKey('Project', blank=True, null=True)
     def _get_display_name(self):
         "Returns the full name if available, or the username if not."
         display_name = self.user.username

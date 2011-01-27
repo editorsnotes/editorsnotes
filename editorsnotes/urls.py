@@ -19,8 +19,7 @@ urlpatterns = patterns('',
      { 'document_root': '/Users/ryanshaw/Code/editorsnotes/editorsnotes/static' }),
     (r'^proxy$', 'editorsnotes.main.views.proxy'),
 )
-
-urlpatterns += patterns('editorsnotes.main.views',
+core_patterns = patterns('editorsnotes.main.views',
     url(r'^$', 'index', name='index_view'),
     url(r'^documents/$', 'all_documents', name='all_documents_view'),
     url(r'^document/(?P<document_id>\d+)/$', 'document', name='document_view'),
@@ -32,4 +31,8 @@ urlpatterns += patterns('editorsnotes.main.views',
     url(r'^footnote/(?P<footnote_id>\d+)/$', 'footnote', name='footnote_view'),
     url(r'^search/$', 'search', name='search_view'),
     url(r'^api/topics/$', 'api_topics', name='api_topics_view'),
+)
+urlpatterns += core_patterns
+urlpatterns += patterns('',
+    (r'^(?P<project_slug>[-_a-z0-9]+)/', include(core_patterns)),
 )

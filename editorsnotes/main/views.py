@@ -27,9 +27,11 @@ def _sort_citations(instance):
     return cites
 
 @login_required
-def index(request):
+def index(request, project_slug=None):
     max_count = 6
     o = {}
+    if project_slug:
+        o['project'] = get_object_or_404(Project, slug=project_slug)
     o['user_activity'], skip_object_ids = UserProfile.get_activity_for(
         request.user, max_count)
     for model in [Topic, Note, Document, Transcript]:
@@ -38,10 +40,13 @@ def index(request):
             listname = 'document_list'
         else:
             listname = '%s_list' % model_name
-        o[listname] = list(
-            model.objects\
+        query_set = model.objects\
                 .exclude(id__in=skip_object_ids[model_name])\
-                .order_by('-last_updated')[:max_count])
+                .order_by('-last_updated')
+        if project_slug:
+            query_set = query_set.filter(
+                creator__userprofile__affiliation=o['project'])
+        o[listname] = list(query_set[:max_count])
     o['document_list'] = sorted(o['document_list'],
                               key=lambda x: x.last_updated, 
                               reverse=True)[:max_count]
