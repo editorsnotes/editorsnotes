@@ -161,7 +161,7 @@ class FootnoteAdmin(VersionAdmin):
 
 class UserProfileAdmin(UserAdmin):
     inlines = (UserProfileInline,)
-    list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'affiliation')
+    list_display = ('username', 'email', 'first_name', 'last_name', 'is_active', 'affiliation')
     def affiliation(self, user):
         try:
             return user.get_profile().affiliation or ''
