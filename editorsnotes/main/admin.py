@@ -163,7 +163,10 @@ class UserProfileAdmin(UserAdmin):
     inlines = (UserProfileInline,)
     list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'affiliation')
     def affiliation(self, user):
-        return user.get_profile().affiliation or ''
+        try:
+            return user.get_profile().affiliation or ''
+        except UserProfile.DoesNotExist:
+            return ''
 
 admin.site.unregister(User)
 
