@@ -183,6 +183,8 @@ class Command(LabelCommand):
                 document.transcript.content = transcript_html
                 document.transcript.last_updater = user
                 document.transcript.save()
+                document.last_updater = user
+                document.save()
                 changed_count += 1
             else:
                 unchanged_count += 1

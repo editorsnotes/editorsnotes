@@ -62,11 +62,11 @@ def all_topics(request, project_slug=None):
     o['topics_1'] = []
     o['topics_2'] = []
     o['topics_3'] = []
-    if project_slug:
-        query_set = Topic.objects.filter(
-            last_updater__userprofile__affiliation=o['project'])
-    else:
-        query_set = Topic.objects.all()
+    #if project_slug:
+    #    query_set = Topic.objects.filter(
+    #        last_updater__userprofile__affiliation=o['project'])
+    #else:
+    query_set = Topic.objects.all()
     all_topics = list(query_set)
     prev_letter = 'A'
     topic_index = 1
