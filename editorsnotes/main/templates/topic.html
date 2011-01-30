@@ -4,9 +4,13 @@
 {% block title %}: {{ topic.preferred_name }}{% endblock %}
 
 {% block js %}
+<script type="text/javascript" src="/media/function/jquery.easing.js"></script>
+<script type="text/javascript" src="/media/function/jquery.collapse.js"></script>
+
 <script type="text/javascript">
   $(function() {
     $('#tabs').tabs();
+    $('#collapse').jqcollapse({ slide: true, speed: 250, easing: 'easeOutCubic' });
   });
 </script>
 {% endblock %}
@@ -79,10 +83,13 @@
 
       <section id="notes" class="span-23 last">
         {% if notes %}
+	<ul id="collapse">
           {% for note, topics, cites in notes %}
             {% include "note.include" %}
-            {% if forloop.last %}{% else %}<hr/>{% endif %}
+            {% if forloop.last %}{% else %}
+        <hr/>{% endif %}
           {% endfor %}
+	</ul>
         {% else %}
           There are no notes or queries related to <em>{{ topic.preferred_name }}</em>.
         {% endif %}

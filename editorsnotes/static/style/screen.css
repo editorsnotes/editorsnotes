@@ -30,7 +30,7 @@ h1 {font-size:3em;line-height:1;margin-bottom:0.5em;}
 h2 {font-size:2em;margin-bottom:0.75em;}
 h3 {font-size:1.5em;line-height:1;margin-bottom:1em;}
 h4 {font-size:1.2em;line-height:1.25;margin-bottom:1.25em;}
-h5 {font-size:1em;font-weight:bold;margin-bottom:1.5em;}
+h5 {font-size:1.25em;font-weight:bold;margin-bottom:1.2em;}
 h6 {font-size:1em;font-weight:bold;}
 h1 img, h2 img, h3 img, h4 img, h5 img, h6 img {margin:0;}
 p {margin:0 0 1.5em;}
@@ -251,7 +251,7 @@ input.span-24, textarea.span-24 {width:938px;}
 .prepend-top {margin-top:1.5em;}
 .append-bottom {margin-bottom:1.5em;}
 .box {padding:1.5em;margin-bottom:1.5em;background:#E5ECF9;}
-hr {background:#ddd;color:#ddd;clear:both;float:none;width:100%;height:.1em;margin:0 0 1.45em;border:none;}
+hr {background:#ddd;color:#ddd;clear:both;float:none;width:100%;height:.09em;margin:0 0 1.45em;border:none;}
 hr.space {background:#fff;color:#fff;visibility:hidden;}
 .clearfix:after, .container:after {content:"\0020";display:block;height:0;clear:both;visibility:hidden;overflow:hidden;}
 .clearfix, .container {display:block;}
@@ -294,7 +294,7 @@ ul {list-style-type:none;padding:0
 #actions, ul.topic-list {display:inline;}
 #actions li, ul.topic-list li {display:inline;}
 #actions {padding:0;margin-bottom:0;}
-hr {margin-bottom:2.95em;}
+hr {margin-bottom:1.5em;}
 #stripe-1 {position:absolute;z-index:-1;height:42px;width:100%;background:#e5ecf9;}
 #stripe-2 {position:absolute;z-index:-1;top:42px;height:44px;width:100%;background:#aeb4be;}
 #logo a {text-decoration:none;}
