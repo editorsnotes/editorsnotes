@@ -2,10 +2,11 @@ from django.core.management.base import LabelCommand, CommandError
 from django.utils.encoding import smart_str
 from django.db import transaction
 from lxml import etree
-from lxml.html.builder import P
+from lxml.html.builder import P, BR
 from os import path
 from difflib import ndiff
 from optparse import make_option
+from itertools import chain
 from main.models import User, Document, Transcript, Topic, TopicAssignment
 
 NS = { 'fmp': 'http://www.filemaker.com/fmpxmlresult' }
@@ -19,7 +20,13 @@ class Command(LabelCommand):
                     '--username',
                     action='store',
                     default='ryanshaw',
-                    help='username that will create/update documents'),)
+                    help='username that will create/update documents'),
+        make_option('-f',
+                    '--force-update',
+                    action='store_true',
+                    default=False,
+                    help='update documents whether or not they have changed'),
+        )
     def handle_label(self, filename, **options):
         if not path.isfile(filename):
             raise CommandError('%s is not a file.' % filename)
@@ -73,8 +80,16 @@ class Command(LabelCommand):
             raise CommandError(message)
 
         # Utility functions for accessing XML data.
+        def text(e):
+            text = e.text or ''
+            for child in e:
+                if not child.tag == '{%s}BR' % NS['fmp']:
+                    raise CommandError('Unexpected element: %s' % child)
+                text += ('\n%s' % (child.tail or ''))
+            return text.strip()
         def values(row, field):
-            return list(set([ v for v in [ e.text.strip() for e in row[f.index(field)] ] if v ]))
+            return list(set(
+                    [ v for v in [ text(e) for e in row[f.index(field)] ] if v ]))
         def value(row, field):
             v = values(row, field)
             if len(v) == 0:
@@ -108,8 +123,8 @@ class Command(LabelCommand):
                 skipped_count += 1
                 continue
 
-            description = P('Agnes Inglis card #%s, %s (%s).'
-                            % (md['CardID'], md['CardHeading'], md['CardType']))
+            description = P('%s -- %s -- Agnes Inglis card #%s'
+                            % (md['CardHeading'], md['CardType'], md['CardID']))
             document, created = Document.objects.get_or_create(
                 import_id=(ID_PREFIX + md['CardID']),
                 defaults={ 'description': description,
@@ -121,17 +136,28 @@ class Command(LabelCommand):
             # Set document topics.
             for topic_assignment in document.topics.all():
                 topic_assignment.delete()
-            for topic_name in (md['ContributorJoin::Contributors'] +
-                               md['SubjectJoin::Subject'] +
-                               md['OrganizationJoin::Organizations']):
+            def assign_topic(document, user, topic_name, topic_type=''):
                 topic, topic_created = Topic.objects.get_or_create(
                     slug=Topic.make_slug(topic_name),
                     defaults={ 'preferred_name': topic_name,
                                'creator': user, 'last_updater': user })
-                if topic_created:
-                    topics_created_count += 1
+                topic.type = topic_type
+                topic.save()
                 TopicAssignment.objects.create(
                     content_object=document, topic=topic, creator=user)
+                if topic_created:
+                    return 1
+                else:
+                    return 0
+            for topic_name in md['ContributorJoin::Contributors']:
+                topics_created_count += assign_topic(
+                    document, user, topic_name, 'PER')
+            for topic_name in md['OrganizationJoin::Organizations']:
+                topics_created_count += assign_topic(
+                    document, user, topic_name, 'ORG')
+            for topic_name in md['SubjectJoin::Subject']:
+                topics_created_count += assign_topic(
+                    document, user, topic_name)
 
             # Set document links.
             for link in document.links.all():
@@ -144,16 +170,21 @@ class Command(LabelCommand):
             changed = document.set_metadata(md, user)
 
             # Create or update document transcript.
+            transcript_html = P(*list(chain.from_iterable(
+                        ( (line, BR()) for line 
+                          in md['Transcription'].split('\n') )))[:-1])
             if created:
                 Transcript.objects.create(
                     document=document, 
-                    content=P(md['Transcription']),
+                    content=transcript_html,
                     creator=user, last_updater=user)
                 created_count += 1
-            elif changed:
-                document.transcript.content = P(md['Transcription'])
+            elif changed or options['force_update']:
+                document.transcript.content = transcript_html
                 document.transcript.last_updater = user
                 document.transcript.save()
+                document.last_updater = user
+                document.save()
                 changed_count += 1
             else:
                 unchanged_count += 1

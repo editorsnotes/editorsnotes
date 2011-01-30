@@ -285,8 +285,14 @@ class Topic(LastUpdateMetadata, Administered, URLAccessible):
     place name, an event name, a publication name, or the name of a
     topic or theme.
     """
+    TYPE_CHOICES = (
+        ('EVT', 'Event'),
+        ('ORG', 'Organization'),
+        ('PER', 'Person'),
+        ('PUB', 'Publication'))
     preferred_name = models.CharField(max_length='80', unique=True)
     slug = models.CharField(max_length='80', unique=True, editable=False)
+    type = models.CharField(max_length=3, choices=TYPE_CHOICES, blank=True)
     related_topics = models.ManyToManyField('self', blank=True)
     summary = fields.XHTMLField(verbose_name='article', blank=True, null=True)
     summary_citations = generic.GenericRelation('Citation')
@@ -330,6 +336,12 @@ class Topic(LastUpdateMetadata, Administered, URLAccessible):
                         e.message_dict['preferred_name'] = []
                     e.message_dict['preferred_name'].append(u'Topic with a very similar Preferred name already exists.')
             raise e
+    def related_objects(self, model=None):
+        if model:
+            return [ ta.content_object for ta in self.assignments.filter(
+                    content_type=ContentType.objects.get_for_model(model)) ]
+        else:
+            return [ ta.content_object for ta in o['topic'].assignments.all() ]
     class Meta:
         ordering = ['slug']
 
@@ -350,8 +362,18 @@ class Note(LastUpdateMetadata, Administered, URLAccessible):
     class Meta:
         ordering = ['-last_updated']  
 
+class Project(models.Model, URLAccessible):
+    name = models.CharField(max_length='80')
+    slug = models.SlugField(help_text='Used for project-specific URLs')
+    @models.permalink
+    def get_absolute_url(self):
+        return ('index_view', [self.slug])
+    def as_text(self):
+        return self.name
+        
 class UserProfile(models.Model, URLAccessible):
     user = models.ForeignKey(User, unique=True)
+    affiliation = models.ForeignKey('Project', blank=True, null=True)
     def _get_display_name(self):
         "Returns the full name if available, or the username if not."
         display_name = self.user.username

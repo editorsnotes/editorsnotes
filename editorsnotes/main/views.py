@@ -27,9 +27,12 @@ def _sort_citations(instance):
     return cites
 
 @login_required
-def index(request):
+def index(request, project_slug=None):
     max_count = 6
     o = {}
+    if project_slug:
+        o['project'] = get_object_or_404(Project, slug=project_slug)
+        print o['project'].get_absolute_url()
     o['user_activity'], skip_object_ids = UserProfile.get_activity_for(
         request.user, max_count)
     for model in [Topic, Note, Document, Transcript]:
@@ -38,10 +41,13 @@ def index(request):
             listname = 'document_list'
         else:
             listname = '%s_list' % model_name
-        o[listname] = list(
-            model.objects\
+        query_set = model.objects\
                 .exclude(id__in=skip_object_ids[model_name])\
-                .order_by('-last_updated')[:max_count])
+                .order_by('-last_updated')
+        if project_slug:
+            query_set = query_set.filter(
+                last_updater__userprofile__affiliation=o['project'])
+        o[listname] = list(query_set[:max_count])
     o['document_list'] = sorted(o['document_list'],
                               key=lambda x: x.last_updated, 
                               reverse=True)[:max_count]
@@ -49,12 +55,19 @@ def index(request):
         'index.html', o, context_instance=RequestContext(request))
 
 @login_required
-def all_topics(request):
+def all_topics(request, project_slug=None):
     o = {}
+    if project_slug:
+        o['project'] = get_object_or_404(Project, slug=project_slug)
     o['topics_1'] = []
     o['topics_2'] = []
     o['topics_3'] = []
-    all_topics = list(Topic.objects.all())
+    #if project_slug:
+    #    query_set = Topic.objects.filter(
+    #        last_updater__userprofile__affiliation=o['project'])
+    #else:
+    query_set = Topic.objects.all()
+    all_topics = list(query_set)
     prev_letter = 'A'
     topic_index = 1
     list_index = 1 
@@ -72,10 +85,17 @@ def all_topics(request):
         'all-topics.html', o, context_instance=RequestContext(request))
 
 @login_required
-def all_documents(request):
+def all_documents(request, project_slug=None):
     o = {}
+    if project_slug:
+        o['project'] = get_object_or_404(Project, slug=project_slug)
     o['documents'] = []
-    for document in Document.objects.all():
+    if project_slug:
+        query_set = Document.objects.filter(
+            last_updater__userprofile__affiliation=o['project'])
+    else:
+        query_set = Document.objects.all()
+    for document in query_set:
         first_letter = document.ordering[0].upper()
         o['documents'].append(
             { 'document': document, 'first_letter': first_letter })
@@ -83,13 +103,22 @@ def all_documents(request):
         'all-documents.html', o, context_instance=RequestContext(request))
 
 @login_required
-def all_notes(request):
+def all_notes(request, project_slug=None):
     o = {}
+    if project_slug:
+        o['project'] = get_object_or_404(Project, slug=project_slug)
+    if project_slug:
+        query_set = Note.objects.filter(
+            last_updater__userprofile__affiliation=o['project'])
+    else:
+        query_set = Note.objects.all()
     # TODO: Make this a custom manager method for Note, maybe
-    notes = dict((n.id, n) for n in Note.objects.all())
+    notes = dict((n.id, n) for n in query_set)
     o['notes_by_topic_1'] = []
     o['notes_by_topic_2'] = []
-    topic_assignments = list(TopicAssignment.objects.assigned_to_model(Note))
+    topic_assignments = [ ta for ta in 
+                          TopicAssignment.objects.assigned_to_model(Note) 
+                          if ta.object_id in notes ]
     ta_index = 1
     list_index = 1
     topic = None
@@ -125,11 +154,11 @@ def topic(request, topic_slug):
                      'email': settings.ADMINS[0][1] }
     o['related_topics'] = o['topic'].related_topics.all()
     o['summary_cites'] = _sort_citations(o['topic'])
-    notes = [ ta.content_object for ta in o['topic'].assignments.filter(
-           content_type=ContentType.objects.get_for_model(Note)) ]
+    notes = o['topic'].related_objects(Note)
     o['notes'] = zip(notes, 
                     [ [ ta.topic for ta in n.topics.exclude(topic=o['topic']) ] for n in notes ],
                     [ _sort_citations(n) for n in notes ])
+    o['documents'] = o['topic'].related_objects(Document)
     o['thread'] = { 'id': 'topic-%s' % o['topic'].id, 'title': o['topic'].preferred_name }
     return render_to_response(
         'topic.html', o, context_instance=RequestContext(request))
@@ -156,8 +185,10 @@ def footnote(request, footnote_id):
 def document(request, document_id):
     o = {}
     o['document'] = get_object_or_404(Document, id=document_id)
-    o['related_topics'] =[ c.content_object for c in o['document'].citations.filter(
-            content_type=ContentType.objects.get_for_model(Topic)) ]
+    o['topics'] = (
+        [ ta.topic for ta in o['document'].topics.all() ] +
+        [ c.content_object for c in o['document'].citations.filter(
+                content_type=ContentType.objects.get_for_model(Topic)) ])
     o['scans'] = o['document'].scans.all()
     o['domain'] = Site.objects.get_current().domain
     notes = [ c.content_object for c in o['document'].citations.filter(

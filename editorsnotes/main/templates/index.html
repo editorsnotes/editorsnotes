@@ -30,7 +30,7 @@
         <li>{{ document|as_link|typogrify }}</li>
         {% endfor %}
         {% if document_list %}
-        <li><a class="more-link" href="{% url all_documents_view %}">All documents</a></li>
+        <li><a class="more-link" href="{% if project %}{% url all_documents_view project.slug %}{% else %}{% url all_documents_view %}{% endif %}">All documents</a></li>
         {% endif %}      
       </ul>
     </section>
@@ -42,7 +42,7 @@
           <li>{{ topic|as_link|typogrify }}</li>
           {% endfor %}
           {% if topic_list %}
-          <li><a class="more-link" href="{% url all_topics_view %}">All topics</a></li>
+          <li><a class="more-link" href="{% if project %}{% url all_topics_view project.slug %}{% else %}{% url all_topics_view %}{% endif %}">All topics</a></li>
           {% endif %}      
         </ul>
       </section>
@@ -53,7 +53,7 @@
           <li>{{ note|as_link|typogrify }}</li>
           {% endfor %}
           {% if note_list %}
-          <li><a class="more-link" href="{% url all_notes_view %}">All notes</a></li>
+          <li><a class="more-link" href="{% if project %}{% url all_notes_view project.slug %}{% else %}{% url all_notes_view %}{% endif %}">All notes</a></li>
           {% endif %}      
         </ul>
       </section>

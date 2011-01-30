@@ -2,6 +2,7 @@ from models import *
 from fields import XHTMLField, ReadonlyXHTMLWidget
 from django import forms
 from django.contrib import admin, messages
+from django.contrib.auth.admin import UserAdmin
 from django.contrib.contenttypes import generic
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
@@ -42,6 +43,9 @@ class DocumentLinkInline(admin.StackedInline):
 
 class ScanInline(admin.StackedInline):
     model = Scan
+
+class UserProfileInline(admin.StackedInline):
+    model = UserProfile
 
 ################################################################################
 
@@ -111,7 +115,7 @@ class NoteAdmin(VersionAdmin):
               'function/admin.js')
 
 class DocumentAdmin(VersionAdmin):
-    inlines = (DocumentLinkInline, ScanInline)
+    inlines = (TopicAssignmentInline, DocumentLinkInline, ScanInline)
     class Media:
         js = ('function/jquery-1.4.2.min.js',
               'function/wymeditor/jquery.wymeditor.pack.js',
@@ -155,8 +159,21 @@ class FootnoteAdmin(VersionAdmin):
               'function/jquery.timeago.js',
               'function/admin.js')
 
+class UserProfileAdmin(UserAdmin):
+    inlines = (UserProfileInline,)
+    list_display = ('username', 'email', 'first_name', 'last_name', 'is_active', 'affiliation')
+    def affiliation(self, user):
+        try:
+            return user.get_profile().affiliation or ''
+        except UserProfile.DoesNotExist:
+            return ''
+
+admin.site.unregister(User)
+
 admin.site.register(Topic, TopicAdmin)
 admin.site.register(Note, NoteAdmin)
 admin.site.register(Document, DocumentAdmin)
 admin.site.register(Transcript, TranscriptAdmin)
 admin.site.register(Footnote, FootnoteAdmin)
+admin.site.register(Project)
+admin.site.register(User, UserProfileAdmin)
