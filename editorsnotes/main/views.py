@@ -155,6 +155,7 @@ def topic(request, topic_slug):
     o['related_topics'] = o['topic'].related_topics.all()
     o['summary_cites'] = _sort_citations(o['topic'])
     notes = o['topic'].related_objects(Note)
+    o['note_count'] = len(notes)
     o['notes'] = zip(notes, 
                     [ [ ta.topic for ta in n.topics.exclude(topic=o['topic']) ] for n in notes ],
                     [ _sort_citations(n) for n in notes ])
