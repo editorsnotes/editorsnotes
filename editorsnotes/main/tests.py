@@ -14,12 +14,12 @@ class UtilsTestCase(TestCase):
     def test_native_to_utc(self):
         from datetime import datetime
         naive_datetime = datetime(2011, 2, 10, 16, 42, 54, 421353)
-        self.assertEquals(
-            'datetime.datetime(2011, 2, 10, 16, 42, 54, 421353, tzinfo=<UTC>)',
+        self.assertEquals( # assuming settings.TIME_ZONE is Pacific Time
+            'datetime.datetime(2011, 2, 11, 0, 42, 54, 421353, tzinfo=<UTC>)',
             repr(utils.naive_to_utc(naive_datetime)))
         self.assertEquals(
-            'datetime.datetime(2011, 2, 11, 0, 42, 54, 421353, tzinfo=<UTC>)',
-            repr(utils.naive_to_utc(naive_datetime, 'America/Los_Angeles')))
+            'datetime.datetime(2011, 2, 10, 16, 42, 54, 421353, tzinfo=<UTC>)',
+            repr(utils.naive_to_utc(naive_datetime, 'UTC')))
         aware_datetime = utils.naive_to_utc(naive_datetime)
         self.assertRaises(TypeError, utils.naive_to_utc, aware_datetime)
 
