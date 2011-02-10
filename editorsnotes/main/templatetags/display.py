@@ -28,9 +28,10 @@ def as_link(obj):
 
 @register.filter
 def timeago(datetime):
+    utc_datetime = utils.naive_to_utc(datetime)
     return mark_safe(
         '<time class="timeago" datetime="%s">%s</time>' % (
-            datetime_isoformat(datetime), datetime.strftime('%I:%M%p, %b %d %Y')))
+            datetime_isoformat(utc_datetime), utc_datetime.strftime('%I:%M%p %Z, %b %d %Y')))
 
 @register.filter
 def display_last_updated(obj):

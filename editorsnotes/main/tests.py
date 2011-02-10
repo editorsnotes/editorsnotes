@@ -11,6 +11,17 @@ import utils
 class UtilsTestCase(TestCase):
     def test_truncate(self):
         self.assertEquals(utils.truncate(u'xxxxxxxxxx', 4), u'xx... xx')
+    def test_native_to_utc(self):
+        from datetime import datetime
+        naive_datetime = datetime(2011, 2, 10, 16, 42, 54, 421353)
+        self.assertEquals(
+            'datetime.datetime(2011, 2, 10, 16, 42, 54, 421353, tzinfo=<UTC>)',
+            repr(utils.naive_to_utc(naive_datetime)))
+        self.assertEquals(
+            'datetime.datetime(2011, 2, 11, 0, 42, 54, 421353, tzinfo=<UTC>)',
+            repr(utils.naive_to_utc(naive_datetime, 'America/Los_Angeles')))
+        aware_datetime = utils.naive_to_utc(naive_datetime)
+        self.assertRaises(TypeError, utils.naive_to_utc, aware_datetime)
 
 def create_test_user():
     user = User(username='testuser', is_staff=True, is_superuser=True)
@@ -141,5 +152,3 @@ class NoteTransactionTestCase(TransactionTestCase):
         transaction.rollback()
         note.delete()
         topic.delete()
-    
-    

@@ -2,7 +2,7 @@
 
 import os.path
 from lxml import etree
-from isodate import datetime_isoformat
+from pytz import timezone, utc
 
 textify = etree.XSLT(etree.parse(
         os.path.abspath(os.path.join(os.path.dirname(__file__), 'textify.xsl'))))
@@ -26,10 +26,18 @@ def truncate(text, length=120):
         r = r[1]
     return l + u'... ' + r
 
-def timeago(datetime):
-    return '<time class="timeago" datetime="%s">%s</time>' % (
-        datetime_isoformat(datetime), datetime.strftime('%I:%M%p, %b %d %Y'))
-
 def prepend_space(element):
     element.addprevious(etree.Entity('nbsp'))
+
+def naive_to_utc(naive_datetime, timezone_string='UTC'):
+    '''Converts a naive datetime (such as Django returns from DateTimeFields) 
+    to an timezone-aware UTC datetime. It will be assumed that the naive 
+    datetime refers to a UTC time, unless a timezone string (e.g. 
+    "America/Los_Angeles") is provided.'''
+    if naive_datetime.tzinfo is not None:
+        raise TypeError('datetime is not naive: %s' % naive_datetime)
+    tz = timezone(timezone_string)
+    return tz.normalize(tz.localize(naive_datetime)).astimezone(utc)
+    
+    
         
