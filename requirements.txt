@@ -8,6 +8,7 @@ lxml==2.2.4
 isodate==0.4.0
 smartypants==1.6.0.3
 PIL==1.1.7
+pytz==2011b
 
 # Symlinks to system packages
 # symlink: _xapian.so
