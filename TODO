@@ -1,3 +1,0 @@
-Add 'type' (Person, Event, Organization, etc.) to Topic.
-
-Add db_index option to Topic.slug.
