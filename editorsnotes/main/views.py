@@ -238,6 +238,12 @@ def search(request):
     return render_to_response(
         'search.html', o, context_instance=RequestContext(request))
 
+def topic_to_dict(topic):
+    return { 'preferred_name': topic.preferred_name,
+             'id': topic.id,
+             'uri': 'http://%s%s' % (Site.objects.get_current().domain, 
+                                     topic.get_absolute_url()) } 
+
 def api_topics(request):
     query = ''
     results = EmptySearchQuerySet()
@@ -248,11 +254,12 @@ def api_topics(request):
                                if len(term) > 1 ])
         results = SearchQuerySet().models(Topic).narrow(query).load_all()
     
-    topics = [ { 'preferred_name': r.object.preferred_name,
-                 'uri': 'http://%s%s' % (Site.objects.get_current().domain, 
-                                         r.object.get_absolute_url()) } 
-               for r in results ]
+    topics = [ topic_to_dict(r.object) for r in results ]
     return HttpResponse(json.dumps(topics), mimetype='text/plain')
+
+def api_topic(request, topic_id):
+    topic = get_object_or_404(Topic, id=topic_id)
+    return HttpResponse(json.dumps(topic_to_dict(topic)), mimetype='text/plain')
 
 # Proxy for cross-site AJAX requests. For development only.
 def proxy(request):

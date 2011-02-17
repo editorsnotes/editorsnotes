@@ -27,6 +27,7 @@ urlpatterns += patterns('editorsnotes.main.views',
     url(r'^footnote/(?P<footnote_id>\d+)/$', 'footnote', name='footnote_view'),
     url(r'^search/$', 'search', name='search_view'),
     url(r'^api/topics/$', 'api_topics', name='api_topics_view'),
+    url(r'^api/topic/(?P<topic_id>\d+)/$', 'api_topic', name='api_topic_view'),
 )
 index_patterns = patterns('editorsnotes.main.views',
     url(r'^$', 'index', name='index_view'),
