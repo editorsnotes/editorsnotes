@@ -291,7 +291,7 @@ class Topic(LastUpdateMetadata, Administered, URLAccessible):
         ('PER', 'Person'),
         ('PUB', 'Publication'))
     preferred_name = models.CharField(max_length='80', unique=True)
-    slug = models.CharField(max_length='80', unique=True, editable=False)
+    slug = models.CharField(max_length='80', unique=True, editable=False, db_index=True)
     type = models.CharField(max_length=3, choices=TYPE_CHOICES, blank=True)
     related_topics = models.ManyToManyField('self', blank=True, editable=False)
     summary = fields.XHTMLField(verbose_name='article', blank=True, null=True)
