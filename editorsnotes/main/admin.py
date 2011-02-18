@@ -25,7 +25,9 @@ class CitationInline(generic.GenericStackedInline):
     extra = 0
     template = 'admin/main/edit_inline/stacked.html'
     formfield_overrides = { 
-        models.ForeignKey: { 'widget': forms.widgets.HiddenInput } }
+        models.ForeignKey: { 
+            'widget': forms.widgets.HiddenInput(
+                attrs={ 'class': 'autocomplete-documents' }) } }
 
 class TopicAssignmentInline(generic.GenericStackedInline):
     model = TopicAssignment
@@ -112,8 +114,38 @@ opener.dismissAddAnotherPopup(window, '%(pk)s', '%(obj)s');
         else:
             messages.info(request, message)
 
+class ManyToManyAutocompleteWidget(forms.widgets.HiddenInput):
+    def render(self, name, value, attrs=None):
+        if value:
+            value = ','.join([str(v) for v in value])
+        else:
+            value = ''
+        return super(ManyToManyAutocompleteWidget, self).render(name, value, attrs)
+    def value_from_datadict(self, data, files, name):
+        value = data.get(name, None)
+        if value and ',' in value:
+            return data[name].split(',')
+        if value:
+            return [value]
+        return None
+    def _has_changed(self, initial, data):
+        if initial is None:
+            initial = []
+        if data is None:
+            data = []
+        if len(initial) != len(data):
+            return True
+        for pk1, pk2 in zip(initial, data):
+            if force_unicode(pk1) != force_unicode(pk2):
+                return True
+        return False
+
 class TopicAdmin(VersionAdmin):
     inlines = (AliasInline, CitationInline)
+    formfield_overrides = { 
+        models.ManyToManyField: { 
+            'widget': ManyToManyAutocompleteWidget(
+                attrs={ 'class': 'autocomplete-multiple-topics vManyToManyRawIdAdminField' }) } }
     class Media:
         css = { 'all': ('style/custom-theme/jquery-ui-1.8.5.custom.css',
                         'style/admin.css') }
@@ -147,6 +179,10 @@ class DocumentAdmin(VersionAdmin):
 
 class TranscriptAdmin(VersionAdmin):
     inlines = (FootnoteInline,)
+    formfield_overrides = { 
+        models.OneToOneField: { 
+            'widget': forms.widgets.HiddenInput(
+                attrs={ 'class': 'autocomplete-documents' }) } }
     def save_formset(self, request, form, formset, change):
         transcript = form.instance
         # Update the transcript HTML to remove any links to deleted footnotes.
@@ -177,8 +213,13 @@ class TranscriptAdmin(VersionAdmin):
               'function/admin-transcript.js')
 
 class FootnoteAdmin(VersionAdmin):
+    formfield_overrides = { 
+        models.ForeignKey: { 
+            'widget': forms.widgets.HiddenInput(
+                attrs={ 'class': 'autocomplete-transcripts' })}}
     class Media:
-        css = { 'all': ('style/custom-theme/jquery-ui-1.8.5.custom.css',) }
+        css = { 'all': ('style/custom-theme/jquery-ui-1.8.5.custom.css',
+                        'style/admin.css') }
         js = ('function/jquery-1.4.2.min.js',
               'function/jquery-ui-1.8.5.custom.min.js',
               'function/wymeditor/jquery.wymeditor.pack.js',

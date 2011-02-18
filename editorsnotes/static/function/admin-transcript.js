@@ -199,4 +199,50 @@ $(document).ready(function () {
 
   // Initialize timeago.
   $('time.timeago').timeago();
+
+  // Initialize autocomplete fields.
+  var init_autocomplete_documents = function() {
+    $('<input type="text" class="vTextField"></input>')
+    .insertBefore($(this))
+    .autocomplete({
+      source: function(request, response) {
+        $.getJSON('/api/documents/', { q: request.term }, function(data) {
+          response($.map(data, function(item, index) {
+            return { label: item.description, id: item.id };
+          }));
+        });
+      },
+    minLength: 2,
+      select: function(event, ui) {
+        if (ui.item) {
+          $(event.target).next().val(ui.item.id);
+        }
+      }
+    });
+    $(this).change(function(event) {
+      console.log(event);
+    });
+  };
+
+  $('.autocomplete-documents').filter(function() {
+    // Skip the hidden template form.
+    return (! this.id.match(/__prefix__/))
+  })
+  .each(init_autocomplete_documents)
+  .each(function() {
+    if ($(this).val()) {
+      var autocomplete = $(this).prev();
+      $.getJSON('/api/documents/' + $(this).val() + '/', {}, function(data) {
+        autocomplete.val(data.description);
+      });
+    }
+  });
+
+  // Set autocomplete field after creating new related items.
+  $('body').bind('addedviapopup', function(e, win, new_id, new_repr) {
+    $('input#' + windowname_to_id(win.name))
+    .prev('.ui-autocomplete-input')
+    .val(html_unescape(new_repr));
+  });
+
 });

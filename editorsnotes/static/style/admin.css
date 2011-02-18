@@ -1,1 +1,25 @@
 ul.ui-autocomplete li.ui-menu-item { list-style-type: none; }
+.form-row.document .vTextField, 
+.form-row.transcript .vTextField,
+.form-row.topic .vTextField,
+.form-row.related_topics .vTextField { width: 50em; }
+.form-row.related_topics .help { display: none; }
+ul.choices-display { margin-top: 5px; }
+ul.choices-display li { 
+    list-style-type: none;
+    height: 15px; 
+}
+a.remove-choice {
+    float: left;
+    text-indent: -9999px;
+    background: transparent url(icons/delete.png) no-repeat;
+    width: 15px;
+    height: 15px;
+    border: 0px none;
+    outline: 0; /* Remove dotted border around link */
+    margin-right: 5px;
+}
+a.remove-choice:hover {
+    background-position: -15px 0;
+    cursor: pointer;
+}

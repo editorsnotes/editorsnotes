@@ -257,9 +257,56 @@ def api_topics(request):
     topics = [ topic_to_dict(r.object) for r in results ]
     return HttpResponse(json.dumps(topics), mimetype='text/plain')
 
-def api_topic(request, topic_id):
-    topic = get_object_or_404(Topic, id=topic_id)
-    return HttpResponse(json.dumps(topic_to_dict(topic)), mimetype='text/plain')
+def api_topic(request, topic_ids):
+    topics_by_id = Topic.objects.in_bulk(topic_ids.split(','))
+    topics = [ topic_to_dict(t) for t in topics_by_id.values() ]
+    return HttpResponse(json.dumps(topics), mimetype='text/plain')
+
+def document_to_dict(document):
+    return { 'description': document.as_text(),
+             'id': document.id,
+             'uri': 'http://%s%s' % (Site.objects.get_current().domain, 
+                                     document.get_absolute_url()) } 
+
+def api_documents(request):
+    query = ''
+    results = EmptySearchQuerySet()
+
+    if request.GET.get('q'):
+        query = ' AND '.join([ 'title:%s' % term for term 
+                               in request.GET.get('q').split() 
+                               if len(term) > 1 ])
+        results = SearchQuerySet().models(Document).narrow(query).load_all()
+    
+    documents = [ document_to_dict(r.object) for r in results ]
+    return HttpResponse(json.dumps(documents), mimetype='text/plain')
+
+def api_document(request, document_id):
+    document = get_object_or_404(Document, id=document_id)
+    return HttpResponse(json.dumps(document_to_dict(document)), mimetype='text/plain')
+
+def transcript_to_dict(transcript):
+    return { 'description': transcript.as_text(),
+             'id': transcript.id,
+             'uri': 'http://%s%s' % (Site.objects.get_current().domain, 
+                                     transcript.get_absolute_url()) } 
+
+def api_transcripts(request):
+    query = ''
+    results = EmptySearchQuerySet()
+
+    if request.GET.get('q'):
+        query = ' AND '.join([ 'title:%s' % term for term 
+                               in request.GET.get('q').split() 
+                               if len(term) > 1 ])
+        results = SearchQuerySet().models(Transcript).narrow(query).load_all()
+    
+    transcripts = [ transcript_to_dict(r.object) for r in results ]
+    return HttpResponse(json.dumps(transcripts), mimetype='text/plain')
+
+def api_transcript(request, transcript_id):
+    transcript = get_object_or_404(Transcript, id=transcript_id)
+    return HttpResponse(json.dumps(transcript_to_dict(transcript)), mimetype='text/plain')
 
 # Proxy for cross-site AJAX requests. For development only.
 def proxy(request):
