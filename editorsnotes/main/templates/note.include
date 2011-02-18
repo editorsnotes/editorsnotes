@@ -33,9 +33,10 @@
 	  <div class="span-2">
 	    <a class="button" href="{{ note.get_admin_url }}?return_to={{ request.path }}">Edit</a>
 	  </div>
-	  <div class="edit-history">
-	    {{ note|display_edit_history }}
-	  </div>
+
 	  </li>
 	</ul>
 	</li>
+	  <div class="edit-history">
+	    {{ note|display_edit_history }}
+	  </div>
