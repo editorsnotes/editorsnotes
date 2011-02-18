@@ -86,11 +86,11 @@ $(document).ready(function () {
       if (hidden.val()) {
         var autocomplete = hidden.prev();
         $.getJSON('/api/' + collection + '/' + hidden.val() + '/', {}, function(data) {
+          if (! $.isArray(data)) {
+            data = [ data ];
+          }
           if (multiple) {
             var choices = hidden.parent().find('ul.choices-display');
-            if (! $.isArray(data)) {
-              data = [ data ];
-            }
             $.each(data, function() {
               var item = this;
               var kill = $('<a class="remove-choice">Remove</a>');
@@ -106,7 +106,7 @@ $(document).ready(function () {
               });
             });
           } else {
-            autocomplete.val(data[label_field]);
+            autocomplete.val(data[0][label_field]);
           }
         });
       }
