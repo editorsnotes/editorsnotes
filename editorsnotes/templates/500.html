@@ -2,7 +2,10 @@
 
 {% block title %}: Error{% endblock %}
 
+{% load typogrify %}
+
 {% block content %}
+{% filter typogrify %}
 <header>
   <h2>Oops.</h2>
 </header>
@@ -12,5 +15,7 @@
 <li>exactly what you were in the process of doing when you got this error (describe each step exactly as you did it, including which links you followed and which buttons you clicked)</li>
 <li>what web browser you are using.</li>
 <ul>
+<p>If you were in the process of submitting new or changed material, you should be able to use your browser's "Back" button to get back to the filled-out form. You can then copy and paste your text into a separate text file to ensure it is not lost.</p>
 <p>Thank you for your patience! We will fix this as soon as possible.</p>
+{% endfilter %}
 {% endblock %}
