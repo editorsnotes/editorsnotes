@@ -8,6 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from django.db.models.fields import FieldDoesNotExist
 from django.http import HttpResponse, HttpResponseRedirect
+from django.utils.encoding import force_unicode
 from django.utils.html import escape
 from reversion import admin as reversion_admin
 from urlparse import urlparse, parse_qsl, urlunparse
