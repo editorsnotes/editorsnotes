@@ -249,7 +249,7 @@ def api_topics(request):
     results = EmptySearchQuerySet()
 
     if request.GET.get('q'):
-        query = ' AND '.join([ 'names:%s' % term for term 
+        query = ' AND '.join([ 'names:%s*' % term for term 
                                in request.GET.get('q').split() 
                                if len(term) > 1 ])
         results = SearchQuerySet().models(Topic).narrow(query).load_all()
@@ -273,7 +273,7 @@ def api_documents(request):
     results = EmptySearchQuerySet()
 
     if request.GET.get('q'):
-        query = ' AND '.join([ 'title:%s' % term for term 
+        query = ' AND '.join([ 'title:%s*' % term for term 
                                in request.GET.get('q').split() 
                                if len(term) > 1 ])
         results = SearchQuerySet().models(Document).narrow(query).load_all()
