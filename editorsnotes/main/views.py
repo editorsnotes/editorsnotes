@@ -16,14 +16,12 @@ import utils
 import json
 
 def _sort_citations(instance):
-    cites = { 'primary': [], 'secondary': [] }
+    cites = { 'all': [] }
     for c in Citation.objects.filter(
         content_type=ContentType.objects.get_for_model(instance), 
         object_id=instance.id):
-        if c.type == 'P': cites['primary'].append(c)
-        elif c.type == 'S': cites['secondary'].append(c)
-    cites['primary'].sort(key=lambda c: c.document.ordering)
-    cites['secondary'].sort(key=lambda c: c.document.ordering)
+        cites['all'].append(c)
+    cites['all'].sort(key=lambda c: c.ordering)
     return cites
 
 @login_required

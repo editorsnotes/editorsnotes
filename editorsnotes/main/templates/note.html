@@ -22,18 +22,10 @@
         <div class="note-content">
           {{ note.content|as_html }}
         </div>
-        {% if cites.primary %}
-        <h4>Primary sources</h4>
+        {% if cites.all %}
+        <h4>Sources</h4>
         <div class="citation-list">
-          {% for cite in cites.primary %}
-            {% include "citation.include" %}
-          {% endfor %}
-        </div>
-        {% endif %}
-        {% if cites.secondary %}
-        <h4>Secondary sources</h4>
-        <div class="citation-list">
-          {% for cite in cites.secondary %}
+          {% for cite in cites.all %}
             {% include "citation.include" %}
           {% endfor %}
         </div>

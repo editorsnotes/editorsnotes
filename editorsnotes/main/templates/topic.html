@@ -48,25 +48,17 @@
           <div class="note-content">
             {{ topic.summary|as_html }}
           </div>
-          {% if summary_cites.primary %}
-          <h4>Primary sources</h4>
-          <div class="citation-list">
-            {% for cite in summary_cites.primary %}
-              {% include "citation.include" %}
-            {% endfor %}
-          </div>
-          {% endif %}
-          {% if summary_cites.secondary %}
-          <h4>Secondary sources</h4>
-          <div class="citation-list">
-            {% for cite in summary_cites.secondary %}
-              {% include "citation.include" %}
-            {% endfor %}
-          </div>
-          {% endif %}
           {% else %}
           <div>
             There is no article about <em>{{ topic.preferred_name }}</em> yet.
+          </div>
+          {% endif %}
+          {% if summary_cites.all %}
+          <h4>Sources</h4>
+          <div class="citation-list">
+            {% for cite in summary_cites.all %}
+              {% include "citation.include" %}
+            {% endfor %}
           </div>
           {% endif %}
           <div class="span-2">
