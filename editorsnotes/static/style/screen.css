@@ -292,7 +292,7 @@ h1, h2, h3 {text-rendering:optimizeLegibility;}
 h4 {font-variant:small-caps;letter-spacing:1px;text-transform:lowercase;font-weight:bold;}
 ul {list-style-type:none;padding:0
 ;}
-#actions, ul.topic-list {display:inline;}
+#actions, ul.topic-list {display:inline !important;}
 #actions li, ul.topic-list li {display:inline;}
 #actions {padding:0;margin-bottom:0;}
 hr {margin-bottom:1.5em;}
