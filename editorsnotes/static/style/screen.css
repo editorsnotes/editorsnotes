@@ -50,7 +50,8 @@ pre {margin:1.5em 0;white-space:pre;}
 pre, code, tt {font:1em 'andale mono', 'lucida console', monospace;line-height:1.5;}
 li ul, li ol {margin:0;}
 ul, ol {margin:0 1.5em 1.5em 0;padding-left:3.333em;}
-ul {list-style-type:disc;}
+.note-content ul {list-style-type: disc;margin:0 1.5em 1.5em 0;padding-left:3.333em;}
+.citation-notes ul {list-style-type: disc;margin:0 1.5em 1.5em 0;padding-left:3.333em;}
 ol {list-style-type:decimal;}
 dl {margin:0 0 1.5em 0;}
 dl dt {font-weight:bold;}
@@ -74,6 +75,7 @@ caption {background:#eee;}
 .last {margin-right:0;padding-right:0;}
 .top {margin-top:0;padding-top:0;}
 .bottom {margin-bottom:0;padding-bottom:0;}
+
 
 /* forms.css */
 label {font-weight:bold;}
@@ -283,15 +285,13 @@ a.scan{display: inline;float: none;}
 body {font-size:87.5%;}
 a {color:#222;}
 a.button, button {font-size:12px !important;}
-h1 {font-size:2em;margin:0.2em 0 0 0
-;}
+h1 {font-size:2em;margin:0.2em 0 0 0;}
 h2 {margin-bottom:0;}
 h3 {margin-bottom:0.5em;}
 h3 p {margin:0;}
 h1, h2, h3 {text-rendering:optimizeLegibility;}
 h4 {font-variant:small-caps;letter-spacing:1px;text-transform:lowercase;font-weight:bold;}
-ul {list-style-type:none;padding:0
-;}
+ul {list-style-type:none;padding:0;}
 #actions, ul.topic-list {display:inline !important;}
 #actions li, ul.topic-list li {display:inline;}
 #actions {padding:0;margin-bottom:0;}
