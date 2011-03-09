@@ -52,3 +52,15 @@ Created by %s %s.<br/>
 Last edited by %s %s.</div>''' % (
             as_link(UserProfile.get_for(obj.creator)), timeago(obj.created),
             as_link(UserProfile.get_for(obj.last_updater)), timeago(obj.last_updated)))
+
+@register.filter
+def login_information(name):
+    affiliation = UserProfile.get_for(name).affiliation
+    if affiliation is not None:
+        return mark_safe(
+            'Currently logged in as %s (%s)' % (
+            as_link(UserProfile.get_for(name)), affiliation))
+    else:
+        return mark_safe(
+            'Currently logged in as %s' % (
+            as_link(UserProfile.get_for(name))))

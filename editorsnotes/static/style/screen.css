@@ -296,8 +296,8 @@ ul {list-style-type:none;padding:0;}
 #actions li, ul.topic-list li {display:inline;}
 #actions {padding:0;margin-bottom:0;}
 hr {margin-bottom:1.5em;}
-#stripe-1 {position:absolute;z-index:-1;height:42px;width:100%;background:#e5ecf9;}
-#stripe-2 {position:absolute;z-index:-1;top:42px;height:44px;width:100%;background:#aeb4be;}
+#stripe-1 {position:absolute;z-index:-1;height:64px;width:100%;background:#e5ecf9;}
+#stripe-2 {position:absolute;z-index:-1;top:64px;height:44px;width:100%;background:#aeb4be;}
 #logo a {text-decoration:none;}
 #searchinput input {width:338px;}
 #topics li, #documents li, .activity-log li {text-indent:-1em;padding-left:1em;}
@@ -355,6 +355,8 @@ header {margin-right:0;padding-right:0;float:left;margin-right:10px;margin-right
 #actions {margin-right:0;padding-right:0;float:left;margin-right:10px;margin-right:0;width:950px;margin-right:0;}
 #login p {padding-left:40px;}
 #searchform {margin-right:0;padding-right:0;float:left;margin-right:10px;margin-right:0;width:430px;}
+#user-information {font-family:"Lucida Grande", Tahoma, Arial, Verdana, sans-serif !important;font-size:100%;font-weight:bold;color:#666666;}
+#user-information a {color:#666666;}
 .comments-container {margin-top:1.5em;}
 .note-list {margin-right:0;padding-right:0;float:left;margin-right:10px;margin-right:0;width:950px;margin-right:0;}
 #login {margin-right:0;padding-right:0;float:left;margin-right:10px;margin-right:0;width:270px;padding-left:320px;}
