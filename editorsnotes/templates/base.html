@@ -1,5 +1,3 @@
-{% load display %}
-
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
   <head>
@@ -23,7 +21,7 @@
       <nav id="topnav">
         <div id="logo">
           <a href="{% if project %}{{ project.get_absolute_url }}{% else %}/{% endif %}">
-            <h1>{% filter smartypants %}{% if project %}{{ project }}{% else %}The Editors' Notes Project{% endif %}{% endfilter %}</h1>
+            <h1>{% filter smartypants %}The Editors' Notes Project{% endfilter %}</h1>
           </a>
         </div>
         <div id="searchform">
@@ -36,8 +34,11 @@
             </div>
           </form>
         </div>
+        {% load display %}
         <div id="user-information">
             {% if user.is_authenticated %}{{ user|login_information }}{% else %}Not logged in{% endif %}
+        </div>
+        <div id="project-browsing">
         </div>
         <ul id="actions">
           <li><a class="button" href="{% url admin:main_topic_add  %}">Add Topic</a></li>

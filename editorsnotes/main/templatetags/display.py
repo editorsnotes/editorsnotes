@@ -58,8 +58,8 @@ def login_information(name):
     affiliation = UserProfile.get_for(name).affiliation
     if affiliation is not None:
         return mark_safe(
-            'Currently logged in as %s (%s)' % (
-            as_link(UserProfile.get_for(name)), affiliation))
+            '%s (%s)' % (
+            as_link(UserProfile.get_for(name)), as_link(affiliation)))
     else:
         return mark_safe(
             'Currently logged in as %s' % (
