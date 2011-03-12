@@ -4,14 +4,22 @@
     <title>{% if project %}{{ project }}{% else %}Editors' Notes{% endif %}{% block title %}{% endblock %}</title>
     <link rel="stylesheet" href="/media/style/custom-theme/jquery-ui-1.8.5.custom.css" type="text/css"/>
     <link rel="stylesheet" href="/media/style/screen.css" type="text/css" media="screen, projection"/>
-    <link rel="stylesheet" href="/media/style/print.css" type="text/css" media="print"/>	
+    <link rel="stylesheet" href="/media/style/print.css" type="text/css" media="print"/>
+    <link rel="stylesheet" href="/media/style/droppy.css" type="text/css"/>	
     <!--[if lt IE 8]><link rel="stylesheet" href="/media/style/ie.css" type="text/css" media="screen, projection"/><![endif]-->
     {% block css %}{% endblock %}
     <script type="text/javascript" src="/media/function/jquery-1.4.2.min.js"></script>
     <script type="text/javascript" src="/media/function/jquery-ui-1.8.5.custom.min.js"></script>
+    <script type="text/javascript" src="/media/function/jquery.droppy.js"></script>
     <script type="text/javascript" src="/media/function/jquery.timeago.js"></script>
     <script type="text/javascript" src="/media/function/base.js"></script>
-    {% block js %}{% endblock %}
+	  <script type='text/javascript'>
+      $(function() {
+        $('#nav').droppy({trigger: 'click'});
+      });
+	  </script>
+    {% block js %}
+    {% endblock %}
   </head>
   {% load typogrify %}
   <body>
@@ -40,12 +48,19 @@
         </div>
         <div id="project-browsing">
         </div>
-        <ul id="actions">
+        <ul id="nav">
           <li><a class="button" href="{% url admin:main_topic_add  %}">Add Topic</a></li>
           <li><a class="button" href="{% url admin:main_note_add %}">Add Note</a></li>
           <li><a class="button" href="{% url admin:main_document_add %}">Add Document</a></li>
-          <li><a class="button" style="float: right; margin-right: 10px;" href="{% url admin:index %}">Admin</a></li>
-          <li><a class="button" style="float: right; margin-right: 10px;" href="https://docs.google.com/document/edit?id=1u9XlHBaVZnPUm5qNSSjcJ5n0xZSkSpduHSAFRlMTIy4&amp;hl=en&amp;authkey=CNHZyK4C">Help</a></li>
+          <li class="right"><a class="button" style="float: right; margin-right: 10px;" href="{% url admin:index %}">Admin</a></li>
+          <li class="right"><a class="button" style="float: right; margin-right: 10px;" href="https://docs.google.com/document/edit?id=1u9XlHBaVZnPUm5qNSSjcJ5n0xZSkSpduHSAFRlMTIy4&amp;hl=en&amp;authkey=CNHZyK4C">Help</a></li>
+          <li class="right"><a class="button" style="float: right; margin-right: 10px;" href='#'>Member Projects</a>
+            <ul>
+              {% for proj in list_projects %}
+              <li><a href='#'>{{ proj|as_link }}</a></li>
+              {% endfor %}
+            </ul>
+          </li>
         </ul>
       </nav>
       {% if messages %}
