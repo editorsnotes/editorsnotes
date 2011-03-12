@@ -1,6 +1,7 @@
 from django.conf.urls.defaults import *
 from django.contrib import admin
 from django.contrib.auth.forms import AuthenticationForm
+from django.conf import settings
 
 admin.autodiscover()
 
@@ -14,9 +15,9 @@ urlpatterns = patterns('',
     (r'^favicon.ico$', 'django.views.generic.simple.redirect_to', 
      { 'url': '/media/style/icons/favicon.ico' }),
     (r'^media/scans/(?P<path>.*)$', 'django.views.static.serve',
-     { 'document_root': '/home/patrick/Code/editorsnotes/uploads/scans' }),
+     { 'document_root': settings.MEDIA_ROOT + '/scans' }),
     (r'^media/(?P<path>.*)$', 'django.views.static.serve',
-     { 'document_root': '/home/patrick/Code/editorsnotes/editorsnotes/static' }),
+     { 'document_root': settings.LOCAL_PATH + '/editorsnotes/static' }),
     (r'^proxy$', 'editorsnotes.main.views.proxy'),
 )
 urlpatterns += patterns('editorsnotes.main.views',
