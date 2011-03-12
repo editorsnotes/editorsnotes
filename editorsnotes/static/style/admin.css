@@ -1,5 +1,6 @@
 ul.ui-autocomplete li.ui-menu-item { list-style-type: none; }
 .form-row.document .vTextField, 
+.form-row.collection .vTextField, 
 .form-row.transcript .vTextField,
 .form-row.topic .vTextField,
 .form-row.related_topics .vTextField { width: 50em; }

@@ -186,6 +186,10 @@ class NoteAdmin(VersionAdmin):
 class DocumentAdmin(VersionAdmin):
     form = DocumentAdminForm
     inlines = (TopicAssignmentInline, DocumentLinkInline, ScanInline)
+    formfield_overrides = { 
+        models.ForeignKey: { 
+            'widget': forms.widgets.HiddenInput(
+                attrs={ 'class': 'autocomplete-documents' }) } }
     class Media:
         css = { 'all': ('style/custom-theme/jquery-ui-1.8.5.custom.css',
                         'style/admin.css') }

@@ -74,12 +74,14 @@ class Document(LastUpdateMetadata, Administered, URLAccessible):
 
     Documents are best defined by example: letters, newspaper articles, 
     contracts, photographs, database records, whole databases, etc. etc.
+    Note that a document may be a collection of other documents.
     """
-    import_id = models.CharField(max_length=32, editable=False, 
+    import_id = models.CharField(max_length=64, editable=False, 
                                  blank=True, null=True, 
                                  unique=True, db_index=True)
     description = fields.XHTMLField()
     bibtex = models.TextField(blank=True)
+    collection = models.ForeignKey('self', blank=True, null=True)
     ordering = models.CharField(max_length=32, editable=False)
     language = models.CharField(max_length=32, default='English')
     topics = generic.GenericRelation('TopicAssignment')
