@@ -19,7 +19,7 @@ $(document).ready(function () {
   };
 
   // Initialize WYMeditors.
-  $('textarea').filter(function() {
+  $('textarea.xhtml-textarea').filter(function() {
     // Skip the hidden template form.
     return (! this.id.match(/__prefix__/))
   }).wymeditor(wymconfig);
@@ -156,7 +156,7 @@ $(document).ready(function () {
   // Initialize new inline rows when they are added.
   $('body').bind('inlineadded', function(e, row) {
     // Need to rewrap the row in non-Django jQuery, which has wymeditor loaded.
-    $(row[0]).find('textarea').wymeditor(wymconfig);
+    $(row[0]).find('textarea.xhtml-textarea').wymeditor(wymconfig);
     $(row[0]).find('.autocomplete-topics').each(init_autocomplete_topics);
     $(row[0]).find('.autocomplete-documents').each(init_autocomplete_documents);
     $(row[0]).find('.autocomplete-transcripts').each(init_autocomplete_transcripts);

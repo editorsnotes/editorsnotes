@@ -22,7 +22,7 @@ class XHTMLWidget(forms.Textarea):
         raise TypeError('%s cannot be formatted as XHTML' % value)
     def render(self, name, value, attrs=None):
         final_attrs = self.build_attrs(attrs, name=name)
-        return mark_safe(u'<textarea%s>%s</textarea>' % (
+        return mark_safe(u'<textarea class="xhtml-textarea"%s>%s</textarea>' % (
                 forms.util.flatatt(final_attrs),
                 conditional_escape(force_unicode(self._format_value(value)))))
 

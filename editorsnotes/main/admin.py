@@ -13,11 +13,27 @@ from django.utils.html import escape
 from reversion import admin as reversion_admin
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
+from pybtex.database.input import bibtex
+from io import StringIO
 
 class FootnoteAdminForm(forms.ModelForm):
     stamp = forms.CharField(required=False, widget=forms.HiddenInput)
     class Meta:
         model = Footnote
+
+class DocumentAdminForm(forms.ModelForm):
+    class Meta:
+        model = Document
+    def clean_bibtex(self):
+        parser = bibtex.Parser()
+        value = self.cleaned_data['bibtex'].strip()
+        if len(value) > 0: # empty value is OK
+            data = parser.parse_stream(StringIO(value))
+            if len(data.entries) == 0:
+                raise ValidationError(
+                    'This does not appear to be valid BibTex data.')
+        return value
+        
 
 ################################################################################
 
@@ -168,6 +184,7 @@ class NoteAdmin(VersionAdmin):
               'function/admin.js')
 
 class DocumentAdmin(VersionAdmin):
+    form = DocumentAdminForm
     inlines = (TopicAssignmentInline, DocumentLinkInline, ScanInline)
     class Media:
         css = { 'all': ('style/custom-theme/jquery-ui-1.8.5.custom.css',

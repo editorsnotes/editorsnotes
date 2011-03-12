@@ -79,6 +79,7 @@ class Document(LastUpdateMetadata, Administered, URLAccessible):
                                  blank=True, null=True, 
                                  unique=True, db_index=True)
     description = fields.XHTMLField()
+    bibtex = models.TextField(blank=True)
     ordering = models.CharField(max_length=32, editable=False)
     language = models.CharField(max_length=32, default='English')
     topics = generic.GenericRelation('TopicAssignment')
