@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
   <head>
-    <title>{% if project %}{{ project }}{% else %}Editors' Notes{% endif %}{% block title %}{% endblock %}</title>
+    <title>Editors' Notes{% if project %}: {{ project }}{% else %}{% endif %}{% block title %}{% endblock %}</title>
     <link rel="stylesheet" href="/media/style/custom-theme/jquery-ui-1.8.5.custom.css" type="text/css"/>
     <link rel="stylesheet" href="/media/style/screen.css" type="text/css" media="screen, projection"/>
     <link rel="stylesheet" href="/media/style/print.css" type="text/css" media="print"/>
@@ -46,13 +46,12 @@
         <div id="user-information">
             {% if user.is_authenticated %}{{ user|login_information }}{% else %}Not logged in{% endif %}
         </div>
-        <div id="project-browsing">
-        </div>
+        <div id="navigation-projects">
         <ul id="nav">
           <li><a class="button" href="{% url admin:main_topic_add  %}">Add Topic</a></li>
           <li><a class="button" href="{% url admin:main_note_add %}">Add Note</a></li>
           <li><a class="button" href="{% url admin:main_document_add %}">Add Document</a></li>
-          <li class="right"><a class="button" style="float: right; margin-right: 10px;" href="{% url admin:index %}">Admin</a></li>
+          <li class="right"><a class="button" style="float: right; margin-right: 10px;" href="/logout/">Log out</a></li>
           <li class="right"><a class="button" style="float: right; margin-right: 10px;" href="https://docs.google.com/document/edit?id=1u9XlHBaVZnPUm5qNSSjcJ5n0xZSkSpduHSAFRlMTIy4&amp;hl=en&amp;authkey=CNHZyK4C">Help</a></li>
           <li class="right"><a class="button" style="float: right; margin-right: 10px;" href='#'>Member Projects</a>
             <ul>
@@ -62,6 +61,7 @@
             </ul>
           </li>
         </ul>
+        </div>
       </nav>
       {% if messages %}
       <div class="message-list">

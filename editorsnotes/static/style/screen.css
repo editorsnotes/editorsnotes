@@ -357,7 +357,8 @@ header {margin-right:0;padding-right:0;float:left;margin-right:10px;margin-right
 #searchform {margin-right:0;padding-right:0;float:left;margin-right:10px;margin-right:0;width:430px;}
 #user-information {font-family:"Lucida Grande", Tahoma, Arial, Verdana, sans-serif !important;font-size:100%;font-weight:bold;color:#666666;line-height:1;padding-bottom:.5em;width:510px;}
 #user-information a {color:#666666;}
-#project-browsing {width:430px;}
+#navigation-projects {width:430px;}
+#navigation-projects ul, ol {margin: 0 0 0 0;}
 .comments-container {margin-top:1.5em;}
 .note-list {margin-right:0;padding-right:0;float:left;margin-right:10px;margin-right:0;width:950px;margin-right:0;}
 #login {margin-right:0;padding-right:0;float:left;margin-right:10px;margin-right:0;width:270px;padding-left:320px;}
