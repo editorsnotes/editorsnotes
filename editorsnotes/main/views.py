@@ -31,7 +31,6 @@ def index(request, project_slug=None):
     o = {}
     if project_slug:
         o['project'] = get_object_or_404(Project, slug=project_slug)
-        print o['project'].get_absolute_url()
     o['user_activity'], skip_object_ids = UserProfile.get_activity_for(
         request.user, max_count)
     for model in [Topic, Note, Document, Transcript]:
