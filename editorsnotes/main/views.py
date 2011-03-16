@@ -42,6 +42,14 @@ def index(request, project_slug=None):
         query_set = model.objects\
                 .exclude(id__in=skip_object_ids[model_name])\
                 .order_by('-last_updated')
+        if model == Document:
+            # only get top-level documents
+            query_set = query_set.filter(
+                collection__isnull=True)
+        if model == Transcript:
+            # only get top-level documents
+            query_set = query_set.filter(
+                document__collection__isnull=True)
         if project_slug:
             query_set = query_set.filter(
                 last_updater__userprofile__affiliation=o['project'])
@@ -93,6 +101,8 @@ def all_documents(request, project_slug=None):
             last_updater__userprofile__affiliation=o['project'])
     else:
         query_set = Document.objects.all()
+    # only get top-level documents
+    query_set = query_set.filter(collection__isnull=True)
     for document in query_set:
         first_letter = document.ordering[0].upper()
         o['documents'].append(

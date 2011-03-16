@@ -123,8 +123,8 @@ class Command(LabelCommand):
                 skipped_count += 1
                 continue
 
-            collection_id = ID_PREFIX + (':%s:%s' % (md['CardHeading'], md['CardType']))
-            collection_description = P('%s -- %s' % (md['CardHeading'], md['CardType']))
+            collection_id = ID_PREFIX + (':%s' % md['CardHeading'])
+            collection_description = P('%s (Agnes Inglis cards)' % md['CardHeading'])
             collection, collection_created = Document.objects.get_or_create(
                 import_id=collection_id,
                 defaults={ 'description': collection_description,
@@ -132,7 +132,7 @@ class Command(LabelCommand):
             if collection_created:
                 collections_created_count += 1
 
-            description = P('%s -- %s -- Agnes Inglis card #%s'
+            description = P('%s -- %s (Agnes Inglis card #%s)'
                             % (md['CardHeading'], md['CardType'], md['CardID']))
             document, created = Document.objects.get_or_create(
                 import_id=(ID_PREFIX + md['CardID']),

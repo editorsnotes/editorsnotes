@@ -65,6 +65,8 @@ class DocumentManager(models.Manager):
 FROM main_documentlink WHERE main_documentlink.document_id = main_document.id''',
                               'scan_count': '''SELECT COUNT(*) 
 FROM main_scan WHERE main_scan.document_id = main_document.id''',
+                              'part_count': '''SELECT COUNT(*) 
+FROM main_document AS part WHERE part.collection_id = main_document.id''',
                               '_has_transcript': '''EXISTS ( SELECT 1 
 FROM main_transcript WHERE main_transcript.document_id = main_document.id )''' })
 
@@ -81,7 +83,7 @@ class Document(LastUpdateMetadata, Administered, URLAccessible):
                                  unique=True, db_index=True)
     description = fields.XHTMLField()
     bibtex = models.TextField(blank=True)
-    collection = models.ForeignKey('self', blank=True, null=True)
+    collection = models.ForeignKey('self', related_name='parts', blank=True, null=True)
     ordering = models.CharField(max_length=32, editable=False)
     language = models.CharField(max_length=32, default='English')
     topics = generic.GenericRelation('TopicAssignment')
@@ -104,6 +106,12 @@ class Document(LastUpdateMetadata, Administered, URLAccessible):
         return self.scans.count()
     def has_scans(self):
         return self.get_scan_count() > 0
+    def get_part_count(self):
+        if hasattr(self, 'part_count'):
+            return self.part_count
+        return self.parts.count()
+    def has_parts(self):
+        return self.get_part_count() > 0
     def has_transcript(self):
         if hasattr(self, '_has_transcript'):
             return self._has_transcript
@@ -138,7 +146,7 @@ class Document(LastUpdateMetadata, Administered, URLAccessible):
         self.ordering = re.sub(r'[^\w\s]', '', utils.xhtml_to_text(self.description))[:32]
         super(Document, self).save(*args, **kwargs)
     class Meta:
-        ordering = ['ordering']    
+        ordering = ['ordering','import_id']    
     # --------------------------------------------------------------------------------
     # The following is a workaround for this Django bug: 
     # http://code.djangoproject.com/ticket/13839
