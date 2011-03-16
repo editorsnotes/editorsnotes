@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.admin.models import LogEntry
+from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
@@ -219,6 +220,11 @@ def user(request, username=None):
     o['log_entries'], ignored = UserProfile.get_activity_for(user)
     return render_to_response(
         'user.html', o, context_instance=RequestContext(request))
+
+def user_logout(request):
+    logout(request)
+    return render_to_response(
+        'logout.html', context_instance=RequestContext(request))
 
 @login_required
 def search(request):
