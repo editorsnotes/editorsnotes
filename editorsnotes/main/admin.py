@@ -15,6 +15,8 @@ from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 from pybtex.database.input import bibtex
 from io import StringIO
+from utils import xhtml_to_text
+from fields import XHTMLField
 
 class FootnoteAdminForm(forms.ModelForm):
     stamp = forms.CharField(required=False, widget=forms.HiddenInput)
@@ -24,6 +26,13 @@ class FootnoteAdminForm(forms.ModelForm):
 class DocumentAdminForm(forms.ModelForm):
     class Meta:
         model = Document
+    def clean_description(self):
+        value = self.cleaned_data['description']
+        field = XHTMLField()
+        if len(re.sub(r'[^\w\s]', '', 
+                      xhtml_to_text(field.to_python(value)))) == 0:
+            raise ValidationError('This field is required.')
+        return value
     def clean_bibtex(self):
         parser = bibtex.Parser()
         value = self.cleaned_data['bibtex'].strip()
