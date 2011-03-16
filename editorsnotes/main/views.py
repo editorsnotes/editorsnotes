@@ -31,17 +31,13 @@ def index(request, project_slug=None):
     o = {}
     if project_slug:
         o['project'] = get_object_or_404(Project, slug=project_slug)
-    o['user_activity'], skip_object_ids = UserProfile.get_activity_for(
-        request.user, max_count)
     for model in [Topic, Note, Document, Transcript]:
         model_name = model._meta.module_name
         if model_name == 'transcript':
             listname = 'document_list'
         else:
             listname = '%s_list' % model_name
-        query_set = model.objects\
-                .exclude(id__in=skip_object_ids[model_name])\
-                .order_by('-last_updated')
+        query_set = model.objects.order_by('-last_updated')
         if model == Document:
             # only get top-level documents
             query_set = query_set.filter(
@@ -53,7 +49,9 @@ def index(request, project_slug=None):
         if project_slug:
             query_set = query_set.filter(
                 last_updater__userprofile__affiliation=o['project'])
-        o[listname] = list(query_set[:max_count])
+        items = o.get(listname, [])
+        items += list(query_set[:max_count])
+        o[listname] = items
     o['document_list'] = sorted(o['document_list'],
                               key=lambda x: x.last_updated, 
                               reverse=True)[:max_count]
