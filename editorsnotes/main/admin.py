@@ -173,10 +173,10 @@ class TopicAdmin(VersionAdmin):
             'widget': ManyToManyAutocompleteWidget(
                 attrs={ 'class': 'autocomplete-multiple-topics vManyToManyRawIdAdminField' }) } }
     class Media:
-        css = { 'all': ('style/custom-theme/jquery-ui-1.8.5.custom.css',
+        css = { 'all': ('style/custom-theme/jquery-ui-1.8.10.custom.css',
                         'style/admin.css') }
-        js = ('function/jquery-1.4.2.min.js',
-              'function/jquery-ui-1.8.5.custom.min.js',
+        js = ('function/jquery-1.5.1.min.js',
+              'function/jquery-ui-1.8.10.custom.min.js',
               'function/wymeditor/jquery.wymeditor.pack.js',
               'function/jquery.timeago.js',
               'function/admin.js')
@@ -184,10 +184,10 @@ class TopicAdmin(VersionAdmin):
 class NoteAdmin(VersionAdmin):
     inlines = (CitationInline, TopicAssignmentInline)
     class Media:
-        css = { 'all': ('style/custom-theme/jquery-ui-1.8.5.custom.css',
+        css = { 'all': ('style/custom-theme/jquery-ui-1.8.10.custom.css',
                         'style/admin.css') }
-        js = ('function/jquery-1.4.2.min.js',
-              'function/jquery-ui-1.8.5.custom.min.js',
+        js = ('function/jquery-1.5.1.min.js',
+              'function/jquery-ui-1.8.10.custom.min.js',
               'function/wymeditor/jquery.wymeditor.pack.js',
               'function/jquery.timeago.js',
               'function/admin.js')
@@ -200,10 +200,10 @@ class DocumentAdmin(VersionAdmin):
             'widget': forms.widgets.HiddenInput(
                 attrs={ 'class': 'autocomplete-documents' }) } }
     class Media:
-        css = { 'all': ('style/custom-theme/jquery-ui-1.8.5.custom.css',
+        css = { 'all': ('style/custom-theme/jquery-ui-1.8.10.custom.css',
                         'style/admin.css') }
-        js = ('function/jquery-1.4.2.min.js',
-              'function/jquery-ui-1.8.5.custom.min.js',
+        js = ('function/jquery-1.5.1.min.js',
+              'function/jquery-ui-1.8.10.custom.min.js',
               'function/wymeditor/jquery.wymeditor.pack.js',
               'function/jquery.timeago.js',
               'function/admin.js')
@@ -233,11 +233,11 @@ class TranscriptAdmin(VersionAdmin):
         # Save the transcript HTML.
         transcript.save()
     class Media:
-        css = { 'all': ('style/custom-theme/jquery-ui-1.8.5.custom.css',
+        css = { 'all': ('style/custom-theme/jquery-ui-1.8.10.custom.css',
                         'style/admin.css',
                         'style/admin-transcript.css') }
-        js = ('function/jquery-1.4.2.min.js',
-              'function/jquery-ui-1.8.5.custom.min.js',
+        js = ('function/jquery-1.5.1.min.js',
+              'function/jquery-ui-1.8.10.custom.min.js',
               'function/wymeditor/jquery.wymeditor.pack.js',
               'function/jquery.timeago.js',
               'function/jquery.ellipsis.js',
@@ -249,10 +249,10 @@ class FootnoteAdmin(VersionAdmin):
             'widget': forms.widgets.HiddenInput(
                 attrs={ 'class': 'autocomplete-transcripts' })}}
     class Media:
-        css = { 'all': ('style/custom-theme/jquery-ui-1.8.5.custom.css',
+        css = { 'all': ('style/custom-theme/jquery-ui-1.8.10.custom.css',
                         'style/admin.css') }
-        js = ('function/jquery-1.4.2.min.js',
-              'function/jquery-ui-1.8.5.custom.min.js',
+        js = ('function/jquery-1.5.1.min.js',
+              'function/jquery-ui-1.8.10.custom.min.js',
               'function/wymeditor/jquery.wymeditor.pack.js',
               'function/jquery.timeago.js',
               'function/admin.js')
