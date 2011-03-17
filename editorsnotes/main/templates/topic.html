@@ -92,7 +92,12 @@
         {% if documents %}
         <ul>
           {% for document in documents %}
-          <li>{{ document|as_link|typogrify }}</li>
+          <li>
+          {{ document|as_link|typogrify }}
+          {% if document.related_via %}
+          [via note on {{ document.related_via|as_link|typogrify }}]
+          {% endif %}
+          </li>
           {% endfor %}
         </ul>
         {% else %}
