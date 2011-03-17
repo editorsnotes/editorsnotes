@@ -90,12 +90,12 @@
 
       <section id="documents" class="span-23 last">
         {% if documents %}
-        <ul>
+        <ul id>
           {% for document in documents %}
           <li>
           {{ document|as_link|typogrify }}
           {% if document.related_via %}
-          [via note on {{ document.related_via|as_link|typogrify }}]
+          [via {{ document.related_via|as_link|typogrify }}]
           {% endif %}
           </li>
           {% endfor %}
