@@ -56,7 +56,7 @@
           <li class="right"><a class="button" style="float: right; margin-right: 10px;" href='#'>Member Projects</a>
             <ul>
               {% for proj in list_projects %}
-              <li><a href='#'>{{ proj|as_link }}</a></li>
+              <li>{{ proj|as_link }}</li>
               {% endfor %}
             </ul>
           </li>
