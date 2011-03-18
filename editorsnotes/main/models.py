@@ -17,6 +17,8 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.urlresolvers import NoReverseMatch
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
+from pybtex.database.input import bibtex
+from io import StringIO
 
 # -------------------------------------------------------------------------------
 # Abstract base classes and interfaces.
@@ -134,13 +136,23 @@ class Document(LastUpdateMetadata, Administered, URLAccessible):
                 md.save()
                 changed = True
         return changed
+    def get_bibtex_fields(self):
+        parser = bibtex.Parser()
+        data = parser.parse_stream(StringIO(self.bibtex))
+        if len(data.entries) == 0:
+            return {}
+        return data.entries.values()[0].fields
     def as_text(self):
         return utils.xhtml_to_text(self.description)
     def as_html(self):
+        data_attributes = ''.join(
+            [ ' data-%s="%s"' % (k, v) 
+              for k, v in self.get_bibtex_fields().iteritems() ])
         return mark_safe(
-            '<div class="document%s">%s</div>' % (
+            '<div class="document%s"%s>%s</div>' % (
                 (self.has_transcript() or self.has_scans()) 
                  and ' has-scans-or-transcript' or '',
+                data_attributes,
                 etree.tostring(self.description)))
     def save(self, *args, **kwargs):
         self.ordering = re.sub(r'[^\w\s]', '', utils.xhtml_to_text(self.description))[:32]
