@@ -27,6 +27,7 @@
 {% block content %}
     <header>
       <h3>{{ document.description|as_html|typogrify }}</h3>
+      {% if document.collection %}<p>Part of {{ document.collection|as_link }}</p>{% endif %}
       <div class="related-topics">
         {% if topics %}
         <span class="quiet">Related topics:</span> 
