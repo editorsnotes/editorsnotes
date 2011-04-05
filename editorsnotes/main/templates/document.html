@@ -19,9 +19,17 @@
 {% endblock %}
 
 {% block js %}
-<script type="text/javascript" src="http://seadragon.com/ajax/0.8/seadragon-min.js"></script>
-<script type="text/javascript" src="/media/function/jquery.ellipsis.js"></script>
-<script type="text/javascript" src="/media/function/document.js"></script>
+    <script type="text/javascript" src="http://seadragon.com/ajax/0.8/seadragon-min.js"></script>
+    <script type="text/javascript" src="/media/function/jquery.ellipsis.js"></script>
+    <script type="text/javascript" src="/media/function/document.js"></script>
+    <script type="text/javascript" src="/media/function/jquery.collapse.js"></script>
+
+    <script type="text/javascript">
+      $(function() {
+        $('#collapse').jqcollapse({ slide: true, speed: 300, easing: '' });
+      });
+    </script>
+
 {% endblock %}
 
 {% block content %}
@@ -132,10 +140,12 @@
 
       <section id="notes" class="span-23 last">
         {% if notes %}
+	    <ul id="collapse">
           {% for note, topics, cites in notes %}
             {% include "note.include" %}
             {% if forloop.last %}{% else %}<hr/>{% endif %}
           {% endfor %}
+        </ul>
         {% else %}
           There are no notes or queries citing this document.
         {% endif %}
