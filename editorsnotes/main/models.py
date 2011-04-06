@@ -516,6 +516,7 @@ class DocumentLink(CreationMetadata):
     """
     document = models.ForeignKey(Document, related_name='links')
     url = models.URLField(verify_exists=True)
+    description = models.TextField(blank=True)
     def __unicode__(self):
         return self.url
 

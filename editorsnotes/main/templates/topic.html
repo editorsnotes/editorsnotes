@@ -4,15 +4,13 @@
 {% block title %}: {{ topic.preferred_name }}{% endblock %}
 
 {% block js %}
-<script type="text/javascript" src="/media/function/jquery.easing.js"></script>
-<script type="text/javascript" src="/media/function/jquery.collapse.js"></script>
-
-<script type="text/javascript">
-  $(function() {
-    $('#tabs').tabs();
-    $('#collapse').jqcollapse({ slide: true, speed: 250, easing: 'easeOutCubic' });
-  });
-</script>
+    <script type="text/javascript" src="/media/function/jquery.collapse.js"></script>
+    <script type="text/javascript">
+      $(function() {
+        $('#tabs').tabs();
+        $('#collapse').jqcollapse({ slide: true, speed: 250, easing: '' });
+      });
+    </script>
 {% endblock %}
 
 {% block css %}

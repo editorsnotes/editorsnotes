@@ -77,6 +77,8 @@ class FootnoteInline(admin.StackedInline):
 
 class DocumentLinkInline(admin.StackedInline):
     model = DocumentLink
+    verbose_name = 'Link'
+    verbose_name_plural = 'External document links'
     extra = 0
 
 class ScanInline(admin.StackedInline):
