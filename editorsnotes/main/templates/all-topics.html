@@ -3,57 +3,29 @@
 
 {% block title %}: All Topics{% endblock %}
 
+{% block js %}
+    <script type="text/javascript">
+      $(function() {
+        $('#tabs').tabs();
+      });
+    </script>
+{% endblock %}
+
 {% block content %}
 <header>
   <h2>All Topics</h2>
 </header>
 
-{% regroup topics_1 by first_letter as alpha_list_1 %}
-{% regroup topics_2 by first_letter as alpha_list_2 %}
-{% regroup topics_3 by first_letter as alpha_list_3 %}
+<div id="tabs" class="span-24 last">
+  <ul>
+    <li><a href="#PER-topics">People</a></li>
+    <li><a href="{{ request.path }}?type=ORG">Organizations</a></li>
+    <li><a href="{{ request.path }}?type=PUB">Publications</a></li>
+    <li><a href="{{ request.path }}?type=EVT">Events</a></li>
+    <li><a href="{{ request.path }}?type=">Uncategorized</a></li>
+  </ul>
 
-<section id="all-topics" class="span-24 last">
-<div class="span-8">
-<ul class="alpha-list">
-  {% for letter in alpha_list_1 %}
-  <li id="{{ letter.grouper }}">
-    <span class="alpha-index">{{ letter.grouper }}</span>
-    <ul class="alpha-items">
-      {% for item in letter.list %}
-      <li>{{ item.topic|as_link|typogrify }}</li>
-      {% endfor %}
-    </ul>
-  </li>
-  {% endfor %}
-</ul>
+  {% include "topic-columns.include" %}
+
 </div>
-<div class="span-8">
-<ul class="alpha-list">
-  {% for letter in alpha_list_2 %}
-  <li id="{{ letter.grouper }}">
-    <span class="alpha-index">{{ letter.grouper }}</span>
-    <ul class="alpha-items">
-      {% for item in letter.list %}
-      <li>{{ item.topic|as_link|typogrify }}</li>
-      {% endfor %}
-    </ul>
-  </li>
-  {% endfor %}
-</ul>
-</div>
-<div class="span-8 last">
-<ul class="alpha-list">
-  {% for letter in alpha_list_3 %}
-  <li id="{{ letter.grouper }}">
-    <span class="alpha-index">{{ letter.grouper }}</span>
-    <ul class="alpha-items">
-      {% for item in letter.list %}
-      <li>{{ item.topic|as_link|typogrify }}</li>
-      {% endfor %}
-    </ul>
-  </li>
-  {% endfor %}
-</ul>
-</div>
-</section>
 {% endblock %}
