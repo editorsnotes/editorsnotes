@@ -26,9 +26,22 @@
 #document-list {
   padding-left: 0.5em;
 }
+.facet-header {
+  margin-bottom: 0.5em;
+}
 .facet-name {
   font-weight: bold;
-  margin-bottom: 0.5em;
+}
+.sort-button {
+  display: inline-block;
+  padding: 2px 0;
+  margin-left: 4px;
+  vertical-align: -25%;
+  cursor: pointer;
+}
+.ui-icon {
+  float: left; 
+  margin: 0 2px;
 }
 label {
   font-weight: normal;
@@ -113,10 +126,23 @@ input[type="checkbox"] {
       <section id="documents" class="span-23 last">
         {% if documents %}
         <div id="document-facets">
-          <div class="facet-name">Year</div>
+          <div class="facet-header">
+            <span class="facet-name">Year</span>
+            <span id='year-sort-button'
+                  class="sort-button ui-state-default ui-corner-all"
+                  data-facet="year">
+              <span class="ui-icon ui-icon-triangle-1-s"></span>
+            </span>
+          </div>
           <ul id="document-year-facet">
           </ul>
-          <div class="facet-name">Periodical</div>
+          <div class="facet-header">
+            <span class="facet-name">Periodical</span>
+            <span class="sort-button ui-state-default ui-corner-all"
+                  data-facet="journal">
+              <span class="ui-icon ui-icon-triangle-1-s"></span>
+            </span>
+          </div>
           <ul id="document-journal-facet">
           </ul>
         </div>
