@@ -8,11 +8,8 @@
 #document-facets {
   float: left;
 }
-#document-list {
-  padding: 0 0.5em;
-}
 .document-item {
-  margin-bottom: 0.5em;
+  margin-bottom: 0 0.5em 0.5em 0.5em;
 }
 .facet-header {
   margin-bottom: 0.5em;
