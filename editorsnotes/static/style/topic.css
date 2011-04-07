@@ -1,0 +1,41 @@
+.isotope-item {
+  z-index: 2;
+}
+.isotope-hidden.isotope-item {
+  pointer-events: none;
+  z-index: 1;
+}
+#document-facets {
+  float: left;
+}
+#document-list {
+  padding-left: 0 0.5em;
+}
+.document-item {
+  margin-bottom: 0.5em;
+}
+.facet-header {
+  margin-bottom: 0.5em;
+}
+.facet-name {
+  font-weight: bold;
+}
+.sort-button {
+  display: inline-block;
+  padding: 2px 0;
+  margin-left: 4px;
+  vertical-align: -25%;
+  cursor: pointer;
+}
+.ui-icon {
+  float: left; 
+  margin: 0 2px;
+}
+label {
+  font-weight: normal;
+  cursor: pointer;
+}
+input[type="checkbox"] {
+  top: 0;
+  cursor: pointer;
+}
