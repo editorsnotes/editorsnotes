@@ -9,7 +9,7 @@
   float: left;
 }
 #document-list {
-  padding-left: 0 0.5em;
+  padding: 0 0.5em;
 }
 .document-item {
   margin-bottom: 0.5em;
