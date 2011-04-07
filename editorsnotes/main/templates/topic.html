@@ -20,8 +20,23 @@
   pointer-events: none;
   z-index: 1;
 }
+#document-facets {
+  float: left;
+}
 #document-list {
   padding-left: 0.5em;
+}
+.facet-name {
+  font-weight: bold;
+  margin-bottom: 0.5em;
+}
+label {
+  font-weight: normal;
+  cursor: pointer;
+}
+input[type="checkbox"] {
+  top: 0;
+  cursor: pointer;
 }
 </style>
 {% endblock %}
@@ -98,7 +113,11 @@
       <section id="documents" class="span-23 last">
         {% if documents %}
         <div id="document-facets">
+          <div class="facet-name">Year</div>
           <ul id="document-year-facet">
+          </ul>
+          <div class="facet-name">Periodical</div>
+          <ul id="document-journal-facet">
           </ul>
         </div>
         <div id="document-list">

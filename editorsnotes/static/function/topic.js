@@ -2,15 +2,26 @@ $(document).ready(function() {
 
   $('#collapse').jqcollapse({ slide: true, speed: 250, easing: '' });
 
-  function update_facet(name) {
+  var facets = [ 'year', 'journal' ];
+
+  function select_document_filters(facet_name) {
     var filters = [];
-    $('#document-' + name + '-facet input:checked').each(function(index) {
+    $('#document-' + facet_name + '-facet input:checked').each(function(index) {
       filters.push($(this).data('filter'));
     });
-    if (filters.length == 0) {
-      filters.push(false);
-    }
-    $('#document-list').isotope({ filter: filters.join(',') });
+    return $('#document-list').find(filters.join(',')).map(function() {
+      return ':has(#' + this.id + ')';
+    }).get();
+  }
+
+  function update_filter() {
+    var selected = [];
+    $.each(facets, function(index, value) {
+      selected.push(select_document_filters(value));
+    });
+    var intersection = _.intersect.apply(this, selected);
+    $('#document-list').isotope({ 
+      filter: (intersection.length == 0 ? false : intersection.join(',')) });
   }
 
   function init_facet(name) {
@@ -24,24 +35,31 @@ $(document).ready(function() {
       if (value in counts) {
         counts[value] += 1;
       } else {
-        keys.push(value);
+        if (value != 'None') {
+          keys.push(value);
+        }
         counts[value] = 1;
       }
     });
     keys.sort();
+    if ('None' in counts) {
+      keys.push('None');
+    }
     $.each(keys, function(index, value) {
       $('<li><label><input type="checkbox" checked/>' 
         + value + ' (' + counts[value] + ')</label></li>')
         .appendTo('#document-' + name + '-facet')
         .find(':checkbox')
         .data('filter', ((value == 'None') ? 
-                         ':has(div.document:not(div[data-' + name + ']))' :
-                         ':has(div.document[data-' + name + '="' + value + '"])'))
-        .change(function() { update_facet(name); });
+                         'div.document:not(div[data-' + name + '])' :
+                         'div.document[data-' + name + '="' + value + '"]'))
+        .change(function() { update_filter(); });
     });
   }
 
-  init_facet('year');
+  $.each(facets, function(index, value) {
+    init_facet(value);
+  });
 
   $('#tabs').tabs({
     show: function(event, ui) {

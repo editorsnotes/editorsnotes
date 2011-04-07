@@ -149,7 +149,8 @@ class Document(LastUpdateMetadata, Administered, URLAccessible):
             [ ' data-%s="%s"' % (k, v) 
               for k, v in self.get_bibtex_fields().iteritems() ])
         return mark_safe(
-            '<div class="document%s"%s>%s</div>' % (
+            '<div id="document-%s" class="document%s"%s>%s</div>' % (
+                self.id,
                 (self.has_transcript() or self.has_scans()) 
                  and ' has-scans-or-transcript' or '',
                 data_attributes,
