@@ -88,7 +88,10 @@
         {% if documents %}
         <div id="document-facets">
           <div class="facet-header">
-            <span class="facet-name">Year</span>
+            <label>
+              <input id="year-select-all" type="checkbox" checked/>
+              <span class="facet-name">Year</span>
+            </label>
             <span id='year-sort-button'
                   class="sort-button ui-state-default ui-corner-all"
                   data-facet="year">
@@ -98,7 +101,10 @@
           <ul id="document-year-facet">
           </ul>
           <div class="facet-header">
-            <span class="facet-name">Periodical</span>
+            <label>
+              <input id="journal-select-all" type="checkbox" checked/>
+              <span class="facet-name">Periodical</span>
+            </label>
             <span class="sort-button ui-state-default ui-corner-all"
                   data-facet="journal">
               <span class="ui-icon ui-icon-triangle-1-s"></span>

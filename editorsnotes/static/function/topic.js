@@ -62,6 +62,13 @@ $(document).ready(function() {
                          'div.document[data-' + name + '="' + value + '"]'))
         .change(function() { update_filter(); });
     });
+    $('#' + name + '-select-all').change(function(event) {
+      var value = $(this).attr('checked');
+      $('#document-' + name + '-facet :checkbox').each(function() {
+        $(this).attr('checked', value);
+      });
+      update_filter();
+    });
   }
 
   function init_sort_buttons() {
