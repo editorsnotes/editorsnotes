@@ -20,8 +20,8 @@ $(document).ready(function() {
       selected.push(select_document_filters(value));
     });
     var intersection = _.intersect.apply(this, selected);
-    $('#document-list').isotope({ 
-      filter: (intersection.length == 0 ? false : intersection.join(',')) });
+    var filter = (intersection.length == 0 ? '.nothing' : intersection.join(','));
+    $('#document-list').isotope({ filter: filter });
   }
 
   function update_sort(facet_name, ascending) {
