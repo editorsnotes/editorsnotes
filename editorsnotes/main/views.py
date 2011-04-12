@@ -7,7 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 #from django.core.paginator import Paginator, InvalidPage
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
@@ -218,7 +218,16 @@ def document(request, document_id):
             content_type=ContentType.objects.get_for_model(Note)) ]
     o['notes'] = zip(notes, 
                      [ [ ta.topic for ta in n.topics.all() ] for n in notes ],
-                     [ _sort_citations(n) for n in notes ])    
+                     [ _sort_citations(n) for n in notes ])
+    # view transcript on page open if only it exists
+    if not o['scans'] and o['document'].transcript:
+        redirect_url = o['document'].get_absolute_url() + "?redirect=1#transcript"
+        if request.REQUEST.get('redirect', ''):
+            pass
+        else:
+            return HttpResponseRedirect(redirect_url)
+    else:
+        pass
     return render_to_response(
         'document.html', o, context_instance=RequestContext(request))
 
