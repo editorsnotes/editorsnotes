@@ -111,6 +111,9 @@ $(document).ready(function() {
     } 
   }
 
+  // get before sidebar is hidden by tabs
+  var initial_facet_height = $('#content').innerHeight() + 'px';
+
   $('#tabs').tabs({
     show: function(event, ui) {
       if (ui.panel.id == 'documents') {
@@ -118,4 +121,30 @@ $(document).ready(function() {
       }
     },
   });
+  
+  var objMain = $('#main');
+  function showSidebar(){
+    objMain.addClass('use-sidebar');
+  }
+
+  function hideSidebar(){
+    objMain.removeClass('use-sidebar');
+  }
+
+  var objSeparator = $('#separator');
+
+  objSeparator.click(function(e){
+    e.preventDefault();
+    if ( objMain.hasClass('use-sidebar') ){
+	    hideSidebar();
+    }
+    else {
+	    showSidebar();
+    }
+    // Update isotope line spacing
+    update_filter();
+    objSeparator.css('height', $('#content').innerHeight() + 'px');
+  }).css('height', initial_facet_height);
+
 });
+

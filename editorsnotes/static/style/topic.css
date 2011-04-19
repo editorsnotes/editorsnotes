@@ -36,3 +36,19 @@ input[type="checkbox"] {
   top: 0;
   cursor: pointer;
 }
+
+/* styles for hiding document facets */
+#sidebar {display: none; }
+#content {width: 97%;}
+
+.use-sidebar #content {width: 80%;}
+.use-sidebar #sidebar {display: block; width: 16%;}
+ 
+.sidebar-at-left #sidebar {margin-right: 1%;}
+.sidebar-at-right #sidebar {margin-left: 1%;}
+ 
+.sidebar-at-left #content, .use-sidebar.sidebar-at-right #sidebar, .sidebar-at-right #separator {float: right;}
+.sidebar-at-right #content, .use-sidebar.sidebar-at-left #sidebar, .sidebar-at-left #separator {float: left;}
+ 
+#separator {background-color: #EEE; display: block; outline: none; width: 7px;}
+#separator:hover { background: #DEF;}

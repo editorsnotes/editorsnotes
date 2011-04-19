@@ -86,42 +86,49 @@
 
       <section id="documents" class="span-23 last">
         {% if documents %}
-        <div id="document-facets">
-          <div class="facet-header">
-            <label>
-              <input id="year-select-all" type="checkbox" checked/>
-              <span class="facet-name">Year</span>
-            </label>
-            <span id='year-sort-button'
-                  class="sort-button ui-state-default ui-corner-all"
-                  data-facet="year">
-              <span class="ui-icon ui-icon-triangle-1-s"></span>
-            </span>
-          </div>
-          <ul id="document-year-facet">
-          </ul>
-          <div class="facet-header">
-            <label>
-              <input id="journal-select-all" type="checkbox" checked/>
-              <span class="facet-name">Periodical</span>
-            </label>
-            <span class="sort-button ui-state-default ui-corner-all"
-                  data-facet="journal">
-              <span class="ui-icon ui-icon-triangle-1-s"></span>
-            </span>
-          </div>
-          <ul id="document-journal-facet">
-          </ul>
+        <div class="use-sidebar sidebar-at-left" id="main">
+        <div id="content">
+          <div id="document-list">
+            {% for document in documents %}
+            <div class="document-item">
+            {{ document|as_link|typogrify }}
+            {% if document.related_via %}
+            [via {{ document.related_via|as_link|typogrify }}]
+            {% endif %}
+            </div>
+            {% endfor %}
+          </div>        
         </div>
-        <div id="document-list">
-          {% for document in documents %}
-          <div class="document-item">
-          {{ document|as_link|typogrify }}
-          {% if document.related_via %}
-          [via {{ document.related_via|as_link|typogrify }}]
-          {% endif %}
+        <div id="sidebar">
+          <div id="document-facets">
+            <div class="facet-header">
+              <label>
+                <input id="year-select-all" type="checkbox" checked/>
+                <span class="facet-name">Year</span>
+              </label>
+              <span id='year-sort-button'
+                    class="sort-button ui-state-default ui-corner-all"
+                    data-facet="year">
+                <span class="ui-icon ui-icon-triangle-1-s"></span>
+              </span>
+            </div>
+            <ul id="document-year-facet">
+            </ul>
+            <div class="facet-header">
+              <label>
+                <input id="journal-select-all" type="checkbox" checked/>
+                <span class="facet-name">Periodical</span>
+              </label>
+              <span class="sort-button ui-state-default ui-corner-all"
+                    data-facet="journal">
+                <span class="ui-icon ui-icon-triangle-1-s"></span>
+              </span>
+            </div>
+            <ul id="document-journal-facet">
+            </ul>
           </div>
-          {% endfor %}
+        </div>
+        <a href="#" id="separator"></a>
         </div>
         {% else %}
           There are no documents related to <em>{{ topic.preferred_name }}</em>.
