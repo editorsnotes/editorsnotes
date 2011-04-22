@@ -173,10 +173,7 @@ def topic(request, topic_slug):
     o['notes'] = zip(notes, note_topics, note_citations)
     o['documents'] = []
     for d in o['topic'].related_objects(Document):
-        if d.collection is None:
             o['documents'].append(d)
-        elif not d.collection in o['documents']:
-            o['documents'].append(d.collection)
     for note, topics, citations in o['notes']:
        for cite in citations['all']:
            if not cite.document in o['documents']:
