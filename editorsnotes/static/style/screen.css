@@ -307,7 +307,7 @@ hr {margin-bottom:1.5em;}
 .edit-history {text-align:right;}
 .citation {text-indent:-2em;padding-left:2em;}
 .citation div, .citation p {display:inline;}
-.citation-notes {padding-left:2em;}
+.citation-notes {padding-left:1em;margin-left:1.5em;border-left: 1px #DDD dashed;}
 .message-list {margin-top:-1.5em;}
 .error, .notice, .success {padding:0.4em;}
 .errorlist li {padding:.8em;background:#fbe3e4;color:#8a1f11;border:2px solid #fbc2c4;}
