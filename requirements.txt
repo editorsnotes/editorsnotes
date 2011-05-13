@@ -1,8 +1,8 @@
 # Installed using pip
 Django==1.2.3
 South==0.7.2
-git://github.com/toastdriven/django-haystack.git@v1.1#egg=django-haystack
-git://github.com/notanumber/xapian-haystack.git#egg=xapian-haystack
+git+http://github.com/toastdriven/django-haystack.git@v1.1#egg=django-haystack
+git+http://github.com/notanumber/xapian-haystack.git#egg=xapian-haystack
 django-reversion==1.3.1
 lxml==2.2.4
 isodate==0.4.0
