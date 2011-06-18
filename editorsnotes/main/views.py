@@ -61,8 +61,8 @@ def index(request, project_slug=None):
 @login_required
 def all_topics(request, project_slug=None):
     o = {}
-    #if project_slug:
-    #    o['project'] = get_object_or_404(Project, slug=project_slug)
+    if project_slug:
+        o['project'] = get_object_or_404(Project, slug=project_slug)
     if 'type' in request.GET:
         o['type'] = request.GET['type']
         template = 'topic-columns.include'
@@ -72,12 +72,13 @@ def all_topics(request, project_slug=None):
     o['topics_1'] = []
     o['topics_2'] = []
     o['topics_3'] = []
-    #if project_slug:
-    #    query_set = Topic.objects.filter(
-    #        last_updater__userprofile__affiliation=o['project'])
-    #else:
-    query_set = Topic.objects.filter(type=o['type'])
+    if project_slug:
+        query_set = set([ ta.topic for ta in TopicAssignment.objects.filter(
+            creator__userprofile__affiliation=o['project']) ])
+    else:
+        query_set = Topic.objects.filter(type=o['type'])
     all_topics = list(query_set)
+    all_topics.sort(key=lambda topic: topic.slug)
     prev_letter = 'A'
     topic_index = 1
     list_index = 1 
