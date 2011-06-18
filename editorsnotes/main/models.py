@@ -320,6 +320,8 @@ class Topic(LastUpdateMetadata, Administered, URLAccessible):
     related_topics = models.ManyToManyField('self', blank=True)
     summary = fields.XHTMLField(verbose_name='article', blank=True, null=True)
     summary_citations = generic.GenericRelation('Citation')
+    has_candidate_facts = models.BooleanField(default=False)
+    has_accepted_facts = models.BooleanField(default=False)
     def __init__(self, *args, **kwargs):
         super(Topic, self).__init__(*args, **kwargs)
         if 'preferred_name' in kwargs:
