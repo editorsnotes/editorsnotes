@@ -20,7 +20,7 @@ def dev():
     env.user = 'ryanshaw'
     env.path = '/Library/WebServer/Documents/%(project_name)s' % env
     env.vhosts_path = '/etc/apache2/sites'
-    env.site_packages = '/Library/Python/2.6/site-packages'
+    env.site_packages = ['/Library/Python/2.6/site-packages']
 
 def pro():
     "Use the production webserver."
@@ -28,7 +28,8 @@ def pro():
     env.user = 'ryanshaw'
     env.path = '/db/projects/%(project_name)s' % env
     env.vhosts_path = '/etc/httpd/sites.d'
-    env.site_packages = '/usr/lib64/python2.6/site-packages'
+    env.site_packages = ['/usr/lib64/python2.6/site-packages',
+                         '/usr/lib/python2.6/site-packages']
 
 # Tasks
 
@@ -144,10 +145,13 @@ def symlink_system_packages():
         with open('requirements.txt') as reqs:
             for line in reqs:
                 if line.startswith('# symlink: '):
-                    target = env.site_packages + '/' + line[11:-1]
-                    if exists(target):
-                        run('ln -f -s %s' % target)
-                    else:
+                    found = False
+                    for sys_site_packages in env.site_packages:
+                        target = env.site_packages + '/' + line[11:-1]
+                        if exists(target):
+                            run('ln -f -s %s' % target)
+                            found = True
+                    if not found:
                         abort('Missing %s' % target)
 
 def install_site():
