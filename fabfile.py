@@ -147,7 +147,7 @@ def symlink_system_packages():
                 if line.startswith('# symlink: '):
                     found = False
                     for sys_site_packages in env.site_packages:
-                        target = env.site_packages + '/' + line[11:-1]
+                        target = sys_site_packages + '/' + line[11:-1]
                         if exists(target):
                             run('ln -f -s %s' % target)
                             found = True
