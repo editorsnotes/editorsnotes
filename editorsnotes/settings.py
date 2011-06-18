@@ -60,6 +60,7 @@ INSTALLED_APPS = (
     'south',
     'haystack',
     'editorsnotes.main',
+    'editorsnotes.facts',
 )
 
 FIXTURE_DIRS = ( 'fixtures', )

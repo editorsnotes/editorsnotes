@@ -45,3 +45,7 @@ urlpatterns += index_patterns
 urlpatterns += patterns('',
     (r'^(?P<project_slug>[-_a-z0-9]+)/', include(index_patterns)),
 )
+urlpatterns += patterns('editorsnotes.facts.views',
+    url(r'^topic/(?P<topic_slug>[-a-z0-9]+)/facts/$', 
+        'topic_facts', name='topic_facts_view'),
+)
