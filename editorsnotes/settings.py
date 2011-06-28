@@ -61,6 +61,7 @@ INSTALLED_APPS = (
     'haystack',
     'editorsnotes.main',
     'editorsnotes.facts',
+    'editorsnotes.djotero',
 )
 
 FIXTURE_DIRS = ( 'fixtures', )

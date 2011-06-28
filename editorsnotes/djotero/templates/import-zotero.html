@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block js %}
+<!--
+Determine the privileges granted by the user's API key
+-->
+<script type="text/javascript">  
+$(document).ready(function(){
+  $('#generate').click(function(){
+    $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
+    $.getJSON('access', function(data) {
+      $('#libraries img').remove();
+      $('#items-c').show();
+      var i = 1
+      $.each(data.libraries, function (key, value) {
+        var radio = $('<input>').attr({
+          type: 'radio', name: 'library', value: value.type + '/' + value.id, id: i
+        });
+        $('#library-list').append(radio).append(value.title + '<br>');
+        i++
+      });
+    });
+  });
+   
+  $("#get-items").click(function(){
+    $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
+    var blah = $("#libraries input[type='radio']:checked").val();
+    $.getJSON('items', {'loc' : blah }, function(data) {
+      $('#items-c img').remove();
+      $.each(data.items, function (key, value) {
+        $('#item-list').append(value.title + '<br>' + '<p>' + value.data + value + '</p>');
+      });
+    });
+  });
+
+});
+</script>
+{% endblock %}
+
+{% block content %}
+
+<div id="libraries" class="span-12">
+<h5>Step 1: Select the library to import from</h5>
+
+<form id="library-list" name="libraries" action="">
+<a class="button" href="#" id="generate">Determine access</a>
+
+</form>
+</div>
+
+<div id="items-c" class="span-12 last" style="display: none">
+<h5>Step 2: Select items to import</h5>
+<form id="item-list" name="items" action="">
+<a href="#" id="get-items">Get items</a>
+</form>
+</div>
+
+{% endblock %}
