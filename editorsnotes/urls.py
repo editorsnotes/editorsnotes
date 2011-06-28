@@ -49,3 +49,8 @@ urlpatterns += patterns('editorsnotes.facts.views',
     url(r'^topic/(?P<topic_slug>[-a-z0-9]+)/facts/$', 
         'topic_facts', name='topic_facts_view'),
 )
+urlpatterns += patterns('editorsnotes.djotero.views',
+    url(r'^document/upload/access$', 'access_list', name='access_list_view'),
+    url(r'^document/upload/$', 'import_zotero', name='import_zotero_view'),
+    url(r'^document/upload/items$', 'list_items', name='list_items_view'),
+)
