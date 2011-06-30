@@ -33,7 +33,6 @@ def list_items(request):
     #if not request.is_ajax():
     #    return HttpResponseBadRequest()
     loc = request.GET.get('loc', '')
-    zotero_uid = '161334'
     zotero_key = 'r0KBtuDLU0Jh2s1jAPVLZymn'
     latest = utils.latest_items(zotero_key, loc)
     return HttpResponse(json.dumps(latest), mimetype='text/plain')
