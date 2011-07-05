@@ -1,8 +1,7 @@
 from django.db import models
+from editorsnotes.main.models import Document
 
-# Create your models here.
-
-#class ZoteroLink(models.Model):
-#    zdoc = models.ForeignKey('main.Document')
-#    zlink = models.URLField()
-#    zdata = models.TextField(blank=True)
+class ZoteroLink(models.Model):
+    doc = models.OneToOneField(Document, related_name='zotero_link')
+    zotero_url = models.URLField()
+    zotero_data = models.TextField(blank=True)

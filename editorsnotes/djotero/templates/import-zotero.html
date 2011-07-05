@@ -28,7 +28,10 @@ $(document).ready(function(){
     $.getJSON('items', {'loc' : blah }, function(data) {
       $('#items-c img').remove();
       $.each(data.items, function (key, value) {
-        $('#item-list').append(value.title + '<br>' + '<p>' + value.data + value + '</p>');
+        var checkbox = $('<input>').attr({
+          type: 'checkbox', name: 'item', value: value.loc + '/' + value.id
+        });
+        $('#item-list').append(checkbox).append('<a href="' + value.url + '">' + value.title + '</a>' + '<br>');
       });
     });
   });
@@ -39,7 +42,7 @@ $(document).ready(function(){
 
 {% block content %}
 
-<div id="libraries" class="span-12">
+<div id="libraries" class="span-10">
 <h5>Step 1: Select the library to import from</h5>
 
 <form id="library-list" name="libraries" action="">
@@ -48,10 +51,10 @@ $(document).ready(function(){
 </form>
 </div>
 
-<div id="items-c" class="span-12 last" style="display: none">
+<div id="items-c" class="span-14 last" style="display: none">
 <h5>Step 2: Select items to import</h5>
 <form id="item-list" name="items" action="">
-<a href="#" id="get-items">Get items</a>
+<a class="button" href="#" id="get-items">Get items</a>
 </form>
 </div>
 
