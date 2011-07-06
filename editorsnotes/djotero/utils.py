@@ -17,7 +17,7 @@ def request_permissions(zotero_uid, zotero_key):
     return access
 
 def latest_items(zotero_key, loc):
-    url = 'https://api.zotero.org/' + loc + '/items?key=' + zotero_key + '&limit=10&order=dateModified&format=atom&content=none'
+    url = 'https://api.zotero.org/' + loc + '/items?key=' + zotero_key + '&limit=10&order=dateModified&format=atom&content=json'
     xml_parse = etree.parse(urlopen(url))
     root = xml_parse.getroot()
     entries = root.xpath('./atom:entry', namespaces=NS)
@@ -26,5 +26,6 @@ def latest_items(zotero_key, loc):
         title = x.xpath('./atom:title', namespaces=NS)[0].text
         library_url = x.xpath('./atom:id', namespaces=NS)[0].text
         item_id = x.xpath('./zot:key', namespaces=NS)[0].text
-        latest['items'].append({'title' : title, 'loc' : loc, 'id' : item_id, 'url' : library_url })
+        item_json = x.xpath('./atom:content[@type="application/json"]', namespaces=NS)[0].text
+        latest['items'].append({'title' : title, 'loc' : loc, 'id' : item_id, 'url' : library_url, 'item_json' : item_json })
     return latest

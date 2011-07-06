@@ -29,11 +29,20 @@ $(document).ready(function(){
       $('#items-c img').remove();
       $.each(data.items, function (key, value) {
         var checkbox = $('<input>').attr({
-          type: 'checkbox', name: 'item', value: value.loc + '/' + value.id
+          type: 'checkbox', name: 'item', value: value.item_json
         });
         $('#item-list').append(checkbox).append('<a href="' + value.url + '">' + value.title + '</a>' + '<br>');
       });
+      var submit = $('<input>').attr({
+        type: 'submit', value: 'Import selected items', class : 'button'
+      });
+      $('#item-list').append(submit);
     });
+  });
+  
+  $("#post-items").click(function(){
+    var selected = $("input[name='item']:checked").serializeArray();
+    $.post("import", { 'data': selected } );
   });
 
 });
@@ -53,9 +62,11 @@ $(document).ready(function(){
 
 <div id="items-c" class="span-14 last" style="display: none">
 <h5>Step 2: Select items to import</h5>
-<form id="item-list" name="items" action="">
+<form id="item-list" name="items" method="post" action="import">{% csrf_token %}
 <a class="button" href="#" id="get-items">Get items</a>
+
 </form>
+<a class="button" href="#" id="post-items">Import items</a>
 </div>
 
 {% endblock %}

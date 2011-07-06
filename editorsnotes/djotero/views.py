@@ -36,3 +36,9 @@ def list_items(request):
     zotero_key = 'r0KBtuDLU0Jh2s1jAPVLZymn'
     latest = utils.latest_items(zotero_key, loc)
     return HttpResponse(json.dumps(latest), mimetype='text/plain')
+
+def import_items(request):
+    o={}
+    o['items'] = request.POST.getlist('item')
+    return render_to_response(
+        'success.html', o, context_instance=RequestContext(request))
