@@ -119,8 +119,12 @@ $(document).ready(function() {
       if (ui.panel.id == 'documents') {
         init_isotope();
       }
-    },
+    }
   });
+
+  if (location.hash == '#facts') {
+    $('#tabs').tabs('select', 4);
+  }
   
   var objMain = $('#main');
   function showSidebar(){

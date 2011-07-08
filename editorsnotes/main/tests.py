@@ -7,8 +7,9 @@ from django.db import IntegrityError, transaction
 from lxml import etree
 from models import *
 import utils
+import unittest
 
-class UtilsTestCase(TestCase):
+class UtilsTestCase(unittest.TestCase):
     def test_truncate(self):
         self.assertEquals(utils.truncate(u'xxxxxxxxxx', 4), u'xx... xx')
     def test_native_to_utc(self):
@@ -22,6 +23,24 @@ class UtilsTestCase(TestCase):
             repr(utils.naive_to_utc(naive_datetime, 'UTC')))
         aware_datetime = utils.naive_to_utc(naive_datetime)
         self.assertRaises(TypeError, utils.naive_to_utc, aware_datetime)
+    def test_alpha_columns(self):
+        import string
+        import random
+        class Item:
+            def __init__(self, key):
+                self.key = key
+        items = [ Item(letter) for letter in string.lowercase ]
+        random.shuffle(items)
+        columns = utils.alpha_columns(items, 'key', itemkey='thing')
+        self.assertEquals(3, len(columns))
+        self.assertEquals(9, len(columns[0]))
+        self.assertEquals(9, len(columns[1]))
+        self.assertEquals(8, len(columns[2]))
+        self.assertEquals('A', columns[0][0]['first_letter'])
+        self.assertEquals('a', columns[0][0]['thing'].key)
+        self.assertEquals('J', columns[1][0]['first_letter'])
+        self.assertEquals('S', columns[2][0]['first_letter'])
+        self.assertEquals('Z', columns[2][7]['first_letter'])
 
 def create_test_user():
     user = User(username='testuser', is_staff=True, is_superuser=True)

@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from editorsnotes.main.models import Topic
+from editorsnotes.main.utils import alpha_columns
 from pprint import pformat
 import RDF
 import re
@@ -51,5 +52,36 @@ def topic_facts(request, topic_slug):
     o['topic'] = topic
     o['candidates'] = subjects
     return render_to_response(
-        'topic-facts.html', o, context_instance=RequestContext(request))
+        'topic-facts.include', o, context_instance=RequestContext(request))
 
+@login_required
+def dashboard(request, project_slug=None):
+    o = {}
+    if 'type' in request.GET:
+        o['type'] = request.GET['type']
+        template = 'topic-columns.include'
+    else:
+        o['type'] = 'candidates'
+        template = 'facts-dashboard.html'
+    if project_slug:
+        o['project'] = get_object_or_404(Project, slug=project_slug)
+        if o['type'] == 'candidates':
+            query_set = set(
+                [ ta.topic for ta in TopicAssignment.objects.filter(
+                        creator__userprofile__affiliation=o['project'],
+                        topic__has_candidate_facts=True) ])
+        else:
+            query_set = set(
+                [ ta.topic for ta in TopicAssignment.objects.filter(
+                        creator__userprofile__affiliation=o['project'],
+                        topic__has_accepted_facts=True) ])
+    else:
+        if o['type'] == 'candidates':
+            query_set = Topic.objects.filter(has_candidate_facts=True)
+        else:
+            query_set = Topic.objects.filter(has_accepted_facts=True)
+    [o['topics_1'], o['topics_2'], o['topics_3']] = alpha_columns(
+        query_set, 'slug', itemkey='topic')
+    return render_to_response(
+        template, o, context_instance=RequestContext(request))
+    

@@ -1,22 +1,8 @@
-{% extends "base.html" %}
 {% load rdfa %}
-
-{% block title %}: Facts about {{ topic.preferred_name }}{% endblock %}
-
-{% block js %}
-{% endblock %}
-
-{% block css %}
-{% endblock %}
-
-{% block content %}
-    <header>
-      <h2 id="topic-name">{{ topic.preferred_name }}</h2>
-    </header>
 
     <div id="facts" class="span-24 last">
       {% for s, predicates in candidates.items %}
-      <div class="statement-group" style="border-top: 1px solid gray;">
+      <div class="statement-group">
         From {{ s|as_netloc }}:
         <table>
           {% for p, objects in predicates.items %}
@@ -34,4 +20,3 @@
       {% endfor %}
     </div>
 
-{% endblock %}

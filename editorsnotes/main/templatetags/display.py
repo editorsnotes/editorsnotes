@@ -21,10 +21,12 @@ def as_html(tree):
     return mark_safe(etree.tostring(tree))
 
 @register.filter
-def as_link(obj):
+def as_link(obj, fragment=''):
     return mark_safe(
-        '<a class="model-link %s-link" href="%s">%s</a>' % (
-            obj._meta.module_name, obj.get_absolute_url(), obj.as_html()))
+        '<a class="model-link %s-link" href="%s%s">%s</a>' % (
+            obj._meta.module_name, 
+            obj.get_absolute_url(), fragment, 
+            obj.as_html()))
 
 @register.filter
 def timeago(datetime):

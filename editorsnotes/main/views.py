@@ -69,29 +69,14 @@ def all_topics(request, project_slug=None):
     else:
         o['type'] = 'PER'
         template = 'all-topics.html'
-    o['topics_1'] = []
-    o['topics_2'] = []
-    o['topics_3'] = []
     if project_slug:
         query_set = set([ ta.topic for ta in TopicAssignment.objects.filter(
-            creator__userprofile__affiliation=o['project']) ])
+            creator__userprofile__affiliation=o['project'],
+            topic__type=o['type']) ])
     else:
         query_set = Topic.objects.filter(type=o['type'])
-    all_topics = list(query_set)
-    all_topics.sort(key=lambda topic: topic.slug)
-    prev_letter = 'A'
-    topic_index = 1
-    list_index = 1 
-    for topic in all_topics:
-        first_letter = topic.slug[0].upper()
-        if not first_letter == prev_letter:
-            if list_index < 3 and topic_index > (len(all_topics) / 3.0):
-                topic_index = 1
-                list_index += 1
-            prev_letter = first_letter
-        o['topics_%s' % list_index].append(
-            { 'topic': topic, 'first_letter': first_letter })
-        topic_index += 1
+    [o['topics_1'], o['topics_2'], o['topics_3']] = utils.alpha_columns(
+        query_set, 'slug', itemkey='topic')
     return render_to_response(
         template, o, context_instance=RequestContext(request))
 

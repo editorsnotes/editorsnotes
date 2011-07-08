@@ -41,6 +41,9 @@ index_patterns = patterns('editorsnotes.main.views',
     url(r'^topics/$', 'all_topics', name='all_topics_view'),
     url(r'^notes/$', 'all_notes', name='all_notes_view'),
 )
+index_patterns += patterns('editorsnotes.facts.views',
+    url(r'^topics/facts/$', 'dashboard', name='dashboard_view'),
+)                          
 urlpatterns += index_patterns
 urlpatterns += patterns('',
     (r'^(?P<project_slug>[-_a-z0-9]+)/', include(index_patterns)),

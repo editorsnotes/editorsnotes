@@ -41,6 +41,28 @@ def naive_to_utc(naive_datetime, timezone_string=None):
         timezone_string = settings.TIME_ZONE
     tz = timezone(timezone_string)
     return tz.normalize(tz.localize(naive_datetime)).astimezone(utc)
+
+def alpha_columns(items, sortattr, num_columns=3, itemkey='item'):
+    items = list(items)
+    sortkey = lambda item: getattr(item, sortattr)
+    items.sort(key=sortkey)
+    prev_letter = 'A'
+    item_index = 0
+    column_index = 0 
+    columns = [[] for i in range(3)]
+    for item in items:
+        first_letter = sortkey(item)[0].upper()
+        if not first_letter == prev_letter:
+            if (column_index < num_columns and 
+                item_index > (len(items) / float(num_columns))):
+                item_index = 0
+                column_index += 1
+            prev_letter = first_letter
+        columns[column_index].append(
+            { itemkey: item, 'first_letter': first_letter })
+        item_index += 1
+    return columns
+
     
     
         
