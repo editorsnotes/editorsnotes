@@ -1190,7 +1190,8 @@ def as_csl(obj):
     csl_output = {}
     csl_output['type'] = type_map[genre]
     for old, new in field_translation.items():
-        csl_output[new] = zotero_data[old]
+        if zotero_data[old]:
+            csl_output[new] = zotero_data[old]
     if zotero_data['date']:
         csl_output['issued'] = { 'raw' : zotero_data['date'] }
     if zotero_data['creators']:
@@ -1211,6 +1212,6 @@ def get_names(z):
         try:
             name = { "family" : c['lastName'], "given" : c['firstName'] }
         except:
-            name = { "family" : c['name'] }        
+            name = { "literal" : c['name'] }        
         contribs.setdefault(contrib_map[c['creatorType']], []).append(name)
     return contribs
