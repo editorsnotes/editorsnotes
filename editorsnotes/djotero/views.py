@@ -43,14 +43,18 @@ def import_items(request):
     o={}
     o['raw'] = request.POST.getlist('item')
     o['items'] = []
+    o['imported_docs'] = []
+    o['existing_docs'] = []
     for item in o['raw']:
         o['items'].append(json.loads(item,strict=False))
     for doc_import in o['items']:
-        i = 1
-        d = Document(creator=request.user, last_updater=request.user, description=doc_import['csl'])
-        d.save()
-        link = ZoteroLink(zotero_data=doc_import['json'], zotero_url=doc_import['url'], doc_id=d.id)
-        link.save()
-        i = i + 1
+        if not ZoteroLink.objects.filter(zotero_url=doc_import['url']):
+            d = Document(creator=request.user, last_updater=request.user, description=doc_import['csl'])
+            d.save()
+            o['imported_docs'].append(d)
+            link = ZoteroLink(zotero_data=json.dumps(doc_import['json']), zotero_url=doc_import['url'], doc_id=d.id)
+            link.save()
+        else:
+            o['existing_docs'].append(ZoteroLink.objects.filter(zotero_url=doc_import['url'])[0].doc)
     return render_to_response(
         'success.html', o, context_instance=RequestContext(request))
