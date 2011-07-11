@@ -3,6 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponse, HttpResponseBadRequest
+from main.models import Document
+from djotero.models import ZoteroLink
 import utils
 import json
 
@@ -39,6 +41,16 @@ def list_items(request):
 
 def import_items(request):
     o={}
-    o['items'] = request.POST.getlist('item')
+    o['raw'] = request.POST.getlist('item')
+    o['items'] = []
+    for item in o['raw']:
+        o['items'].append(json.loads(item,strict=False))
+    for doc_import in o['items']:
+        i = 1
+        d = Document(creator=request.user, last_updater=request.user, description=doc_import['csl'])
+        d.save()
+        link = ZoteroLink(zotero_data=doc_import['json'], zotero_url=doc_import['url'], doc_id=d.id)
+        link.save()
+        i = i + 1
     return render_to_response(
         'success.html', o, context_instance=RequestContext(request))
