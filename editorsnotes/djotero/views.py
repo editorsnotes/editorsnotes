@@ -23,16 +23,16 @@ def access_list(request):
     return HttpResponse(json.dumps(libraries), mimetype='text/plain')
 
 def list_collections(request):
-    #if not request.is_ajax():
-    #    return HttpResponseBadRequest()
+    if not request.is_ajax():
+        return HttpResponseBadRequest()
     loc = request.GET.get('loc', '') 
     zotero_key = 'r0KBtuDLU0Jh2s1jAPVLZymn'
     collections = utils.list_collections(zotero_key, loc)
     return HttpResponse(json.dumps(collections), mimetype='text/plain')
     
 def list_items(request):
-    #if not request.is_ajax():
-    #    return HttpResponseBadRequest()
+    if not request.is_ajax():
+        return HttpResponseBadRequest()
     loc = request.GET.get('loc', '')
     zotero_key = 'r0KBtuDLU0Jh2s1jAPVLZymn'
     latest = utils.latest_items(zotero_key, loc)
