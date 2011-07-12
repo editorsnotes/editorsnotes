@@ -11,15 +11,16 @@
     $(document).ready(function(){
 
       // Get access list of Zotero libraries
-      $('#generate').click(function(){
+      $('#get-libraries').click(function(){
         $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
         $.getJSON('access', function(data) {
           $('#libraries img').remove();
           $('#items-c').show();
+          $('#collection-list').show();
           var i = 1
           $.each(data.libraries, function (key, value) {
             var radio = $('<input>').attr({
-              type: 'radio', name: 'library', value: value.type + '/' + value.id, id: i
+              type: 'radio', name: 'library', value: value.location, id: i
             });
             $('#library-list').append(radio).append(value.title + '<br>');
             i++
@@ -27,7 +28,24 @@
         });
       });
       
-      // Query last 10 items in selected library
+      // Get list of collections in a library
+      $('#get-collections').click(function(){
+        $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
+        var blah = $("#libraries input[type='radio']:checked").val();
+        $.getJSON('collections', {'loc' : blah }, function(data) {
+          $('#collection-list img').remove();
+          var i = 1
+          $.each(data.collections, function (key, value) {
+            var radio = $('<input>').attr({
+              type: 'radio', name: 'collection', value: value.location, id: i
+            });
+            $('#collection-list').append(radio).append(value.title + '<br>');
+            i++
+          });
+        });
+      });
+      
+      // Query last 10 items in selected library (or collection)
       $("#get-items").click(function(){
         $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
         var blah = $("#libraries input[type='radio']:checked").val();
@@ -71,7 +89,13 @@
 <h5>Step 1: Select the library to import from</h5>
 
 <form id="library-list" name="libraries" action="">
-<a class="button" href="#" id="generate">Determine access</a>
+<a class="button" href="#" id="get-libraries">Determine access</a>
+
+</form>
+<br>
+<form id="collection-list" name="collections" action="" style="display:none">
+<h5>Optional: Import from a collection within the selected 
+<a class="button" href="#" id="get-collections">Determine collections</a>
 
 </form>
 </div>

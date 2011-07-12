@@ -53,5 +53,6 @@ urlpatterns += patterns('editorsnotes.djotero.views',
     url(r'^document/upload/access$', 'access_list', name='access_list_view'),
     url(r'^document/upload/$', 'import_zotero', name='import_zotero_view'),
     url(r'^document/upload/items$', 'list_items', name='list_items_view'),
+    url(r'^document/upload/collections$', 'list_collections', name='list_collections_view'),
     url(r'^document/upload/import$', 'import_items', name='import_items_view'),
 )
