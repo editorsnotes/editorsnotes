@@ -1,6 +1,6 @@
 from urllib2 import urlopen
 from lxml import etree
-import re
+import re, json
 from djotero.templatetags import interpret_json
 
 NS = { 'xhtml': 'http://www.w3.org/1999/xhtml', 'zot' : "http://zotero.org/ns/api", 'atom' : "http://www.w3.org/2005/Atom" }
@@ -30,7 +30,7 @@ def list_collections(zotero_key, loc):
     return collections
 
 def latest_items(zotero_key, loc):
-    url = loc + '/items?key=' + zotero_key + '&limit=10&order=dateModified&format=atom&content=json'
+    url = loc + '/items?key=' + zotero_key + '&limit=20&order=dateModified&format=atom&content=json'
     xml_parse = etree.parse(urlopen(url))
     root = xml_parse.getroot()
     entries = root.xpath('./atom:entry', namespaces=NS)
@@ -40,6 +40,7 @@ def latest_items(zotero_key, loc):
         library_url = x.xpath('./atom:id', namespaces=NS)[0].text
         item_id = x.xpath('./zot:key', namespaces=NS)[0].text
         item_json = x.xpath('./atom:content[@type="application/json"]', namespaces=NS)[0].text
-        item_csl = interpret_json.as_csl(item_json)
-        latest['items'].append({'title' : title, 'loc' : loc, 'id' : item_id, 'url' : library_url, 'item_json' : item_json, 'item_csl' : item_csl })
+        if json.loads(item_json)['itemType'] != 'note':
+            item_csl = interpret_json.as_csl(item_json)
+            latest['items'].append({'title' : title, 'loc' : loc, 'id' : item_id, 'url' : library_url, 'item_json' : item_json, 'item_csl' : item_csl })
     return latest
