@@ -1184,13 +1184,19 @@ def as_csl(obj):
     # where z is a json string taken from the zotero API and opt is
     # either 'csl' or 'readable', corresponding to dict values
     # TODO: seperate 'csl' and 'readable' options
-    zotero_data = json.loads(obj)
-    genre = zotero_data['itemType']
+    try:
+        zotero_data = obj
+        genre = zotero_data['itemType']
+    except:
+        zotero_data = json.loads(obj)
+        genre = zotero_data['itemType']
     field_translation = field_map[genre]['csl']
     csl_output = {}
     csl_output['type'] = type_map[genre]
+    csl_output['id'] = 'ITEM-1'
     for old, new in field_translation.items():
-        csl_output[new] = zotero_data[old]
+        if zotero_data[old]:
+            csl_output[new] = zotero_data[old]
     if zotero_data['date']:
         csl_output['issued'] = { 'raw' : zotero_data['date'] }
     if zotero_data['creators']:
@@ -1211,6 +1217,6 @@ def get_names(z):
         try:
             name = { "family" : c['lastName'], "given" : c['firstName'] }
         except:
-            name = { "family" : c['name'] }        
+            name = { "literal" : c['name'] }        
         contribs.setdefault(contrib_map[c['creatorType']], []).append(name)
     return contribs

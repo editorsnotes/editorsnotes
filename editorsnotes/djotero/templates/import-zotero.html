@@ -1,52 +1,86 @@
 {% extends "base.html" %}
 
 {% block js %}
-<!--
-Determine the privileges granted by the user's API key
--->
-<script type="text/javascript">  
-$(document).ready(function(){
-  $('#generate').click(function(){
-    $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
-    $.getJSON('access', function(data) {
-      $('#libraries img').remove();
-      $('#items-c').show();
-      var i = 1
-      $.each(data.libraries, function (key, value) {
-        var radio = $('<input>').attr({
-          type: 'radio', name: 'library', value: value.type + '/' + value.id, id: i
-        });
-        $('#library-list').append(radio).append(value.title + '<br>');
-        i++
-      });
-    });
-  });
-   
-  $("#get-items").click(function(){
-    $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
-    var blah = $("#libraries input[type='radio']:checked").val();
-    $.getJSON('items', {'loc' : blah }, function(data) {
-      $('#items-c img').remove();
-      $.each(data.items, function (key, value) {
-        var checkbox = $('<input>').attr({
-          type: 'checkbox', name: 'item', value: value.item_json
-        });
-        $('#item-list').append(checkbox).append('<a href="' + value.url + '">' + value.title + '</a>' + '<br>');
-      });
-      var submit = $('<input>').attr({
-        type: 'submit', value: 'Import selected items'
-      });
-      $('#item-list').append(submit);
-    });
-  });
-  
-  $("#post-items").click(function(){
-    var selected = $("input[name='item']:checked").serializeArray();
-    $.post("import", { 'data': selected } );
-  });
 
-});
-</script>
+    <script type="text/javascript; e4x=1" src="/media/function/citeproc-js/xmle4x.js"></script> 
+    <script type="text/javascript" src="/media/function/citeproc-js/xmldom.js"></script>
+    <script type="text/javascript" src="/media/function/citeproc-js/citeproc.js"></script>
+    <script type="text/javascript" src="/media/function/citeproc-js/simple.js"></script>
+
+    <script type="text/javascript">
+    $(document).ready(function(){
+
+      // Get access list of Zotero libraries
+      $('#get-libraries').click(function(){
+        $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
+        $.getJSON('access', function(data) {
+          $('#libraries img').remove();
+          $('#items-c').show();
+          $('#collection-list').show();
+          var i = 1
+          $.each(data.libraries, function (key, value) {
+            var radio = $('<input>').attr({
+              type: 'radio', name: 'library', value: value.location, id: i
+            });
+            $('#library-list').append(radio).append(value.title + '<br>');
+            i++
+          });
+        });
+      });
+      
+      // Get list of collections in a library
+      $('#get-collections').click(function(){
+        $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
+        var blah = $("#libraries input[type='radio']:checked").val();
+        $.getJSON('collections', {'loc' : blah }, function(data) {
+          $('#collection-list img').remove();
+          var i = 1
+          $.each(data.collections, function (key, value) {
+            var radio = $('<input>').attr({
+              type: 'radio', name: 'collection', value: value.location, id: i
+            });
+            $('#collection-list').append(radio).append(value.title + '<br>');
+            i++
+          });
+        });
+      });
+      
+      // Query last 10 items in selected library (or collection)
+      $("#get-items").click(function(){
+        $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
+        var blah = $("#libraries input[type='radio']:checked").val();
+        $.getJSON('items', {'loc' : blah }, function(data) {
+          $('#items-c img').remove();
+          $.each(data.items, function (key, value) {
+          
+            // Start citeproc processing
+            var item_csl = eval( "(" + value.item_csl + ")" );
+            var bibdata = {"ITEM-1" : item_csl}
+            var citation_object = {"citationItems": [{"id" : "ITEM-1"}], "properties": {"noteIndex": 0}}
+            var sys = {retrieveItem: function(id){return bibdata[id];}, retrieveLocale: function(lang){return locale[lang];}}
+            
+            citeproc = new CSL.Engine(sys, chicago_fullnote_bibliography2);
+            citeproc.setOutputFormat("text");
+            CSL.Output.Formats.text["@font-style/italic"] = "<i>%%STRING%%</i>"
+            citeproc.appendCitationCluster( citation_object );
+            var citation = citeproc.makeBibliography()[1];
+            // End citeproc processing
+              
+            var checkbox = $('<input>').attr({
+              type: 'checkbox',
+              name: 'item',
+              value: '{ "json" : ' + value.item_json + ', "url" : \"' + value.url + '\", "csl" : \"' + citation + '\"}'
+            });
+            $('#item-list').append(checkbox).append('<a href="' + value.url + '">' + value.title + '</a>' + '<br>');
+
+          });
+          var submit = $('<input>').attr({type: 'submit', value: 'Import selected items'});
+          $('#item-list').append(submit);
+        });
+      });
+
+    });
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -55,7 +89,13 @@ $(document).ready(function(){
 <h5>Step 1: Select the library to import from</h5>
 
 <form id="library-list" name="libraries" action="">
-<a class="button" href="#" id="generate">Determine access</a>
+<a class="button" href="#" id="get-libraries">Determine access</a>
+
+</form>
+<br>
+<form id="collection-list" name="collections" action="" style="display:none">
+<h5>Optional: Import from a collection within the selected 
+<a class="button" href="#" id="get-collections">Determine collections</a>
 
 </form>
 </div>

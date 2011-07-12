@@ -1,56 +1,18 @@
 {% extends "base.html" %}
 
-{% load interpret_json %}
-
-{% block js %}
-    <script type="text/javascript; e4x=1" src="/media/function/citeproc-js/xmle4x.js"></script> 
-    <script type="text/javascript" src="/media/function/citeproc-js/xmldom.js"></script>
-    <script type="text/javascript" src="/media/function/citeproc-js/citeproc.js"></script>
-    <script type="text/javascript" src="/media/function/citeproc-js/simple.js"></script>
-{% endblock %}
+{% load interpret_json display %}
 
 {% block content %}
-<p>Imported documents:</p>
-  <span id="bibliography" class="bibliography"></span>
-    
-<script type="text/javascript">
-
-  var bibdata = {
-    {% autoescape off %}
-    {% for item in items %}
-    "ITEM-{{ forloop.counter }}" : {{ item|safe|as_citeproc_ref:forloop.counter }}{% if not forloop.last %},{% endif %}
-    {% endfor %}
-    {% endautoescape %}
-  }
-
-  var citation_object = 
-    {
-      "citationItems": [
-          {% for item in items %}
-          {
-            "id" : "ITEM-{{ forloop.counter }}"
-          }{% if not forloop.last %},{% endif %}
-          {% endfor %}
-        ],
-      "properties": {
-          "noteIndex": 0
-      }
-          
-  }  
-  
-  // fetch the citation. In this case, the citation to be included is hard 
-  // coded.
-  var citation_string = get_formatted_citation();
-
-  // fetch the formatting bib. The last call also populated the bib. 
-  var bib_string = get_formatted_bib();
-  
-  $(document).ready(function(){
-    $.each(bib_string, function(idx, val) {
-      $('#bibliography').append(val);
-    });
-  });
-  
-</script>
+  <div id="imported">
+    <h3>Imported documents:</h3>
+      {% for document in imported_docs %}
+        {{ document|as_link }}<br/>
+      {% endfor %}
+    <br/>
+    <h3>Documents already in Editors' Notes:</h3>
+      {% for document in existing_docs %}
+        {{ document|as_link }}<br/>
+      {% endfor %}
+  </div>
 
 {% endblock %}
