@@ -69,7 +69,7 @@ $(function() {
     </section>
 
   <div id="dialog-form" title="Edit Zotero access information">
-	  <p class="validateTips">Log in to <a href="http://www.zotero.org">Zotero</a> and browse to the <a href="https://www.zotero.org/settings/keys">"Feeds API"</a> section within user settings. Create a new key, with these settings recommended: "Allow library access" and "Read only" access to All Groups. For more information, see the Zotero section on this site's help page.</p>
+	  <p class="validateTips">Log in to <a href="http://www.zotero.org" target="_blank">Zotero</a> and browse to the <a href="https://www.zotero.org/settings/keys" target="_blank">"Feeds API"</a> section within user settings. Create a new key, with these settings recommended: "Allow library access" and "Read only" access to All Groups. For more information, see the Zotero section on this site's help page.</p>
 
 	  <form action="../zotero_info?return_to={{ request.get_full_path }}" method="post"> {% csrf_token %}
 	  <fieldset>
