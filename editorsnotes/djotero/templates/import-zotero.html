@@ -101,6 +101,7 @@
 
 {% block content %}
 
+{% if zotero_status %}
 <div id="access" class="span-24 last">
   <section id="libraries" class="span-8">
     <span class="top-label">
@@ -133,4 +134,7 @@
   </form>
 </div>
 
+{% else %}
+    <p>You have not yet entered Zotero access information. Click on your name in the top navigation bar to do so.</p>
+{% endif %}
 {% endblock %}

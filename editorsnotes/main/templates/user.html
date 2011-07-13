@@ -1,14 +1,55 @@
 {% extends "base.html" %}
 {% load typogrify display %}
 
+{% block js %}
+<script type="text/javascript">
+$(function() {
+  
+  $("#dialog-form").dialog({
+    autoOpen: false,
+    modal: true,
+    width: 400
+  });
+  
+  $("#dialog-form").keyup(function(){
+    var keyLength = $("#zotero-key").val().length;
+    var uidLength = $("#zotero-id").val().length;
+    if (keyLength == 24 && uidLength == 6) {
+      $("#dialog-form input[type='submit']").attr('disabled', false);  
+    }
+    else {
+      $("#dialog-form input[type='submit']").attr('disabled', true);  
+    };
+  });
+  
+  $("#edit-zotero-info").click( function() {
+    $("#dialog-form").dialog('open');
+  });
+  
+});
+</script>
+
+{% endblock %}
+
 {% block title %}: {{ profile.display_name }}{% endblock %}
 
 {% block content %}
     <header>
       <h2>{{ profile.display_name }}</h2>
       <div id="loggedin" class="quiet append-bottom">
-        Last logged in {{ profile.user.last_login|timeago }}</span>
-      </div>    
+        <span class="quiet">Last logged in {{ profile.user.last_login|timeago }}</span>
+        <br/>
+        {% if zotero_status %}
+          <span class="quiet">You have entered Zotero access information.
+        {% else %}
+          <span class="quiet">You have not yet entered Zotero access information.
+        {% endif %}
+           <a id="edit-zotero-info" href="#">(edit)</a></span>
+      </div>
+      <div id="zotero-information">
+
+      
+      </div>
     </header>
 
     <section id="user_activity" class="span-24 last"> 
@@ -26,4 +67,20 @@
         {% endfor %}
       </ul>
     </section>
+
+  <div id="dialog-form" title="Edit Zotero access information">
+	  <p class="validateTips">Log in to <a href="http://www.zotero.org">Zotero</a> and browse to the <a href="https://www.zotero.org/settings/keys">"Feeds API"</a> section within user settings. Create a new key, with these settings recommended: "Allow library access" and "Read only" access to All Groups. For more information, see the Zotero section on this site's help page.</p>
+
+	  <form action="../zotero_info?return_to={{ request.get_full_path }}" method="post"> {% csrf_token %}
+	  <fieldset>
+		  <label for="name">User ID</label>
+		  <input type="text" name="zotero-id" id="zotero-id" class="text ui-widget-content ui-corner-all" />
+		  <br/>
+		  <label for="email">API Key</label>
+		  <input type="text" name="zotero-key" id="zotero-key" value="" class="text ui-widget-content ui-corner-all" />
+	    <br/>
+	    <input type="submit" value="Update Zotero information" disabled="true">
+	  </fieldset>
+	  </form>
+  </div>
 {% endblock %}

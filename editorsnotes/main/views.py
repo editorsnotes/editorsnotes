@@ -236,6 +236,10 @@ def user(request, username=None):
         user = request.user
     else:
         user = get_object_or_404(User, username=username)
+    if user.get_profile().zotero_uid and user.get_profile().zotero_key:
+        o['zotero_status'] = True
+    else:
+        o['zotero_status'] = False
     o['profile'] = UserProfile.get_for(user)
     o['log_entries'], ignored = UserProfile.get_activity_for(user)
     return render_to_response(
