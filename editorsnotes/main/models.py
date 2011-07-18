@@ -400,6 +400,8 @@ class Project(models.Model, URLAccessible):
 class UserProfile(models.Model, URLAccessible):
     user = models.ForeignKey(User, unique=True)
     affiliation = models.ForeignKey('Project', blank=True, null=True)
+    zotero_key = models.CharField(max_length='24', blank=True, null=True)
+    zotero_uid = models.CharField(max_length='6', blank=True, null=True)
     def _get_display_name(self):
         "Returns the full name if available, or the username if not."
         display_name = self.user.username

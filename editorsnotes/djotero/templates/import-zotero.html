@@ -15,8 +15,6 @@
         $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
         $.getJSON('access', function(data) {
           $('#libraries img').remove();
-          $('#items-c').show();
-          $('#collection-list').show();
           var i = 1
           $.each(data.libraries, function (key, value) {
             var radio = $('<input>').attr({
@@ -27,13 +25,18 @@
           });
         });
       });
-      
+
+      $('input').live('click', function(){
+        $('.after-library').show();
+      });
+
       // Get list of collections in a library
       $('#get-collections').click(function(){
         $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
+        $('#library-list input').attr('disabled', true);
         var blah = $("#libraries input[type='radio']:checked").val();
         $.getJSON('collections', {'loc' : blah }, function(data) {
-          $('#collection-list img').remove();
+          $('#collections img').remove();
           var i = 1
           $.each(data.collections, function (key, value) {
             var radio = $('<input>').attr({
@@ -48,9 +51,15 @@
       // Query last 10 items in selected library (or collection)
       $("#get-items").click(function(){
         $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
-        var blah = $("#libraries input[type='radio']:checked").val();
-        $.getJSON('items', {'loc' : blah }, function(data) {
-          $('#items-c img').remove();
+        if($('#collections').find('input:checked').length > 0) {
+          var selectedSource = $("#collections input[type='radio']:checked").val();
+        }
+        else {
+          var selectedSource = $("#libraries input[type='radio']:checked").val();
+        }
+        $.getJSON('items', {'loc' : selectedSource }, function(data) {
+          $('#access').hide();
+          $('#items').show();
           $.each(data.items, function (key, value) {
           
             // Start citeproc processing
@@ -83,29 +92,49 @@
     </script>
 {% endblock %}
 
+{% block css %}
+<style type="text/css">
+.top-label h6 {padding-bottom: .75em;}
+#collections {height: 20em;}
+</style>
+{% endblock %}
+
 {% block content %}
 
-<div id="libraries" class="span-10">
-<h5>Step 1: Select the library to import from</h5>
-
-<form id="library-list" name="libraries" action="">
-<a class="button" href="#" id="get-libraries">Determine access</a>
-
-</form>
-<br>
-<form id="collection-list" name="collections" action="" style="display:none">
-<h5>Optional: Import from a collection within the selected 
-<a class="button" href="#" id="get-collections">Determine collections</a>
-
-</form>
+{% if zotero_status %}
+<div id="access" class="span-24 last">
+  <section id="libraries" class="span-8">
+    <span class="top-label">
+      <h6>Select a library to import from</h6>
+    </span>
+    <a class="button" href="#" id="get-libraries">Determine access</a>
+    <form id="library-list" name="libraries" action="">
+    </form>
+  </section>
+  
+  <section id="collections" style="display: none" class="span-10 colborder after-library">
+    <span class="top-label">
+      <h6>Optional: Select a collection from within the library</h6>
+    </span>
+    <a class="button" href="#" id="get-collections">Determine collections</a>
+    <form id="collection-list" name="collections" action="">
+    </form>
+  </section>
+  
+  <section id="query" style="display: none" class="span-4 after-library">
+    <span class="top-label">
+      <h6>&nbsp;</h6>
+    </span>
+    <a class="button" href="#" id="get-items">Get items</a>
+  </section>
 </div>
 
-<div id="items-c" class="span-14 last" style="display: none">
-<h5>Step 2: Select items to import</h5>
-<form id="item-list" name="items" method="post" action="import">{% csrf_token %}
-<a class="button" href="#" id="get-items">Get items</a>
-
-</form>
+<div id="items" class="span-24 last" style="display: none">
+  <form id="item-list" method="post" action="import">{% csrf_token %}
+  </form>
 </div>
 
+{% else %}
+    <p>You have not yet entered Zotero access information. Click on your name in the top navigation bar to do so.</p>
+{% endif %}
 {% endblock %}
