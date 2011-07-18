@@ -13,18 +13,12 @@ import re
 import signal
 import sys
 
-pause = 0.5 # seconds
+pause = 0.25 # seconds
 logging.basicConfig(
     level=logging.INFO, format='%(message)s', stream=sys.stdout)
 
 class Command(NoArgsCommand):
     help = 'Loads statements about topics from the linked data cloud.'
-    def load_labels(self, model, uris):
-        for uri in uris:
-            labels = utils.get_labels(model, uri)
-            if len(labels) == 0:
-                logging.debug('No labels for <%s>' % uri)
-            sleep(pause)
     def load_triples(self, model, topic):
         def reject(statement):
             if statement.object.is_literal():
@@ -37,16 +31,12 @@ class Command(NoArgsCommand):
         count = utils.count_all_statements(model, context)
         if count > 0:
             logging.info('%s statements already loaded.' % count)
-        else: 
+        else:
             for uri in utils.find_best_uris(model, topic.preferred_name):
-                try:
-                    count, predicate_uris, object_uris = utils.load_triples(
-                        model, context, uri, reject)
-                    self.load_labels(
-                        model, list(predicate_uris) + list(object_uris))
-                    sleep(pause)
-                except RDF.RedlandError as e:
-                    logging.debug('Failed to parse <%s>: %s' % (uri, e))
+                count, predicate_uris, object_uris = \
+                    utils.load_triples(model, context, uri, reject)
+                self.uris_to_label.update(predicate_uris, object_uris)
+                sleep(pause)
         if count > 0:
             topic.has_candidate_facts = True
             topic.save()
@@ -58,6 +48,13 @@ class Command(NoArgsCommand):
         if os.path.exists('start-from-topic-id.txt'):
             with open('start-from-topic-id.txt') as f:
                 start_id = int(f.read())
+            os.remove('start-from-topic-id.txt')
+        self.uris_to_label = set()
+        if os.path.exists('uris-to-label.txt'):
+            with open('uris-to-label.txt') as f:
+                for line in f:
+                    self.uris_to_label.add(line[:-1])
+            os.remove('uris_to_label.txt')
         self.quit = False
         signal.signal(signal.SIGINT, self.signal_handler)
         model = RDF.Model(utils.open_triplestore())
@@ -72,9 +69,9 @@ class Command(NoArgsCommand):
                     f.write(str(topic.id))
                     break
             self.load_triples(model, topic)
-        if not self.quit:
-            if os.path.exists('start-from-topic-id.txt'):
-                os.remove('start-from-topic-id.txt')
+        with open('uris_to_label.txt', 'w') as f:
+            for uri in self.uris_to_label:
+                f.write('%s\n' % uri)
                 
 
                 

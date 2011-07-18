@@ -5,15 +5,22 @@ from django.template import RequestContext
 from editorsnotes.main.models import Topic
 from editorsnotes.main.utils import alpha_columns
 from pprint import pformat
+from urlparse import urlparse
 import RDF
 import re
 import json
 import utils
 
+excluded_sources = [
+    'http://sw.opencyc.org/',
+    'http://www4.wiwiss.fu-berlin.de/',
+]
+
 excluded_predicates = re.compile(r'|'.join((
     r'^http://RDVocab\.info/ElementsGr2/identifierForThePerson$',
     r'^http://creativecommons\.org/ns#.+',
     r'^http://d-nb\.info/gnd/countryCodeForThePerson$',
+    r'^http://d-nb\.info/gnd/invalidIdentifierForThePerson$',
     r'^http://data\.nytimes\.com/elements/(?!topicPage)',
     r'^http://dbpedia\.org/property/bgcolour$',
     r'^http://dbpedia\.org/property/hasPhotoCollection$',
@@ -23,9 +30,14 @@ excluded_predicates = re.compile(r'|'.join((
     r'^http://rdf\.freebase\.com/ns/people\.person\.places_lived$',
     r'^http://rdf\.freebase\.com/ns/type\.object\.key$',
     r'^http://rdf\.freebase\.com/ns/user\..+',
+    r'^http://sw\.cyc\.com/CycAnnotations_v1#.+',
+    r'^http://sw\.opencyc\.org/2009/04/07/concept/Mx4rBVVEokNxEdaAAACgydogAg$',
+    r'^http://sw\.opencyc\.org/2009/04/07/concept/en/quotedIsa$',
+    r'^http://sw\.opencyc\.org/concept/Mx4rBVVEokNxEdaAAACgydogAg$',
     r'^http://www\.w3\.org/1999/xhtml/vocab#license$',
     r'^http://www\.w3\.org/2002/07/owl#sameAs$',
     r'^http://www\.w3\.org/2004/02/skos/core#inScheme$',
+    r'^http://dbpedia\.org/ontology/individualisedPnd$',
 )))
 
 @login_required
@@ -33,8 +45,9 @@ def topic_facts(request, topic_slug):
     topic = get_object_or_404(Topic, slug=topic_slug)
     model = RDF.Model(utils.open_triplestore())
     candidates = utils.get_topic_context_node(topic)
-    print candidates
-    subjects = {}
+    sources = {}
+    excluded_subjects = set()
+    #predicate_objects_by_source = {}
     for statement in model.as_stream(candidates):
         p = str(statement.predicate.uri)
         if excluded_predicates.match(p):
@@ -43,14 +56,28 @@ def topic_facts(request, topic_slug):
         if o.is_blank():
             continue
         s = str(statement.subject.uri)
-        if not s in subjects:
-            subjects[s] = {}
-        if not p in subjects[s]:
-            subjects[s][p] = []
-        subjects[s][p].append(o)
+        if p == 'http://dbpedia.org/ontology/wikiPageRedirects':
+            excluded_subjects.add(s)
+        source = '%s://%s/' % urlparse(s)[0:2]
+        if source in excluded_sources:
+            continue
+        #if (p,o) in predicate_objects_by_source.get(source, []):
+        #    continue
+        if not source in sources:
+            sources[source] = {}
+            #predicate_objects_by_source[source] = []
+        if not s in sources[source]:
+            sources[source][s] = {}
+        if s in excluded_subjects:
+            del sources[source][s]
+            continue
+        if not p in sources[source][s]:
+            sources[source][s][p] = []
+        sources[source][s][p].append(o)
+        #predicate_objects_by_source[source].append((p,o))
     o = {}
     o['topic'] = topic
-    o['candidates'] = subjects
+    o['candidates'] = sources
     return render_to_response(
         'topic-facts.include', o, context_instance=RequestContext(request))
 

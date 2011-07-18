@@ -26,7 +26,7 @@
     <span class="alpha-index">{{ letter.grouper }}</span>
     <ul class="alpha-items">
       {% for item in letter.list %}
-      <li>{{ item.topic|as_link|typogrify }}</li>
+      <li>{{ item.topic|as_link:fragment|typogrify }}</li>
       {% endfor %}
     </ul>
   </li>
@@ -40,7 +40,7 @@
     <span class="alpha-index">{{ letter.grouper }}</span>
     <ul class="alpha-items">
       {% for item in letter.list %}
-      <li>{{ item.topic|as_link|typogrify }}</li>
+      <li>{{ item.topic|as_link:fragment|typogrify }}</li>
       {% endfor %}
     </ul>
   </li>

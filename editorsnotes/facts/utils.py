@@ -12,7 +12,22 @@ rdfs = RDF.NS('http://www.w3.org/2000/01/rdf-schema#')
 skos = RDF.NS('http://www.w3.org/2004/02/skos/core#')
 fb = RDF.NS('http://rdf.freebase.com/ns/')
 gnd = RDF.NS('http://d-nb.info/gnd/')
+dcterms = RDF.NS('http://purl.org/dc/terms/')
 labels_context = RDF.Node(RDF.Uri('http://editorsnotes.org/labels/'))
+
+def redland_error_handler(*args):
+    if args[1] > 4:
+        logging.warning(args[3][1:-1])
+
+def load_statements(uri):
+    statements = RDF.Model()
+    #parser = RDF.Parser(name="guess")
+    #parser.set_feature(
+    #    'http://feature.librdf.org/raptor-wwwTimeout', 
+    #    RDF.Node(literal="5"))
+    #parser.parse_into_model(statements, uri, handler=redland_error_handler)
+    statements.load(uri, handler=redland_error_handler)
+    return statements
 
 def open_triplestore(name=None):
     options = { 'dsn': settings.TRIPLESTORE_DSN,
@@ -27,8 +42,11 @@ def get_topic_context_node(topic, context='candidates'):
     return RDF.Node(RDF.Uri('http://editorsnotes.org%s%s/'
                             % (topic.get_absolute_url(), context)))
 
+def get_source_uri(uri):
+    return '%s://%s/' % urlparse(uri)[0:2]
+
 def get_source_context_node(uri):
-    return RDF.Node(RDF.Uri('%s://%s/' % urlparse(uri)[0:2]))
+    return RDF.Node(RDF.Uri(get_source_uri(uri)))
 
 def count_statements(model, context, where_clause):
     query = RDF.Query('SELECT (COUNT(*) AS ?count) '
@@ -53,28 +71,46 @@ def find_possible_uris(name, normalize=True):
     if normalize:
         name = normalize_topic_name(name)
     url = 'http://sameas.org/json?q=%s' % quote_plus(name.encode('utf-8'))
-    logging.info(url)
+    logging.info(url.decode('UTF-8'))
     sets = []
     try:
         for uri_set in json.load(urlopen(url)):
             sets.append([ encode_uri(uri) for uri in uri_set['duplicates'] ])
     except ValueError:
-        logging.warning('Bad JSON from %s' % url)
+        logging.warning(u'Bad JSON from %s' % url.decode('UTF-8'))
     except IOError:
-        logging.warning('Network error connecting to %s' % url)
+        logging.warning(u'Network error connecting to %s' % url.decode('UTF-8'))
     return sets
 
 def find_best_uris(model, name, normalize=True):
+    sources_whitelist = [
+        'http://d-nb.info/',
+        'http://data.nytimes.com/',
+        'http://dbpedia.org/',
+        'http://rdf.freebase.com/',
+        'http://viaf.org/',
+        ]
     if normalize:
         name = normalize_topic_name(name)
+    good_uris = []
     for uri_set in find_possible_uris(name, False):
-        if len(uri_set) > 30: 
-            continue # probably bad data if we get this many
+        if len(uri_set) > 30: # probably bogus if we get this many
+            continue
         for uri in uri_set:
+            if not get_source_uri(uri) in sources_whitelist:
+                continue
             labels = [ l[0] for l in get_labels(model, uri) ]
             if name in labels:
-                return uri_set
-    return []
+                good_uris = uri_set
+                break
+    best_uris = []
+    for uri in good_uris:
+        source_uri = get_source_uri(uri)
+        if source_uri in sources_whitelist:
+            best_uris.append(uri)
+        else:
+            logging.info(u'Rejecting source: %s' % source_uri.decode('UTF-8'))
+    return best_uris
 
 def encode_uri(uri):
     if not type(uri) is unicode:
@@ -97,34 +133,53 @@ def find_dbpedia_labels(uri):
         labels = [ (b['label']['value'], b['label']['xml:lang']) 
                    for b in result['results']['bindings'] ]
     except URLError as e:
-        logging.warning('Finding DBpedia labels for <%s> failed: %s' % (uri, e))
+        logging.warning(
+            u'Finding DBpedia labels for <%s> failed: %s' % (
+                uri.decode('UTF-8'), e))
     except HTTPError as e:
-        logging.warning('Finding DBpedia labels for <%s> failed: %s' % (uri, e))
+        logging.warning(
+            u'Finding DBpedia labels for <%s> failed: %s' % (
+                uri.decode('UTF-8'), e))
     except ValueError as e:
-        logging.warning('Finding DBpedia labels for <%s> failed: %s' % (uri, e))
+        logging.warning(
+            u'Finding DBpedia labels for <%s> failed: %s' % (
+                uri.decode('UTF-8'), e))
     return labels
 
+labels_blacklist = [
+    'http://upload.wikimedia.org/',
+    'http://en.wikipedia.org/wiki/',
+    'http://www4.wiwiss.fu-berlin.de/flickrwrappr/',
+    ]
 def find_labels(uri):
+    label_properties = [ 
+        rdfs.label, 
+        fb['type.object.name'], 
+        skos.prefLabel,
+        gnd.preferredNameForThePerson,
+        dcterms.title ]
     if type(uri) is unicode:
         raise Exception('URI must be UTF-8 encoded')
+    for prefix in labels_blacklist:
+        if uri.startswith(prefix):
+            return []
     if uri.startswith('http://dbpedia.org/resource/'):
-        labels = find_dbpedia_labels(uri)
-    else:
-        labels = []
-        subject = RDF.Node(RDF.Uri(uri))
-        parser = RDF.Parser(name='rdfxml')
-        try:
-            # TODO: change to use parser.parse_into_model with error handler
-            for statement in parser.parse_as_stream(uri):
-                if (statement.subject == subject
-                    and statement.predicate in (
-                        rdfs.label, fb['type.object.name'], skos.prefLabel,
-                        gnd.preferredNameForThePerson)
-                    and statement.object.is_literal()):
-                    labels.append((statement.object.literal[0],
-                                   statement.object.literal[1]))
-        except RDF.RedlandError as e:
-            logging.debug('Failed to parse <%s>: %s' % (uri, e))
+        return find_dbpedia_labels(uri)
+    if uri.startswith(fb._prefix): # freebase
+        identifier = uri[len(fb._prefix):]
+        if '/' in identifier:
+            # the URI should use 'dot notation'
+            # see http://wiki.freebase.com/wiki/RDF
+            uri = str(fb[identifier.replace('/', '.')])
+    labels = []
+    subject = RDF.Node(RDF.Uri(uri))
+    statements = load_statements(uri)
+    for statement in statements:
+        if (statement.subject == subject and
+            statement.predicate in label_properties and
+            statement.object.is_literal()):
+            labels.append((statement.object.literal[0],
+                           statement.object.literal[1]))
     return labels
 
 def check_object_literal_language(statement):
@@ -182,28 +237,26 @@ def get_labels(model, uri):
     try:
         labels = get_cached_labels(model, uri)
     except RDF.RedlandError as e:
-        logging.warning('Bogus URI: <%s>' % uri)
+        logging.warning(u'Bogus URI: <%s>' % uri.decode('UTF-8'))
         return labels
     if len(labels) == 0:
         labels = find_labels(uri)
         cache_labels(model, uri, labels)
     return labels
 
-hardcoded_labels = {
-    'http://d-nb.info/gnd/preferredNameForThePerson': 'preferred name',
-    'http://data.nytimes.com/elements/topicPage': 'topic page',
-}
-
 def get_cached_label(model, uri, lang=None):
     if type(uri) is unicode:
         raise Exception('URI must be UTF-8 encoded')
-    if uri in hardcoded_labels:
-        return hardcoded_labels[uri]
+    source_context = get_source_context_node(uri)
     queryfilter = ''
     if lang: queryfilter = "FILTER langMatches(lang(?label), '%s')" % lang
-    sparql = '''SELECT ?label FROM <%s> WHERE { 
+    sparql = '''DEFINE input:same-as "yes"
+SELECT ?label 
+FROM <%s> 
+FROM <%s>
+WHERE { 
 <%s> <%s> ?label %s
-} LIMIT 1''' % (labels_context, uri, rdfs.label, queryfilter)
+} LIMIT 1''' % (labels_context, source_context, uri, rdfs.label, queryfilter)
     query = RDF.Query(sparql, query_language='vsparql')
     for result in model.execute(query):
         return result['label'].literal_value['string']
@@ -213,15 +266,14 @@ def load_triples(model, context, uri, reject=lambda s: False, source=None):
     if type(uri) is unicode:
             raise Exception('URI must be UTF-8 encoded')
     primary_subject = RDF.Node(RDF.Uri(uri))
-    logging.info('<%s>' % primary_subject)
+    logging.info(u'<%s>' % primary_subject)
     if source is None:
         source = get_source_context_node(uri)
     count = 0
     predicate_uris = set()
     object_uris = set()
-    parser = RDF.Parser(name='rdfxml')
-    # TODO: change to use parser.parse_into_model with error handler
-    for statement in parser.parse_as_stream(uri):
+    statements = load_statements(uri)
+    for statement in statements:
         statement = check_object_literal_language(statement)
         predicate_uris.add(statement.predicate.uri)
         if statement.object.is_resource():

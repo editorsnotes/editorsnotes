@@ -89,7 +89,7 @@ class UtilsTestCase(TestCase):
             'http://dbpedia.org/resource/Abad_de_Santill%C3%A1n')
     def test_find_best_uris(self):
         uri_set = utils.find_best_uris(self.model, u'Abad de Santillán, Diego')
-        self.assertEquals(len(uri_set), 6)
+        self.assertEquals(len(uri_set), 5)
         self.assertTrue(
             'http://rdf.freebase.com/ns/guid.9202a8c04000641f8000000000319690'
             in uri_set)
@@ -116,6 +116,10 @@ class UtilsTestCase(TestCase):
         self.assertEquals(
             labels,
             [(u'Hippolyte Havel','en')])
+        labels = utils.find_labels('http://rdf.freebase.com/ns/m/072wkb')
+        self.assertEquals(
+            labels,
+            [(u'Rose Pastor Stokes','en')])
         labels = utils.find_labels('http://purl.org/dc/terms/subject')
         self.assertEquals(
             labels,
