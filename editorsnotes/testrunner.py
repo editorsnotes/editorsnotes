@@ -8,7 +8,7 @@ class CustomTestSuiteRunner(DjangoTestSuiteRunner):
         suite = self.build_suite(test_labels, extra_tests)
         need_database = False
         for test in suite:
-            if type(test) is TestCase:
+            if isinstance(test, TestCase):
                 need_database = True
                 break
         if need_database:
