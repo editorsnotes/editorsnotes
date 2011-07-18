@@ -86,6 +86,7 @@ def dashboard(request, project_slug=None):
     o = {}
     if 'type' in request.GET:
         o['type'] = request.GET['type']
+        o['fragment'] = '#facts'
         template = 'topic-columns.include'
     else:
         o['type'] = 'candidates'

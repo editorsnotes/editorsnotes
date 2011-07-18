@@ -25,7 +25,9 @@
     <li><a href="{{ request.path }}?type=">Uncategorized</a></li>
   </ul>
 
+  {% with '' as fragment %}
   {% include "topic-columns.include" %}
+  {% endwith %}
 
 </div>
 {% endblock %}

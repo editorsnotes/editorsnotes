@@ -65,6 +65,7 @@ def all_topics(request, project_slug=None):
         o['project'] = get_object_or_404(Project, slug=project_slug)
     if 'type' in request.GET:
         o['type'] = request.GET['type']
+        o['fragment'] = ''
         template = 'topic-columns.include'
     else:
         o['type'] = 'PER'
