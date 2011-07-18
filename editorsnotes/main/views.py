@@ -167,6 +167,7 @@ def topic(request, topic_slug):
                cite.document.related_via = note
                o['documents'].append(cite.document)
     o['thread'] = { 'id': 'topic-%s' % o['topic'].id, 'title': o['topic'].preferred_name }
+    o['alpha'] = (request.user.groups.filter(name='Alpha').count() == 1)
     return render_to_response(
         'topic.html', o, context_instance=RequestContext(request))
 
