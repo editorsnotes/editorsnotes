@@ -4,7 +4,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from editorsnotes.main.models import Document
-from djotero.models import ZoteroLink
+from models import ZoteroLink
 import utils
 import json
 
