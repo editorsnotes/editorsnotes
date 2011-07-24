@@ -1,0 +1,67 @@
+@prefix rdfs:	<http://www.w3.org/2000/01/rdf-schema#> .
+<http://d-nb.info/> rdfs:label "Deutsche Nationalbibliothek"@en .
+<http://d-nb.info/gnd/preferredNameForThePerson> rdfs:label "preferred name"@en .
+<http://d-nb.info/gnd/variantNameForThePerson> rdfs:label "variant name"@en .
+<http://data.nytimes.com/elements/topicPage> rdfs:label "topic page"@en .
+<http://dbpedia.org/> rdfs:label "DBpedia"@en .
+<http://rdf.freebase.com/> rdfs:label "Freebase"@en .
+<http://sw.opencyc.org/> rdfs:label "OpenCyc"@en .
+<http://viaf.org/> rdfs:label "VIAF"@en .
+
+# d-nb profession terms
+<http://d-nb.info/gnd/4003157-3> rdfs:label "doctor"@en .
+<http://d-nb.info/gnd/4012401-0> rdfs:label "diplomat"@en .
+<http://d-nb.info/gnd/4012434-4> rdfs:label "conductor"@en .
+<http://d-nb.info/gnd/4020214-8> rdfs:label "geographer"@en .
+<http://d-nb.info/gnd/4025098-2> rdfs:label "historian"@en .
+<http://d-nb.info/gnd/4028781-6> rdfs:label "journalist"@en .
+<http://d-nb.info/gnd/4029050-5> rdfs:label "jurist"@en .
+<http://d-nb.info/gnd/4032009-1> rdfs:label "composer"@en .
+<http://d-nb.info/gnd/4033423-5> rdfs:label "artist"@en .
+<http://d-nb.info/gnd/4033430-2> rdfs:label "artist"@en .
+<http://d-nb.info/gnd/4037215-7> rdfs:label "painter"@en .
+<http://d-nb.info/gnd/4037223-6> rdfs:label "painter"@en .
+<http://d-nb.info/gnd/4037945-0> rdfs:label "mathematician"@en .
+<http://d-nb.info/gnd/4040841-3> rdfs:label "musician"@en .
+<http://d-nb.info/gnd/4041423-1> rdfs:label "scientist"@en .
+<http://d-nb.info/gnd/4045790-4> rdfs:label "philosopher"@en .
+<http://d-nb.info/gnd/4045893-3> rdfs:label "photographer"@en .
+<http://d-nb.info/gnd/4046517-2> rdfs:label "politician"@en .
+<http://d-nb.info/gnd/4047233-4> rdfs:label "priest"@en .
+<http://d-nb.info/gnd/4048755-6> rdfs:label "lawyer"@en .
+<http://d-nb.info/gnd/4049050-6> rdfs:label "director"@en .
+<http://d-nb.info/gnd/4049923-6> rdfs:label "judge"@en .
+<http://d-nb.info/gnd/4053309-8> rdfs:label "writer"@en .
+<http://d-nb.info/gnd/4053311-6> rdfs:label "author"@en .
+<http://d-nb.info/gnd/4055786-8> rdfs:label "socialist"@en .
+<http://d-nb.info/gnd/4055930-0> rdfs:label "sociologist"@en .
+<http://d-nb.info/gnd/4059756-8> rdfs:label "theologian"@en .
+<http://d-nb.info/gnd/4061414-1> rdfs:label "translator"@en .
+<http://d-nb.info/gnd/4061949-7> rdfs:label "entrepreneur"@en .
+<http://d-nb.info/gnd/4066533-1> rdfs:label "economist"@en .
+<http://d-nb.info/gnd/4125173-8> rdfs:label "graphic artist"@en .
+<http://d-nb.info/gnd/4131406-2> rdfs:label "pianist"@en .
+<http://d-nb.info/gnd/4132437-7> rdfs:label "mechanic"@en .
+<http://d-nb.info/gnd/4132592-8> rdfs:label "pastor"@en .
+<http://d-nb.info/gnd/4135404-7> rdfs:label "pedagogue"@en .
+<http://d-nb.info/gnd/4136506-9> rdfs:label "union member"@en .
+<http://d-nb.info/gnd/4160777-6> rdfs:label "humanist"@en .
+<http://d-nb.info/gnd/4161277-2> rdfs:label "illustrator"@en .
+<http://d-nb.info/gnd/4165775-5> rdfs:label "critic"@en .
+<http://d-nb.info/gnd/4166032-8> rdfs:label "artisan"@en .
+<http://d-nb.info/gnd/4167838-2> rdfs:label "literary critic"@en .
+<http://d-nb.info/gnd/4175019-6> rdfs:label "politician"@en .
+<http://d-nb.info/gnd/4176310-5> rdfs:label "publicist"@en .
+<http://d-nb.info/gnd/4177294-5> rdfs:label "editor"@en .
+<http://d-nb.info/gnd/4177943-5> rdfs:label "revolutionary"@en .
+<http://d-nb.info/gnd/4185045-2> rdfs:label "theater critic"@en .
+<http://d-nb.info/gnd/4200345-3> rdfs:label "artist"@en .
+<http://d-nb.info/gnd/4275213-9> rdfs:label "feminist"@en .
+<http://d-nb.info/gnd/4294734-0> rdfs:label "sculptor"@en .
+<http://d-nb.info/gnd/4394505-3> rdfs:label "anarchist"@en .
+<http://d-nb.info/gnd/4398838-6> rdfs:label "dramaturg"@en .
+<http://d-nb.info/gnd/4398977-9> rdfs:label "zoologist"@en .
+<http://d-nb.info/gnd/4464763-3> rdfs:label "essayist"@en .
+<http://d-nb.info/gnd/4483772-0> rdfs:label "social reformer"@en .
+<http://d-nb.info/gnd/4550852-5> rdfs:label "graphic artist"@en .
+<http://d-nb.info/gnd/4651655-4> rdfs:label "reformer"@en .
