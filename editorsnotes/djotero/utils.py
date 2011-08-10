@@ -62,8 +62,12 @@ def as_csl(obj):
     for old, new in field_translation.items():
         if zotero_data[old]:
             csl_output[new] = zotero_data[old]
-    if zotero_data['date']:
-        csl_output['issued'] = { 'raw' : zotero_data['date'] }
+    try:
+        if zotero_data['date']:
+            csl_output['issued'] = { 'raw' : zotero_data['date'] }
+    except KeyError:
+        if zotero_data['dateDecided']:
+            csl_output['issued'] = { 'raw' : zotero_data['dateDecided'] }
     if zotero_data['creators']:
         names = get_names(zotero_data)
         for contrib_type in names.keys():
