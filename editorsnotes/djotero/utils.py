@@ -57,7 +57,7 @@ def as_csl(obj):
         genre = zotero_data['itemType']
     field_translation = field_map[genre]['csl']
     csl_output = {}
-    csl_output['type'] = type_map[genre]
+    csl_output['type'] = type_map['csl'][genre]
     csl_output['id'] = 'ITEM-1'
     for old, new in field_translation.items():
         if zotero_data[old]:
@@ -69,19 +69,44 @@ def as_csl(obj):
         if zotero_data['dateDecided']:
             csl_output['issued'] = { 'raw' : zotero_data['dateDecided'] }
     if zotero_data['creators']:
-        names = get_names(zotero_data)
+        names = get_names(zotero_data, 'csl')
         for contrib_type in names.keys():
             csl_output[contrib_type] = names[contrib_type]
     return json.dumps(csl_output)
 
-def get_names(z):
+def as_readable(obj):
+    try:
+        zotero_data = obj
+        genre = zotero_data['itemType']
+    except:
+        zotero_data = json.loads(obj)
+        genre = zotero_data['itemType']
+    field_translation = field_map[genre]['readable']
+    readable_output = {}
+    readable_output['Item Type'] = type_map['readable'][genre]
+    if zotero_data['creators']:
+        names = get_names(zotero_data, 'readable')
+        for contrib_type in names.keys():
+            readable_output[contrib_type] = names[contrib_type][0]
+    for old, new in field_translation.items():
+        if zotero_data[old]:
+            readable_output[new] = zotero_data[old]
+    return json.dumps(readable_output)
+
+def get_names(namelist, format):
     contribs = {}
-    for c in z['creators']:
-        try:
-            name = { "family" : c['lastName'], "given" : c['firstName'] }
-        except:
-            name = { "literal" : c['name'] }        
-        contribs.setdefault(contrib_map[c['creatorType']], []).append(name)
+    for c in namelist['creators']:
+        if format == 'csl':
+            try:
+                name = { "family" : c['lastName'], "given" : c['firstName'] }
+            except:
+                name = { "literal" : c['name'] }
+        else:
+            try:
+                name = c['lastName'] + ', ' + c['firstName']
+            except:
+                name = c['name']
+        contribs.setdefault(contrib_map[format][c['creatorType']], []).append(name)
     return contribs
 
 # Maps to translate json from Zotero's API to CSL or human-readable form,
@@ -1252,8 +1277,24 @@ field_map = {
             "abstractNote" : "abstract",
             "archiveLocation" : "archive_location",
             "archive" : "archive"
+        },
+        "readable" : {
+            "abstractNote": "Abstract Note",
+            "accessDate": "Access Date",
+            "archive": "Archive",
+            "archiveLocation": "Loc. in Archive",
+            "callNumber": "Call Number",
+            "date": "Date",
+            "extra": "Extra",
+            "language": "Language",
+            "libraryCatalog": "Library Catalog",
+            "publisher": "Publisher",
+            "rights": "Rights",
+            "shortTitle": "Short Title",
+            "title": "Title",
+            "url": "URL",
         }
     }
 }
-type_map = {'document': 'article', 'manuscript': 'manuscript', 'radioBroadcast': 'broadcast', 'dictionaryEntry': 'chapter', 'hearing': 'bill', 'thesis': 'thesis', 'film': 'motion_picture', 'conferencePaper': 'paper-conference', 'journalArticle': 'article-journal', 'patent': 'patent', 'webpage': 'webpage', 'book': 'book', 'instantMessage': 'personal_communication', 'interview': 'interview', 'presentation': 'speech', 'email': 'personal_communication', 'forumPost': 'webpage', 'map': 'map', 'videoRecording': 'motion_picture', 'blogPost': 'webpage', 'newspaperArticle': 'article-newspaper', 'letter': 'personal_communication', 'artwork': 'graphic', 'report': 'report', 'podcast': 'song', 'audioRecording': 'song', 'case': 'legal_case', 'statute': 'bill', 'computerProgram': 'book', 'bill': 'bill', 'bookSection': 'chapter', 'tvBroadcast': 'broadcast', 'magazineArticle': 'article-magazine', 'encyclopediaArticle': 'chapter'}
-contrib_map = {'author': 'author', 'contributor' : 'author', 'bookAuthor': 'container-author', 'seriesEditor': 'collection-editor', 'translator': 'translator', 'editor': 'editor', 'interviewer': 'interviewer', 'recipient': 'recipient', 'interviewee' : 'contributor'}
+type_map = {'csl' : {'document': 'article', 'manuscript': 'manuscript', 'radioBroadcast': 'broadcast', 'dictionaryEntry': 'chapter', 'hearing': 'bill', 'thesis': 'thesis', 'film': 'motion_picture', 'conferencePaper': 'paper-conference', 'journalArticle': 'article-journal', 'patent': 'patent', 'webpage': 'webpage', 'book': 'book', 'instantMessage': 'personal_communication', 'interview': 'interview', 'presentation': 'speech', 'email': 'personal_communication', 'forumPost': 'webpage', 'map': 'map', 'videoRecording': 'motion_picture', 'blogPost': 'webpage', 'newspaperArticle': 'article-newspaper', 'letter': 'personal_communication', 'artwork': 'graphic', 'report': 'report', 'podcast': 'song', 'audioRecording': 'song', 'case': 'legal_case', 'statute': 'bill', 'computerProgram': 'book', 'bill': 'bill', 'bookSection': 'chapter', 'tvBroadcast': 'broadcast', 'magazineArticle': 'article-magazine', 'encyclopediaArticle': 'chapter'}, 'readable' : {'forumPost': 'Forum Post', 'map': 'Map', 'instantMessage': 'Instant Message', 'videoRecording': 'Video Recording', 'thesis': 'Thesis', 'manuscript': 'Manuscript', 'radioBroadcast': 'Radio Broadcast', 'blogPost': 'Blog Post', 'dictionaryEntry': 'Dictionary Entry', 'hearing': 'Hearing', 'newspaperArticle': 'Newspaper Article', 'letter': 'Letter', 'artwork': 'Artwork', 'report': 'Report', 'podcast': 'Podcast', 'audioRecording': 'Audio Recording', 'film': 'Film', 'conferencePaper': 'Conference Paper', 'case': 'Case', 'statute': 'Statute', 'computerProgram': 'Computer Program', 'journalArticle': 'Journal Article', 'patent': 'Patent', 'bill': 'Bill', 'bookSection': 'Book Section', 'magazineArticle': 'Magazine Article', 'webpage': 'Webpage', 'book': 'Book', 'encyclopediaArticle': 'Encyclopedia Article', 'interview': 'Interview', 'document': 'Document', 'presentation': 'Presentation', 'email': 'Email', 'tvBroadcast': 'TV Broadcast'} }
+contrib_map = {'csl' : {'author': 'author', 'contributor' : 'author', 'bookAuthor': 'container-author', 'seriesEditor': 'collection-editor', 'translator': 'translator', 'editor': 'editor', 'interviewer': 'interviewer', 'recipient': 'recipient', 'interviewee' : 'contributor'}, 'readable' : {'translator': 'Translator', 'contributor': 'Contributor', 'seriesEditor': 'Series Editor', 'editor': 'Editor', 'author': 'Author', 'bookAuthor': 'Book Author', 'recipient': 'Recipient', 'interviewer': 'Interviewer', 'interviewee': 'Interviewee'}}

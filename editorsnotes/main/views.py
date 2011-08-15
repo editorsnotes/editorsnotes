@@ -204,6 +204,9 @@ def document(request, document_id):
     o['notes'] = zip(notes, 
                      [ [ ta.topic for ta in n.topics.all() ] for n in notes ],
                      [ _sort_citations(n) for n in notes ])
+    if o['document'].zotero_link():
+        o['zotero_data'] = o['document'].zotero_link().zotero_data
+        o['zotero_url'] = o['document'].zotero_link().zotero_url
     # view transcript on page open if only it exists
     if not o['scans'] and o['document'].transcript:
         redirect_url = o['document'].get_absolute_url() + "?redirect=1#transcript"
