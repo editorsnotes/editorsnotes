@@ -1,5 +1,5 @@
 from django import template
-from djotero.utils import as_readable
+from djotero.utils import convert_zotero_json
 from collections import defaultdict
 import json
 
@@ -7,7 +7,7 @@ register = template.Library()
 
 @register.filter
 def readable(obj):
-    content = json.loads(as_readable(obj))
+    content = json.loads(convert_zotero_json(obj, 'readable'))
     content_sorted = defaultdict(list)
     for item in content.items():
         category = category_dict[item[0]]

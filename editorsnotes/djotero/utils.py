@@ -40,58 +40,43 @@ def latest_items(zotero_key, loc):
         item_id = x.xpath('./zot:key', namespaces=NS)[0].text
         item_json = x.xpath('./atom:content[@type="application/json"]', namespaces=NS)[0].text
         if json.loads(item_json)['itemType'] != 'note':
-            item_csl = as_csl(item_json)
+            item_csl = convert_zotero_json(item_json, 'csl')
             latest['items'].append({'title' : title, 'loc' : loc, 'id' : item_id, 'url' : library_url, 'item_json' : item_json, 'item_csl' : item_csl })
     return latest
 
-def as_csl(obj):
-    # Meant to translate a Zotero json string to a csl compatible one,
-    # where z is a json string taken from the zotero API and opt is
-    # either 'csl' or 'readable', corresponding to dict values
-    # TODO: seperate 'csl' and 'readable' options
+def convert_zotero_json(obj, output_format):
+    # option must be 'csl' or 'readable'
+    #
+    # Next lines are necessary so that data can be
+    # passed either as a string or a dictionary
     try:
         zotero_data = obj
         genre = zotero_data['itemType']
     except:
         zotero_data = json.loads(obj)
         genre = zotero_data['itemType']
-    field_translation = field_map[genre]['csl']
-    csl_output = {}
-    csl_output['type'] = type_map['csl'][genre]
-    csl_output['id'] = 'ITEM-1'
-    for old, new in field_translation.items():
-        if zotero_data[old]:
-            csl_output[new] = zotero_data[old]
-    try:
-        if zotero_data['date']:
-            csl_output['issued'] = { 'raw' : zotero_data['date'] }
-    except KeyError:
-        if zotero_data['dateDecided']:
-            csl_output['issued'] = { 'raw' : zotero_data['dateDecided'] }
-    if zotero_data['creators']:
-        names = get_names(zotero_data, 'csl')
-        for contrib_type in names.keys():
-            csl_output[contrib_type] = names[contrib_type]
-    return json.dumps(csl_output)
 
-def as_readable(obj):
-    try:
-        zotero_data = obj
-        genre = zotero_data['itemType']
-    except:
-        zotero_data = json.loads(obj)
-        genre = zotero_data['itemType']
-    field_translation = field_map[genre]['readable']
-    readable_output = {}
-    readable_output['Item Type'] = type_map['readable'][genre]
-    if zotero_data['creators']:
-        names = get_names(zotero_data, 'readable')
-        for contrib_type in names.keys():
-            readable_output[contrib_type] = names[contrib_type][0]
+    field_translation = field_map[genre][output_format]
+    output = {}
     for old, new in field_translation.items():
         if zotero_data[old]:
-            readable_output[new] = zotero_data[old]
-    return json.dumps(readable_output)
+            output[new] = zotero_data[old]
+    if zotero_data['creators']:
+        names = get_names(zotero_data, output_format)
+        for contrib_type in names.keys():
+            output[contrib_type] = names[contrib_type]
+    if output_format == 'csl':
+        output['type'] = type_map['csl'][genre]
+        output['id'] = 'ITEM-1' # For use with citeproc-js.
+        try:
+            if zotero_data['date']:
+                output['issued'] = { 'raw' : zotero_data['date'] }
+        except KeyError:
+            if zotero_data['dateDecided']:
+                output['issued'] = { 'raw' : zotero_data['dateDecided'] }
+    elif output_format == 'readable':
+        output['Item Type'] = type_map['readable'][genre]
+    return json.dumps(output)
 
 def get_names(namelist, format):
     contribs = {}
@@ -101,12 +86,26 @@ def get_names(namelist, format):
                 name = { "family" : c['lastName'], "given" : c['firstName'] }
             except:
                 name = { "literal" : c['name'] }
-        else:
+        elif format == 'readable':
             try:
                 name = c['lastName'] + ', ' + c['firstName']
             except:
                 name = c['name']
+        
         contribs.setdefault(contrib_map[format][c['creatorType']], []).append(name)
+
+        if format == 'readable':
+        # Combine lists of names for display. Fix this later to list contribs separately.
+            for creator_type in contribs.keys():
+                if len(contribs[creator_type]) == 1:
+                    contribs[creator_type] = contribs[creator_type][0]
+                    break
+                elif len(contribs[creator_type]) == 2:
+                    contribs[creator_type] = ' and '.join(contribs[creator_type])
+                    break
+                else:
+                    contribs[creator_type] = '; '.join(contribs[creator_type])
+                    break
     return contribs
 
 # Maps to translate json from Zotero's API to CSL or human-readable form,
