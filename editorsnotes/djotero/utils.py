@@ -40,44 +40,72 @@ def latest_items(zotero_key, loc):
         item_id = x.xpath('./zot:key', namespaces=NS)[0].text
         item_json = x.xpath('./atom:content[@type="application/json"]', namespaces=NS)[0].text
         if json.loads(item_json)['itemType'] != 'note':
-            item_csl = as_csl(item_json)
+            item_csl = convert_zotero_json(item_json, 'csl')
             latest['items'].append({'title' : title, 'loc' : loc, 'id' : item_id, 'url' : library_url, 'item_json' : item_json, 'item_csl' : item_csl })
     return latest
 
-def as_csl(obj):
-    # Meant to translate a Zotero json string to a csl compatible one,
-    # where z is a json string taken from the zotero API and opt is
-    # either 'csl' or 'readable', corresponding to dict values
-    # TODO: seperate 'csl' and 'readable' options
+def convert_zotero_json(obj, output_format):
+    # option must be 'csl' or 'readable'
+    #
+    # Next lines are necessary so that data can be
+    # passed either as a string or a dictionary
     try:
         zotero_data = obj
         genre = zotero_data['itemType']
     except:
         zotero_data = json.loads(obj)
         genre = zotero_data['itemType']
-    field_translation = field_map[genre]['csl']
-    csl_output = {}
-    csl_output['type'] = type_map[genre]
-    csl_output['id'] = 'ITEM-1'
+
+    field_translation = field_map[genre][output_format]
+    output = {}
     for old, new in field_translation.items():
         if zotero_data[old]:
-            csl_output[new] = zotero_data[old]
-    if zotero_data['date']:
-        csl_output['issued'] = { 'raw' : zotero_data['date'] }
+            output[new] = zotero_data[old]
     if zotero_data['creators']:
-        names = get_names(zotero_data)
+        names = get_names(zotero_data, output_format)
         for contrib_type in names.keys():
-            csl_output[contrib_type] = names[contrib_type]
-    return json.dumps(csl_output)
-
-def get_names(z):
-    contribs = {}
-    for c in z['creators']:
+            output[contrib_type] = names[contrib_type]
+    if output_format == 'csl':
+        output['type'] = type_map['csl'][genre]
+        output['id'] = 'ITEM-1' # For use with citeproc-js.
         try:
-            name = { "family" : c['lastName'], "given" : c['firstName'] }
-        except:
-            name = { "literal" : c['name'] }        
-        contribs.setdefault(contrib_map[c['creatorType']], []).append(name)
+            if zotero_data['date']:
+                output['issued'] = { 'raw' : zotero_data['date'] }
+        except KeyError:
+            if zotero_data['dateDecided']:
+                output['issued'] = { 'raw' : zotero_data['dateDecided'] }
+    elif output_format == 'readable':
+        output['Item Type'] = type_map['readable'][genre]
+    return json.dumps(output)
+
+def get_names(namelist, format):
+    contribs = {}
+    for c in namelist['creators']:
+        if format == 'csl':
+            try:
+                name = { "family" : c['lastName'], "given" : c['firstName'] }
+            except:
+                name = { "literal" : c['name'] }
+        elif format == 'readable':
+            try:
+                name = c['lastName'] + ', ' + c['firstName']
+            except:
+                name = c['name']
+        
+        contribs.setdefault(contrib_map[format][c['creatorType']], []).append(name)
+
+        if format == 'readable':
+        # Combine lists of names for display. Fix this later to list contribs separately.
+            for creator_type in contribs.keys():
+                if len(contribs[creator_type]) == 1:
+                    contribs[creator_type] = contribs[creator_type][0]
+                    break
+                elif len(contribs[creator_type]) == 2:
+                    contribs[creator_type] = ' and '.join(contribs[creator_type])
+                    break
+                else:
+                    contribs[creator_type] = '; '.join(contribs[creator_type])
+                    break
     return contribs
 
 # Maps to translate json from Zotero's API to CSL or human-readable form,
@@ -1248,8 +1276,24 @@ field_map = {
             "abstractNote" : "abstract",
             "archiveLocation" : "archive_location",
             "archive" : "archive"
+        },
+        "readable" : {
+            "abstractNote": "Abstract Note",
+            "accessDate": "Access Date",
+            "archive": "Archive",
+            "archiveLocation": "Loc. in Archive",
+            "callNumber": "Call Number",
+            "date": "Date",
+            "extra": "Extra",
+            "language": "Language",
+            "libraryCatalog": "Library Catalog",
+            "publisher": "Publisher",
+            "rights": "Rights",
+            "shortTitle": "Short Title",
+            "title": "Title",
+            "url": "URL",
         }
     }
 }
-type_map = {'document': 'article', 'manuscript': 'manuscript', 'radioBroadcast': 'broadcast', 'dictionaryEntry': 'chapter', 'hearing': 'bill', 'thesis': 'thesis', 'film': 'motion_picture', 'conferencePaper': 'paper-conference', 'journalArticle': 'article-journal', 'patent': 'patent', 'webpage': 'webpage', 'book': 'book', 'instantMessage': 'personal_communication', 'interview': 'interview', 'presentation': 'speech', 'email': 'personal_communication', 'forumPost': 'webpage', 'map': 'map', 'videoRecording': 'motion_picture', 'blogPost': 'webpage', 'newspaperArticle': 'article-newspaper', 'letter': 'personal_communication', 'artwork': 'graphic', 'report': 'report', 'podcast': 'song', 'audioRecording': 'song', 'case': 'legal_case', 'statute': 'bill', 'computerProgram': 'book', 'bill': 'bill', 'bookSection': 'chapter', 'tvBroadcast': 'broadcast', 'magazineArticle': 'article-magazine', 'encyclopediaArticle': 'chapter'}
-contrib_map = {'author': 'author', 'contributor' : 'author', 'bookAuthor': 'container-author', 'seriesEditor': 'collection-editor', 'translator': 'translator', 'editor': 'editor', 'interviewer': 'interviewer', 'recipient': 'recipient', 'interviewee' : 'contributor'}
+type_map = {'csl' : {'document': 'article', 'manuscript': 'manuscript', 'radioBroadcast': 'broadcast', 'dictionaryEntry': 'chapter', 'hearing': 'bill', 'thesis': 'thesis', 'film': 'motion_picture', 'conferencePaper': 'paper-conference', 'journalArticle': 'article-journal', 'patent': 'patent', 'webpage': 'webpage', 'book': 'book', 'instantMessage': 'personal_communication', 'interview': 'interview', 'presentation': 'speech', 'email': 'personal_communication', 'forumPost': 'webpage', 'map': 'map', 'videoRecording': 'motion_picture', 'blogPost': 'webpage', 'newspaperArticle': 'article-newspaper', 'letter': 'personal_communication', 'artwork': 'graphic', 'report': 'report', 'podcast': 'song', 'audioRecording': 'song', 'case': 'legal_case', 'statute': 'bill', 'computerProgram': 'book', 'bill': 'bill', 'bookSection': 'chapter', 'tvBroadcast': 'broadcast', 'magazineArticle': 'article-magazine', 'encyclopediaArticle': 'chapter'}, 'readable' : {'forumPost': 'Forum Post', 'map': 'Map', 'instantMessage': 'Instant Message', 'videoRecording': 'Video Recording', 'thesis': 'Thesis', 'manuscript': 'Manuscript', 'radioBroadcast': 'Radio Broadcast', 'blogPost': 'Blog Post', 'dictionaryEntry': 'Dictionary Entry', 'hearing': 'Hearing', 'newspaperArticle': 'Newspaper Article', 'letter': 'Letter', 'artwork': 'Artwork', 'report': 'Report', 'podcast': 'Podcast', 'audioRecording': 'Audio Recording', 'film': 'Film', 'conferencePaper': 'Conference Paper', 'case': 'Case', 'statute': 'Statute', 'computerProgram': 'Computer Program', 'journalArticle': 'Journal Article', 'patent': 'Patent', 'bill': 'Bill', 'bookSection': 'Book Section', 'magazineArticle': 'Magazine Article', 'webpage': 'Webpage', 'book': 'Book', 'encyclopediaArticle': 'Encyclopedia Article', 'interview': 'Interview', 'document': 'Document', 'presentation': 'Presentation', 'email': 'Email', 'tvBroadcast': 'TV Broadcast'} }
+contrib_map = {'csl' : {'author': 'author', 'contributor' : 'author', 'bookAuthor': 'container-author', 'seriesEditor': 'collection-editor', 'translator': 'translator', 'editor': 'editor', 'interviewer': 'interviewer', 'recipient': 'recipient', 'interviewee' : 'contributor'}, 'readable' : {'translator': 'Translator', 'contributor': 'Contributor', 'seriesEditor': 'Series Editor', 'editor': 'Editor', 'author': 'Author', 'bookAuthor': 'Book Author', 'recipient': 'Recipient', 'interviewer': 'Interviewer', 'interviewee': 'Interviewee'}}

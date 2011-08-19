@@ -118,6 +118,11 @@ class Document(LastUpdateMetadata, Administered, URLAccessible):
         if hasattr(self, '_has_transcript'):
             return self._has_transcript
         return self.transcript is not None
+    def zotero_link(self):
+        try:
+            return self._zotero_link
+        except:
+            return None
     def get_metadata(self):
         metadata = {}
         for md in self.metadata.all():
