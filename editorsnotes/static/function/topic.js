@@ -2,7 +2,7 @@ $(document).ready(function() {
 
   $('#collapse').jqcollapse({ slide: true, speed: 250, easing: '' });
 
-  var facets = [ 'year', 'journal' ];
+  var facets = [ 'year', 'itemtype' ];
 
   function select_document_filters(facet_name) {
     var filters = [];

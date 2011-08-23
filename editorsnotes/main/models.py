@@ -147,12 +147,16 @@ class Document(LastUpdateMetadata, Administered, URLAccessible):
         if len(data.entries) == 0:
             return {}
         return data.entries.values()[0].fields
+        
     def as_text(self):
         return utils.xhtml_to_text(self.description)
     def as_html(self):
-        data_attributes = ''.join(
-            [ ' data-%s="%s"' % (k, v) 
-              for k, v in self.get_bibtex_fields().iteritems() ])
+        if self.zotero_link():
+            data_attributes = ''.join(
+                [ ' data-%s="%s"' % (k, v) 
+                  for k, v in self.zotero_link().get_zotero_fields() if v != "" and k!= "tags" ])
+        else:
+            data_attributes = ''
         return mark_safe(
             '<div id="document-%s" class="document%s"%s>%s</div>' % (
                 self.id,

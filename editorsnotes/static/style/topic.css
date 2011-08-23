@@ -41,8 +41,8 @@ input[type="checkbox"] {
 #sidebar {display: none; }
 #content {width: 97%;}
 
-.use-sidebar #content {width: 80%;}
-.use-sidebar #sidebar {display: block; width: 16%;}
+.use-sidebar #content {width: 75%;}
+.use-sidebar #sidebar {display: block; width: 20%;}
  
 .sidebar-at-left #sidebar {margin-right: 1%;}
 .sidebar-at-right #sidebar {margin-left: 1%;}

@@ -119,15 +119,15 @@
             </ul>
             <div class="facet-header">
               <label>
-                <input id="journal-select-all" type="checkbox" checked/>
-                <span class="facet-name">Periodical</span>
+                <input id="itemtype-select-all" type="checkbox" checked/>
+                <span class="facet-name">Item Type</span>
               </label>
               <span class="sort-button ui-state-default ui-corner-all"
-                    data-facet="journal">
+                    data-facet="itemtype">
                 <span class="ui-icon ui-icon-triangle-1-s"></span>
               </span>
             </div>
-            <ul id="document-journal-facet">
+            <ul id="document-itemtype-facet">
             </ul>
             <div id="import-documents">
               <a class="button" href="/document/upload/?rel=topic&id={{ topic.id }}">Import documents</a>
@@ -138,6 +138,9 @@
         </div>
         {% else %}
           There are no documents related to <em>{{ topic.preferred_name }}</em>.
+            <div id="import-documents">
+              <a class="button" href="/document/upload/?rel=topic&id={{ topic.id }}">Import documents</a>
+            </div>
         {% endif %}
       </section>
     </div>
