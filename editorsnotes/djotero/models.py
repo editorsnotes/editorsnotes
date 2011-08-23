@@ -1,6 +1,5 @@
 from django.db import models
 from editorsnotes.main.models import Document
-import parsedatetime.parsedatetime as pdt
 import utils
 import json
 
