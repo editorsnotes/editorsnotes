@@ -172,7 +172,8 @@ def migrate():
     require('path')
     with cd('%(path)s/releases/current/%(project_name)s' % env):
         run('../../../bin/python manage.py syncdb --noinput')
-        run('../../../bin/python manage.py migrate --noinput main')
+        for app in [ 'main', 'djotero' ]:
+            run('../../../bin/python manage.py migrate --noinput %s' % app)
         run('../../../bin/python manage.py rebuild_index --noinput')
     
 def restart_webserver():
