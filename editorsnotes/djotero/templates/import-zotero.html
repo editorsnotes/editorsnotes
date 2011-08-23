@@ -6,6 +6,7 @@
     <script type="text/javascript" src="/media/function/citeproc-js/xmldom.js"></script>
     <script type="text/javascript" src="/media/function/citeproc-js/citeproc.js"></script>
     <script type="text/javascript" src="/media/function/citeproc-js/simple.js"></script>
+    <script type="text/javascript" src="/media/function/json2.js"></script>
 
     <script type="text/javascript">
     $(document).ready(function(){
@@ -73,12 +74,14 @@
             CSL.Output.Formats.text["@font-style/italic"] = "<i>%%STRING%%</i>"
             citeproc.appendCitationCluster( citation_object );
             var citation = citeproc.makeBibliography()[1];
+            var parser = new CSL.DateParser;
+            var date = parser.parse(value.date)
             // End citeproc processing
               
             var checkbox = $('<input>').attr({
               type: 'checkbox',
               name: 'item',
-              value: '{ "json" : ' + value.item_json + ', "url" : \"' + value.url + '\", "csl" : \"' + citation + '\", "related_object" : \"' + "{{ related_object }}" + '\", "related_id" : \"' + "{{ related_id }}" + '\"}'
+              value: '{ "json" : ' + value.item_json + ', "url" : \"' + value.url + '\", "date" : ' + JSON.stringify(date) + ', "csl" : \"' + citation + '\", "related_object" : \"' + "{{ related_object }}" + '\", "related_id" : \"' + "{{ related_id }}" + '\"}'
             });
             $('#item-list').append(checkbox).append('<a href="' + value.url + '">' + value.title + '</a>' + '<br>');
 

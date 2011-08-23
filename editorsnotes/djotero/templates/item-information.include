@@ -1,0 +1,25 @@
+{% regroup zotero_data|dictsort:"display_category" by display_category as sorted_zotero_list %}
+{% load djotero_display %}
+<ul>
+{% for cat in sorted_zotero_list %}
+    <li>
+    <ul>
+        {% for item in cat.list %}
+        <li>
+        <span class="span-4" style="color: gray; font-size: 13px; vertical-align: center;">{{ item.label }}</span>
+        {{ item.value }}
+        </li>
+        {% endfor %}
+    </ul>
+    </li>
+{% endfor %}
+</ul>
+
+{% if zotero_date_information %}
+    Date associated with this record:<br/>
+    {% for key, value in zotero_date_information|date_as_text %}
+       {{ value }}
+    {% endfor %}
+{% else %}
+    <p>No date associated with this record.</p>
+{% endif %}

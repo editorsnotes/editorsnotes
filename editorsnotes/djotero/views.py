@@ -41,8 +41,8 @@ def list_collections(request):
     return HttpResponse(json.dumps(collections), mimetype='text/plain')
     
 def list_items(request):
-    if not request.is_ajax():
-        return HttpResponseBadRequest()
+    #if not request.is_ajax():
+    #    return HttpResponseBadRequest()
     loc = request.GET.get('loc', '')
     zotero_key = request.user.get_profile().zotero_key
     latest = utils.latest_items(zotero_key, loc)
@@ -62,13 +62,22 @@ def import_items(request):
             d.save()
             o['imported_docs'].append(d)
             link = ZoteroLink(zotero_data=json.dumps(doc_import['json']), zotero_url=doc_import['url'], doc_id=d.id)
+            try:
+                doc_import['date']['year']
+                link.date_information = json.dumps(doc_import['date'])
+            except KeyError:
+                pass
             link.save()
-            if doc_import['related_object'] == 'topic':
-                related_topic = Topic.objects.get(id=int(doc_import['related_id']))
+        else:
+            existing_link = ZoteroLink.objects.filter(zotero_url=doc_import['url'])[0]
+            o['existing_docs'].append(existing_link.doc)
+        if doc_import['related_object'] == 'topic':
+            related_topic = Topic.objects.get(id=int(doc_import['related_id']))
+            if TopicAssignment.objects.filter(document=d, topic=related_topic):
+                pass
+            else:
                 new_assignment = TopicAssignment.objects.create(content_object=d, topic=related_topic, creator=request.user)
                 new_assignment.save()
-        else:
-            o['existing_docs'].append(ZoteroLink.objects.filter(zotero_url=doc_import['url'])[0].doc)
     return render_to_response(
         'success.html', o, context_instance=RequestContext(request))
 
