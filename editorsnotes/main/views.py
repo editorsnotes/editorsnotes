@@ -13,7 +13,7 @@ from django.template import RequestContext
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from urllib import urlopen
 from models import *
-from djotero.utils import as_readable
+from editorsnotes.djotero.utils import as_readable
 import utils
 import json
 
