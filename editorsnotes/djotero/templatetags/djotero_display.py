@@ -1,6 +1,6 @@
 from django import template
 from collections import defaultdict
-from djotero.utils import resolve_names
+from editorsnotes.djotero.utils import resolve_names
 import json
 
 register = template.Library()
