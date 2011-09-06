@@ -60,3 +60,6 @@ urlpatterns += patterns('editorsnotes.djotero.views',
     url(r'^document/upload/import$', 'import_items', name='import_items_view'),
     url(r'^user/zotero_info$', 'update_zotero_info', name='update_zotero_info_view'),
 )
+urlpatterns += patterns('editorsnotes.refine.views',
+    url(r'^topics/clusters/$', 'show_clusters', name='show_clusters_view'),
+)

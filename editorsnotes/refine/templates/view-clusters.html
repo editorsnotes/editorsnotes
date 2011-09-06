@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% load typogrify display %}
+
+{% block content %}
+    {% for cluster in clusters %}
+        <div class="span-7" id="{{ cluster.id }}">
+            <ul>
+            {% for topic in cluster.clustered_topics.all %}
+                <li>{{ topic|as_link|typogrify }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+    {% endfor %}
+{% endblock %}
