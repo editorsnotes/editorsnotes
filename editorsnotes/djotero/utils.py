@@ -43,7 +43,7 @@ def latest_items(zotero_key, loc):
             item_date = json.loads(item_json)['date']
         except:
             item_date = ""
-        if json.loads(item_json)['itemType'] != 'note':
+        if json.loads(item_json)['itemType'] not in ['note', 'attachment']:
             item_csl = as_csl(item_json)
             latest['items'].append({'title' : title, 'loc' : loc, 'id' : item_id, 'date' : item_date, 'url' : library_url, 'item_json' : item_json, 'item_csl' : item_csl })
     return latest
