@@ -7,10 +7,13 @@
     <script type="text/javascript" src="/media/function/citeproc-js/citeproc.js"></script>
     <script type="text/javascript" src="/media/function/citeproc-js/simple.js"></script>
     <script type="text/javascript" src="/media/function/json2.js"></script>
+    <script type="text/javascript">
 
+    </script>
     <script type="text/javascript">
     $(document).ready(function(){
-
+      var csrf_token = $("input[name='csrfmiddlewaretoken']").attr('value');
+      
       // Get access list of Zotero libraries
       $('#get-libraries').click(function(){
         $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
@@ -27,7 +30,7 @@
         });
       });
 
-      $('input').live('click', function(){
+      $('#libraries input').live('click', function(){
         $('.after-library').show();
       });
 
@@ -61,6 +64,7 @@
         $.getJSON('items', {'loc' : selectedSource }, function(data) {
           $('#access').hide();
           $('#items').show();
+          var counter = 1
           $.each(data.items, function (key, value) {
           
             // Start citeproc processing
@@ -83,14 +87,66 @@
               name: 'item',
               value: '{ "json" : ' + value.item_json + ', "url" : \"' + value.url + '\", "date" : ' + JSON.stringify(date) + ', "csl" : \"' + citation + '\", "related_object" : \"' + "{{ related_object }}" + '\", "related_id" : \"' + "{{ related_id }}" + '\"}'
             });
-            $('#item-list').append(checkbox).append('<a href="' + value.url + '">' + value.title + '</a>' + '<br>');
-
+            
+            var input = $('<div class="zotero-link">').attr("id", "z" + counter).append('<a class="add-to-document"><img width="20" height="20" alt="Add Another" src="/media/style/icons/insert-link-2.png">&nbsp;').append(checkbox).append('<a class="zotero-object" href="' + value.url + '" target="_blank">' + value.title + '</a>');
+            
+            counter = counter + 1
+            
+            $('#item-list').append(input);
+          
           });
           var submit = $('<input>').attr({type: 'submit', value: 'Import selected items'});
           $('#item-list').append(submit);
         });
       });
-
+      
+      $("#doc-add-form").dialog({
+        autoOpen: false,
+        modal: true,
+        width: 500,
+        title: 'Connect to existing document'
+      });
+      
+      $('.add-to-document').live('click', function(){
+        var link = $(this).parent()
+        $('#document')
+          .html(link.find('.zotero-object')[0].text)
+          .attr('source', link.attr('id'))
+          .attr('value', link.find('input').attr('value'));
+        $("#doc-add-form").dialog('open');
+      });
+      
+      $('#docsearch input')
+        .autocomplete({
+          source: function(request, response) {
+            $.getJSON('/api/documents/', { q: request.term }, function(data) {
+              response($.map(data, function(item, index) {
+                return { label: item.description, id: item.id };
+              }));
+            });
+          },
+          minLength: 3,
+          select: function(event, ui) {
+            if (ui.item) {
+              $('#link-document').show()
+                .attr('document', ui.item.id);
+            }
+          }
+        });
+        $('#link-document').click(function(){
+          $.post("update_link/", { 
+              'doc_id' : $(this).attr('document'),
+              'zotero_info' : $('#document').attr('value'),
+              'csrfmiddlewaretoken': csrf_token
+          },
+              function(data) {
+                  var old_div = $('#document').attr('source');
+                  $('#' + old_div ).remove();
+                  $('#docsearch input')[0].value = "";
+                  $("#doc-add-form").dialog('close');
+              }
+          );
+        });
     });
     </script>
 {% endblock %}
@@ -99,6 +155,12 @@
 <style type="text/css">
 .top-label h6 {padding-bottom: .75em;}
 #collections {height: 20em;}
+.zotero-link {padding: .33em;}
+.zotero-link a {text-decoration: none;}
+.add-to-document a {text-decoration: none;}
+.add-to-document img { vertical-align: bottom;}
+.zotero-link input {margin-right: 1em; margin-left: 1em;}
+#document {padding-bottom: 1em;}
 </style>
 {% endblock %}
 
@@ -135,6 +197,15 @@
 <div id="items" class="span-24 last" style="display: none">
   <form id="item-list" method="post" action="import">{% csrf_token %}
   </form>
+</div>
+
+<div id="doc-add-form">
+  <div id="document"></div>
+  <div id="docsearch">
+    <span>Search for item:<span>
+    <input type="text" class="text" name="q"/>
+    <a class="button" style="display: none;" id="link-document">Submit</a>
+  </div>
 </div>
 
 {% else %}

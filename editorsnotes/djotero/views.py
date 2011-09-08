@@ -6,7 +6,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedire
 from editorsnotes.main.models import Document, Topic, TopicAssignment
 from models import ZoteroLink
 import utils
-import json
+import json, datetime
 
 @login_required
 def import_zotero(request, username=False):
@@ -93,3 +93,29 @@ def update_zotero_info(request, username=None):
     profile.save()
     redirect_url = request.GET.get('return_to', '')
     return HttpResponseRedirect(redirect_url)
+
+def batch_import(request):
+    o = {}
+    return render_to_response('batch-import.html', o, context_instance=RequestContext(request))
+
+def update_link(request):
+    #if not request.is_ajax():
+    #    return HttpResponseBadRequest()
+    doc_id = request.POST.get('doc_id')
+    json_string = request.POST.get('zotero_info')
+    doc_information = json.loads(json_string, strict=False)
+    document = Document.objects.get(id=doc_id)
+    if document.zotero_link():
+        document.zotero_link().delete()
+    
+    link = ZoteroLink(zotero_data=json.dumps(doc_information['json']), zotero_url=doc_information['url'], doc_id=document.id)
+    try:
+        doc_information['date']['year']
+        link.date_information = json.dumps(doc_information['date'])
+    except KeyError:
+        pass
+    link.save()
+    document.last_updated = datetime.datetime.now()
+    document.save()
+    
+    return HttpResponse(document, mimetype='text/plain')
