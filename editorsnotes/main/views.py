@@ -167,6 +167,7 @@ def topic(request, topic_slug):
            if not cite.document in o['documents']:
                cite.document.related_via = note
                o['documents'].append(cite.document)
+    o['doc_count'] = len(o['documents'])
     o['thread'] = { 'id': 'topic-%s' % o['topic'].id, 'title': o['topic'].preferred_name }
     o['alpha'] = (request.user.groups.filter(name='Alpha').count() == 1)
     return render_to_response(

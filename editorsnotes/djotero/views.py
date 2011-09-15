@@ -21,6 +21,10 @@ def import_zotero(request, username=False):
         o['zotero_status'] = False
     o['related_object'] = request.GET.get('rel', '')
     o['related_id'] = request.GET.get('id', '')
+    if request.GET.get('apply', ''):
+        o['apply_to_docs'] = True
+    else:
+        o['apply_to_docs'] = False
     return render_to_response(
         'import-zotero.html', o, context_instance=RequestContext(request))
 
@@ -41,8 +45,8 @@ def list_collections(request):
     return HttpResponse(json.dumps(collections), mimetype='text/plain')
     
 def list_items(request):
-    #if not request.is_ajax():
-    #    return HttpResponseBadRequest()
+    if not request.is_ajax():
+        return HttpResponseBadRequest()
     loc = request.GET.get('loc', '')
     zotero_key = request.user.get_profile().zotero_key
     latest = utils.latest_items(zotero_key, loc)
@@ -99,8 +103,8 @@ def batch_import(request):
     return render_to_response('batch-import.html', o, context_instance=RequestContext(request))
 
 def update_link(request):
-    #if not request.is_ajax():
-    #    return HttpResponseBadRequest()
+    if not request.is_ajax():
+        return HttpResponseBadRequest()
     doc_id = request.POST.get('doc_id')
     json_string = request.POST.get('zotero_info')
     doc_information = json.loads(json_string, strict=False)

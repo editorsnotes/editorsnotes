@@ -88,7 +88,7 @@
               value: '{ "json" : ' + value.item_json + ', "url" : \"' + value.url + '\", "date" : ' + JSON.stringify(date) + ', "csl" : \"' + citation + '\", "related_object" : \"' + "{{ related_object }}" + '\", "related_id" : \"' + "{{ related_id }}" + '\"}'
             });
             
-            var input = $('<div class="zotero-link">').attr("id", "z" + counter).append('<a class="add-to-document"><img width="20" height="20" alt="Add Another" src="/media/style/icons/insert-link-2.png">&nbsp;').append(checkbox).append('<a class="zotero-object" href="' + value.url + '" target="_blank">' + value.title + '</a>');
+            var input = $('<div class="zotero-link">').attr("id", "z" + counter).append('<a class="add-to-document"><img width="10" height="10" alt="Add Another" src="/django_admin_media/img/admin/icon_addlink.gif">&nbsp;').append(checkbox).append('<a class="zotero-object" href="' + value.url + '" target="_blank">' + value.title + '</a>');
             
             counter = counter + 1
             
@@ -155,12 +155,12 @@
 <style type="text/css">
 .top-label h6 {padding-bottom: .75em;}
 #collections {height: 20em;}
-.zotero-link {padding: .33em;}
+.zotero-link {padding: .25em;}
 .zotero-link a {text-decoration: none;}
 .add-to-document a {text-decoration: none;}
-.add-to-document img { vertical-align: bottom;}
-.zotero-link input {margin-right: 1em; margin-left: 1em;}
+.zotero-link input {margin-right: .5em; margin-left: .25em;}
 #document {padding-bottom: 1em;}
+.zotero-link img { {% if not apply_to_docs %}display: none; {% endif %}vertical-align: middle; }
 </style>
 {% endblock %}
 
