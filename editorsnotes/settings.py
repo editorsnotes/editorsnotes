@@ -63,6 +63,7 @@ INSTALLED_APPS = (
     'editorsnotes.main',
     'editorsnotes.facts',
     'editorsnotes.djotero',
+    'editorsnotes.refine',
 )
 
 FIXTURE_DIRS = ( 'fixtures', )
