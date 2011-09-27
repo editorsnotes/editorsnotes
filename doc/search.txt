@@ -1,0 +1,46 @@
+There are five indexes: 
+One each for documents, transcripts, footnotes, topics and notes.
+
+What exactly is indexed for each of these?
+
+For documents, the full text of the bibliographic information for the
+document is indexed. Currently the topics assigned to the document are
+NOT indexed. For example:
+
+Woman Suffrage. The Argument of Carrie S. Burnham before Chief Justice
+Reed, and Associate Justices Agnew, Sharswood and Mercur, of the
+Supreme Court of Pennsylvania, in Banc, on the Third and Fourth of
+April, 1873. Philadelphia: Citizen’s Suffrage Association, 1873.
+
+For transcripts, the full text of the transcript is indexed.
+
+For footnotes, the full text of the footnote is indexed. Currently the
+footnoted text (i.e. the text in a transcript to which the footnotes
+is attached) is NOT indexed. For example:
+
+When the women pickets were forcibly fed in Washington Jail, they were
+told by a gentleman from Congress that if they would stop hunger
+striking, they would be given all the privileges of political
+Prisoners but would not be recognized as such, for that would
+automatically establish a political status which a Democracy could not
+tolerate.
+
+For topics, the preferred name, aliases (if any), and full text of the
+topic summary (if one exists) are indexed. The related topics are NOT
+indexed. For example:
+
+Rankin, Jeannette (1880-1973)
+Montana social worker, suffragist and politician. Graduating from the
+University of Montana in 1912...
+
+For notes, the full text of the main content of the note as well as
+the full text of any citation-specific notes are indexed. Currently
+the title of the note is NOT indexed, the topics assigned to the note
+are NOT indexed, and the bibliographic information in the citations is
+NOT indexed. For example:
+
+Notes on relationship between Rompapas and Margaret Sanger
+JR ought to be a closed book & yet I feel, have a very strong feeling
+somehow that you are waiting.  You said at Provincetown...
+
+
