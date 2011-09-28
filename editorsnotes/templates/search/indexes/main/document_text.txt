@@ -1,1 +1,6 @@
-{{ object.as_text }}
+{% load display %}
+{{ object.description|as_text }}
+{% for topic in topics %}
+{{ topic.preferred_name }}
+{{ topic.get_aliases }}
+{% endfor %}

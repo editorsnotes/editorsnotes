@@ -4,24 +4,24 @@ from haystack import site
 from haystack.indexes import *
 from models import Document, Transcript, Footnote, Topic, Note
 
-class DocumentIndex(SearchIndex):
+class DocumentIndex(RealTimeSearchIndex):
     title = CharField(model_attr='as_text')
     text = CharField(document=True, use_template=True)
 
-class TranscriptIndex(SearchIndex):
+class TranscriptIndex(RealTimeSearchIndex):
     title = CharField(model_attr='as_text')
     text = CharField(document=True, use_template=True)
 
-class FootnoteIndex(SearchIndex):
+class FootnoteIndex(RealTimeSearchIndex):
     title = CharField(model_attr='as_text')
     text = CharField(document=True, use_template=True)
 
-class TopicIndex(SearchIndex):
+class TopicIndex(RealTimeSearchIndex):
     title = CharField(model_attr='as_text')
     text = CharField(document=True, use_template=True)
     names = CharField(use_template=True)
 
-class NoteIndex(SearchIndex):
+class NoteIndex(RealTimeSearchIndex):
     title = CharField(model_attr='as_text')
     text = CharField(document=True, use_template=True)
 

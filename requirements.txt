@@ -1,7 +1,7 @@
 # Installed using pip
 Django==1.2.3
 South==0.7.2
-django-haystack==1.1.0
+django-haystack==1.2.5
 xapian-haystack==1.1.5beta
 django-reversion==1.3.1
 lxml==2.2.4
