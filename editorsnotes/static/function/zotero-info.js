@@ -18,7 +18,7 @@ $(function() {
         zotero_key: $("#zotero-key").val()
       },
       success: function() {
-        success = 1;
+        validationSuccess = 1;
         $(loader).remove();
         $("#test-message").html('<p>Combination OK!</p>');
         $('#dialog-form :input[type="text"]').attr('readonly', true).css('background', '#EEEEEE');
@@ -33,7 +33,7 @@ $(function() {
   
   $("#edit-zotero-info").click( function() {
     $("#dialog-form").dialog('open');
-    if ( typeof success == "undefined") {
+    if ( typeof validationSuccess == "undefined") {
       $('#dialog-form :input[type="text"]').val("");
       $('#test-message').html('');
     }
