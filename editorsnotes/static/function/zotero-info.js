@@ -37,8 +37,6 @@ $(function() {
       $('#dialog-form :input[type="text"]').val("");
       $('#test-message').html('');
     }
-    else {
-    }
   });
   
 });
