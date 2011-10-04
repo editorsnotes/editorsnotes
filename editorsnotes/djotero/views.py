@@ -31,8 +31,12 @@ def import_zotero(request, username=False):
 def access_list(request):
     if not request.is_ajax():
         return HttpResponseBadRequest()
-    zotero_uid = request.user.get_profile().zotero_uid
-    zotero_key = request.user.get_profile().zotero_key
+    if request.GET.get('validate', ''):
+        zotero_uid = request.GET.get('zotero_uid')
+        zotero_key = request.GET.get('zotero_key')
+    else:
+        zotero_uid = request.user.get_profile().zotero_uid
+        zotero_key = request.user.get_profile().zotero_key
     libraries = utils.request_permissions(zotero_uid, zotero_key)
     return HttpResponse(json.dumps(libraries), mimetype='text/plain')
 

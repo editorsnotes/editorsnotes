@@ -2,34 +2,15 @@
 {% load typogrify display %}
 
 {% block js %}
-<script type="text/javascript">
-$(function() {
-  
-  $("#dialog-form").dialog({
-    autoOpen: false,
-    modal: true,
-    width: 400
-  });
-  
-  $("#dialog-form").keyup(function(){
-    var keyLength = $("#zotero-key").val().length;
-    var uidLength = $("#zotero-id").val().length;
-    if (keyLength == 24 && uidLength == 6) {
-      $("#dialog-form input[type='submit']").attr('disabled', false);  
-    }
-    else {
-      $("#dialog-form input[type='submit']").attr('disabled', true);  
-    };
-  });
-  
-  $("#edit-zotero-info").click( function() {
-    $("#dialog-form").dialog('open');
-  });
-  
-});
-</script>
-
+<script type="text/javascript" src="/media/function/zotero-info.js"></script>
 {% endblock %}
+
+{% block css %}
+<style type="text/css">
+#test-message p {color: red};
+</style>
+{% endblock %}
+
 
 {% block title %}: {{ profile.display_name }}{% endblock %}
 
@@ -47,8 +28,6 @@ $(function() {
            <a id="edit-zotero-info" href="#">(edit)</a></span>
       </div>
       <div id="zotero-information">
-
-      
       </div>
     </header>
 
@@ -69,17 +48,17 @@ $(function() {
     </section>
 
   <div id="dialog-form" title="Edit Zotero access information">
-	  <p class="validateTips">Log in to <a href="http://www.zotero.org" target="_blank">Zotero</a> and browse to the <a href="https://www.zotero.org/settings/keys" target="_blank">"Feeds API"</a> section within user settings. Create a new key, with these settings recommended: "Allow library access" and "Read only" access to All Groups. For more information, see the Zotero section on this site's help page.</p>
-
+	  <p>Log in to <a href="http://www.zotero.org" target="_blank">Zotero</a> and browse to the <a href="https://www.zotero.org/settings/keys" target="_blank">"Feeds API"</a> section within user settings. Create a new key, with these settings recommended: "Allow library access" and "Read only" access to All Groups. For more information, see the Zotero section on this site's help page.</p>
 	  <form action="../zotero_info?return_to={{ request.get_full_path }}" method="post"> {% csrf_token %}
 	  <fieldset>
 		  <label for="name">User ID</label>
 		  <input type="text" name="zotero-id" id="zotero-id" class="text ui-widget-content ui-corner-all" />
-		  <br/>
 		  <label for="email">API Key</label>
 		  <input type="text" name="zotero-key" id="zotero-key" value="" class="text ui-widget-content ui-corner-all" />
-	    <br/>
-	    <input type="submit" value="Update Zotero information" disabled="true">
+	    <span id="test-message">
+	    </span>
+	    <a href="#" class="button" id="test-zotero-information">Test key</a>
+	    <input type="submit" value="Update Zotero information" style="display: none;" disabled="true">
 	  </fieldset>
 	  </form>
   </div>
