@@ -13,7 +13,6 @@ from django.utils.html import escape
 from reversion import admin as reversion_admin
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
-from pybtex.database.input import bibtex
 from io import StringIO
 from utils import xhtml_to_text
 from fields import XHTMLField
@@ -33,16 +32,6 @@ class DocumentAdminForm(forms.ModelForm):
                       xhtml_to_text(field.to_python(value)))) == 0:
             raise ValidationError('This field is required.')
         return value
-    def clean_bibtex(self):
-        parser = bibtex.Parser()
-        value = self.cleaned_data['bibtex'].strip()
-        if len(value) > 0: # empty value is OK
-            data = parser.parse_stream(StringIO(value))
-            if len(data.entries) == 0:
-                raise ValidationError(
-                    'This does not appear to be valid BibTex data.')
-        return value
-        
 
 ################################################################################
 
