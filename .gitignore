@@ -23,3 +23,5 @@ share
 src
 uploads
 topics-list.txt
+fabfile_local.py
+vhost-editorsnotes-local.conf
