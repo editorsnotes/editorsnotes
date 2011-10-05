@@ -20,7 +20,7 @@ env.project_name = 'editorsnotes'
 def pro():
     "Use the production webserver."
     env.hosts = ['editorsnotes.org']
-    env.user = 'patrick'
+    env.user = 'ryanshaw'
     env.path = '/db/projects/%(project_name)s' % env
     env.vhosts_path = '/etc/httpd/sites.d'
     env.site_packages = ['/usr/lib64/python2.6/site-packages',
