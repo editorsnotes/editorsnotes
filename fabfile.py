@@ -156,7 +156,9 @@ def symlink_system_packages():
 def install_site():
     "Add the virtualhost file to apache."
     require('release', provided_by=[deploy, setup])
-    sudo('cp -f vhost-%(host)s.conf %(vhosts_path)s' % env, pty=True)
+    put('vhost-%(host)s.conf' % env,
+        '%(path)s/vhost-%(host)s.conf.tmp' % env)
+    sudo('cd %(path)s; mv -f vhost-%(host)s.conf.tmp %(vhosts_path)s/vhost-%(host)s.conf' % env, pty=True)
 
 def symlink_current_release():
     "Symlink our current release."
