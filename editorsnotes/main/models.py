@@ -17,7 +17,6 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.urlresolvers import NoReverseMatch
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
-from pybtex.database.input import bibtex
 from io import StringIO
 
 # -------------------------------------------------------------------------------
@@ -84,7 +83,6 @@ class Document(LastUpdateMetadata, Administered, URLAccessible):
                                  blank=True, null=True, 
                                  unique=True, db_index=True)
     description = fields.XHTMLField()
-    bibtex = models.TextField(blank=True)
     collection = models.ForeignKey('self', related_name='parts', blank=True, null=True)
     ordering = models.CharField(max_length=32, editable=False)
     language = models.CharField(max_length=32, default='English')
@@ -141,12 +139,6 @@ class Document(LastUpdateMetadata, Administered, URLAccessible):
                 md.save()
                 changed = True
         return changed
-    def get_bibtex_fields(self):
-        parser = bibtex.Parser()
-        data = parser.parse_stream(StringIO(self.bibtex))
-        if len(data.entries) == 0:
-            return {}
-        return data.entries.values()[0].fields
         
     def as_text(self):
         return utils.xhtml_to_text(self.description)
