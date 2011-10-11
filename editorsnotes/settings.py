@@ -61,7 +61,6 @@ INSTALLED_APPS = (
     'south',
     'haystack',
     'editorsnotes.main',
-    'editorsnotes.facts',
     'editorsnotes.djotero',
     'editorsnotes.refine',
 )

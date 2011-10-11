@@ -122,10 +122,6 @@ $(document).ready(function() {
     }
   });
 
-  if (location.hash == '#facts') {
-    $('#tabs').tabs('select', 4);
-  }
-  
   var objMain = $('#main');
   function showSidebar(){
     objMain.addClass('use-sidebar');
