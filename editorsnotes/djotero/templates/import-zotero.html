@@ -14,6 +14,26 @@
     $(document).ready(function(){
       var csrf_token = $("input[name='csrfmiddlewaretoken']").attr('value');
       
+      // Set up selection for all lists
+      $(".djotero-list.active li").live({
+        mouseenter : function() {
+          if ( $(this).hasClass('item-selected') == false ) {
+            $(this).addClass('item-hover');
+          }
+        },
+        mouseleave : function() {
+          $(this).removeClass('item-hover');
+        },
+        click : function() {
+          $(this).siblings().removeClass('item-selected');
+          $(this).addClass('item-selected');
+        }
+      });
+      
+      $('.library-item').live('click', function() {
+        $('.after-library').show();
+      });
+      
       // Get access list of Zotero libraries
       $('#get-libraries').click(function(){
         $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
@@ -21,32 +41,38 @@
           $('#libraries img').remove();
           var i = 1
           $.each(data.libraries, function (key, value) {
-            var radio = $('<input>').attr({
-              type: 'radio', name: 'library', value: value.location, id: i
-            });
-            $('#library-list').append(radio).append(value.title + '<br>');
+            var library = $('<li>')
+              .attr({
+                'class' : 'library-item',
+                'location' : value.location,
+                'id' : 'library-' + i
+              })
+              .text(value.title);
+            $('#library-list').append(library);
             i++
           });
         });
       });
 
-      $('#libraries input').live('click', function(){
-        $('.after-library').show();
-      });
+
 
       // Get list of collections in a library
       $('#get-collections').click(function(){
         $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
-        $('#library-list input').attr('disabled', true);
-        var blah = $("#libraries input[type='radio']:checked").val();
-        $.getJSON('collections', {'loc' : blah }, function(data) {
+        $('#library-list').removeClass('active');
+        var base = $("#library-list .item-selected").attr('location');
+        $.getJSON('collections', {'loc' : base }, function(data) {
           $('#collections img').remove();
           var i = 1
           $.each(data.collections, function (key, value) {
-            var radio = $('<input>').attr({
-              type: 'radio', name: 'collection', value: value.location, id: i
-            });
-            $('#collection-list').append(radio).append(value.title + '<br>');
+            var collection = $('<li>')
+              .attr({
+                'class' : 'collection-item',
+                'location' : value.location,
+                'id' : 'collection-' + i
+              })
+              .text(value.title);
+            $('#collection-list').append(collection);
             i++
           });
         });
@@ -55,11 +81,11 @@
       // Query last 10 items in selected library (or collection)
       $("#get-items").click(function(){
         $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
-        if($('#collections').find('input:checked').length > 0) {
-          var selectedSource = $("#collections input[type='radio']:checked").val();
+        if( $('#collection-list').find('.item-selected').length > 0 ) {
+          var selectedSource = $("#collection-list .item-selected").attr('location');
         }
         else {
-          var selectedSource = $("#libraries input[type='radio']:checked").val();
+          var selectedSource = $("#library-list .item-selected").attr('location');
         }
         $.getJSON('items', {'loc' : selectedSource }, function(data) {
           $('#access').hide();
@@ -161,6 +187,19 @@
 .zotero-link input {margin-right: .5em; margin-left: .25em;}
 #document {padding-bottom: 1em;}
 .zotero-link img { {% if not apply_to_docs %}display: none; {% endif %}vertical-align: middle; }
+.djotero-list li {
+    border: 1px none;
+    border-radius: 5px 5px 5px 5px;
+    margin: 0.2em;
+    padding: 0.4em;
+}
+.djotero-list li.item-hover {
+    background: none repeat scroll 0 0 #F4F4F4;
+}
+.djotero-list li.item-selected {
+    background: #AEB4BE;
+}
+
 </style>
 {% endblock %}
 
@@ -168,13 +207,13 @@
 
 {% if zotero_status %}
 <div id="access" class="span-24 last">
-  <section id="libraries" class="span-8">
+  <section id="libraries" class="span-7">
     <span class="top-label">
       <h6>Select a library to import from</h6>
     </span>
     <a class="button" href="#" id="get-libraries">Determine access</a>
-    <form id="library-list" name="libraries" action="">
-    </form>
+    <ul id="library-list" class="djotero-list active">
+    </ul>
   </section>
   
   <section id="collections" style="display: none" class="span-10 colborder after-library">
@@ -182,8 +221,8 @@
       <h6>Optional: Select a collection from within the library</h6>
     </span>
     <a class="button" href="#" id="get-collections">Determine collections</a>
-    <form id="collection-list" name="collections" action="">
-    </form>
+    <ul id="collection-list" class="djotero-list active">
+    </ul>
   </section>
   
   <section id="query" style="display: none" class="span-4 after-library">
