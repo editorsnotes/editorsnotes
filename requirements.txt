@@ -17,5 +17,3 @@ pybtex==0.15
 # symlink: xapian.pyc
 # symlink: xapian.pyo
 # symlink: psycopg2
-# symlink: RDF.py
-# symlink: Redland.so
