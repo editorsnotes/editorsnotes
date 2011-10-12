@@ -7,7 +7,7 @@ NS = {'xhtml': 'http://www.w3.org/1999/xhtml',
       'atom' : "http://www.w3.org/2005/Atom"}
 
 # Zotero API calls
-def libraries(zotero_uid, zotero_key):
+def get_libraries(zotero_uid, zotero_key):
     url = 'https://api.zotero.org/users/%s/groups?key=%s' % (zotero_uid, zotero_key)
     access = {'zapi_version' : 'null',
               'libraries' : [{'title' : 'Your Zotero library',
@@ -18,7 +18,7 @@ def libraries(zotero_uid, zotero_key):
         access['libraries'].append({'title' : title, 'location' : loc })
     return access
 
-def collections(zotero_key, loc):
+def get_collections(zotero_key, loc):
     url = '%s/collections?key=%s&limit=10&order=dateModified&format=atom&content=json' % (loc, zotero_key)
     collections = { 'zapi_version' : 'null',
                     'collections' : []}
@@ -28,7 +28,7 @@ def collections(zotero_key, loc):
         collections['collections'].append({ 'title' : title, 'location' : loc })
     return collections
 
-def items(zotero_key, loc):
+def get_items(zotero_key, loc):
     url = loc + '/items?key=' + zotero_key + '&limit=20&order=dateModified&format=atom&content=json'
     latest = { 'zapi_version' : 'null', 'items' : []}
     for x in parse_xml(url):

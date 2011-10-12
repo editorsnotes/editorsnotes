@@ -28,7 +28,7 @@ def import_zotero(request, username=False):
     return render_to_response(
         'import-zotero.html', o, context_instance=RequestContext(request))
 
-def access_list(request):
+def libraries(request):
     if not request.is_ajax():
         return HttpResponseBadRequest()
     if request.GET.get('validate', ''):
@@ -37,23 +37,23 @@ def access_list(request):
     else:
         zotero_uid = request.user.get_profile().zotero_uid
         zotero_key = request.user.get_profile().zotero_key
-    libraries = utils.request_permissions(zotero_uid, zotero_key)
+    libraries = utils.get_libraries(zotero_uid, zotero_key)
     return HttpResponse(json.dumps(libraries), mimetype='text/plain')
 
-def list_collections(request):
+def collections(request):
     if not request.is_ajax():
         return HttpResponseBadRequest()
     loc = request.GET.get('loc', '') 
     zotero_key = request.user.get_profile().zotero_key
-    collections = utils.list_collections(zotero_key, loc)
+    collections = utils.get_collections(zotero_key, loc)
     return HttpResponse(json.dumps(collections), mimetype='text/plain')
     
-def list_items(request):
+def items(request):
     if not request.is_ajax():
         return HttpResponseBadRequest()
     loc = request.GET.get('loc', '')
     zotero_key = request.user.get_profile().zotero_key
-    latest = utils.latest_items(zotero_key, loc)
+    latest = utils.get_items(zotero_key, loc)
     return HttpResponse(json.dumps(latest), mimetype='text/plain')
 
 def import_items(request):

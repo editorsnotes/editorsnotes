@@ -32,7 +32,7 @@ $(document).ready(function(){
   // Get access list of Zotero libraries
   $('#get-libraries').click(function(){
     $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
-    $.getJSON('access/', function(data) {
+    $.getJSON('libraries/', function(data) {
       $('#libraries img').remove();
       var i = 1
       $.each(data.libraries, function (key, value) {

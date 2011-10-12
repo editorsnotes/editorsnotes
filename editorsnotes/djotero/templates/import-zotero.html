@@ -45,7 +45,7 @@
 
 {% if zotero_status %}
 <div id="access" class="span-24 last">
-  <section id="libraries" class="span-7">
+  <section id="libraries" class="span-8">
     <span class="top-label">
       <h6>Select a library to import from</h6>
     </span>
@@ -54,20 +54,22 @@
     </ul>
   </section>
   
-  <section id="collections" style="display: none" class="span-9 colborder after-library">
+  <section id="collections" class="span-8 colborder after-library">
     <span class="top-label">
-      <h6>Optional: Select a collection from within the library</h6>
+      <h6>Optional: Select a collection from the library</h6>
     </span>
     <a class="button" href="#" id="get-collections">Determine collections</a>
     <ul id="collection-list" class="djotero-list active">
     </ul>
   </section>
   
-  <section id="query" style="display: none" class="span-4 after-library">
+  <section id="query" class="span-7 last after-library">
     <span class="top-label">
       <h6>&nbsp;</h6>
     </span>
-    <a class="button" href="#" id="get-items">Get items</a>
+    <div id="items">
+        <a class="button" href="#" id="get-items">Get items</a>
+    </div>
   </section>
 </div>
 
