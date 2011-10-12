@@ -1,6 +1,6 @@
 $(document).ready(function(){
   var csrf_token = $("input[name='csrfmiddlewaretoken']").attr('value');
-  
+
   // Initiate citeproc engine
   var sys = {retrieveItem: function(id){return bibdata[id];}, retrieveLocale: function(lang){return locale[lang];}}
   var citeproc = new CSL.Engine(sys, chicago_fullnote_bibliography2);
@@ -8,8 +8,8 @@ $(document).ready(function(){
   CSL.Output.Formats.text["@font-style/italic"] = "<i>%%STRING%%</i>"
   var parser = new CSL.DateParser;
   var bibdata = new Object
-  
-  // Set up selection for all lists
+
+  // Set up selection for lists
   $(".djotero-list.active li").live({
     mouseenter : function() {
       if ( $(this).hasClass('item-selected') == false ) {
@@ -24,11 +24,11 @@ $(document).ready(function(){
       $(this).addClass('item-selected');
     }
   });
-  
+
   $('.library-item').live('click', function() {
     $('.after-library').show();
   });
-  
+
   // Get access list of Zotero libraries
   $('#get-libraries').click(function(){
     $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
@@ -48,8 +48,6 @@ $(document).ready(function(){
       });
     });
   });
-
-
 
   // Get list of collections in a library
   $('#get-collections').click(function(){
@@ -72,7 +70,7 @@ $(document).ready(function(){
       });
     });
   });
-  
+
   // Query last 10 items in selected library (or collection)
   $("#get-items").click(function(){
     $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
@@ -85,43 +83,48 @@ $(document).ready(function(){
     $.getJSON('items', {'loc' : selectedSource }, function(data) {
       $('#access').hide();
       $('#items').show();
-      var counter = 1
+      var i = 1
       $.each(data.items, function (key, value) {
-      
-        // Citeproc processing
+        // Start citeproc processing
         var item_csl = eval( "(" + value.item_csl + ")" );
         bibdata[item_csl.id] = item_csl;
         var citation = citeproc.previewCitationCluster(
-          {"citationItems": [{"id" : item_csl.id}], "properties": {}},
-          [], [], "html"
+          {"citationItems": [{"id" : item_csl.id}], "properties": {}}, [], [], "text"
         );
         var date = parser.parse(value.date)
-          
-        var checkbox = $('<input>').attr({
-          type: 'checkbox',
-          name: 'item',
-          value: '{ "json" : ' + value.item_json + ', "url" : \"' + value.url + '\", "date" : ' + JSON.stringify(date) + ', "csl" : \"' + citation + '\", "related_object" : \"' + "{{ related_object }}" + '\", "related_id" : \"' + "{{ related_id }}" + '\"}'
+        // End citeproc processing
+        var itemData = {
+          'json' : value.item_json,
+          'url' : value.url,
+          'date' : date,
+          'citation' : citation
+        }
+        if ( typeof(related_object) != 'undefined' ) {
+          itemData['related_object'] = related_object;
+          itemData['related_id'] = related_id;
+        }
+        var item = $('<li>').attr({
+          'class' : 'item',
+          'data' : JSON.stringify(itemData),
+          'id' : 'zotero-item-' + i
         });
-        
-        var input = $('<div class="zotero-link">').attr("id", "z" + counter).append('<a class="add-to-document"><img width="10" height="10" alt="Add Another" src="/django_admin_media/img/admin/icon_addlink.gif">&nbsp;').append(checkbox).append('<a class="zotero-object" href="' + value.url + '" target="_blank">' + value.title + '</a>');
-        
-        counter = counter + 1
-        
-        $('#item-list').append(input);
-      
+        var zoteroLink = $('<div class="zotero-link">')
+          .append('<a class="add-to-document"><img width="10" height="10" src="/django_admin_media/img/admin/icon_addlink.gif">&nbsp;')
+          .append('<a class="zotero-object" href="' + value.url + '" target="_blank">' + value.title + '</a>');
+        item.append(zoteroLink)
+        $('#item-list').append(item);
+        i++
       });
       var submit = $('<input>').attr({type: 'submit', value: 'Import selected items'});
       $('#item-list').append(submit);
     });
   });
-  
   $("#doc-add-form").dialog({
     autoOpen: false,
     modal: true,
     width: 500,
     title: 'Connect to existing document'
   });
-  
   $('.add-to-document').live('click', function(){
     var link = $(this).parent()
     $('#document')
@@ -130,7 +133,6 @@ $(document).ready(function(){
       .attr('value', link.find('input').attr('value'));
     $("#doc-add-form").dialog('open');
   });
-  
   $('#docsearch input')
     .autocomplete({
       source: function(request, response) {
@@ -149,17 +151,18 @@ $(document).ready(function(){
       }
   });
   $('#link-document').click(function(){
-    $.post("update_link/", { 
+    $.post("update_link/",
+      {
         'doc_id' : $(this).attr('document'),
         'zotero_info' : $('#document').attr('value'),
         'csrfmiddlewaretoken': csrf_token
-    },
-        function(data) {
-            var old_div = $('#document').attr('source');
-            $('#' + old_div ).remove();
-            $('#docsearch input')[0].value = "";
-            $("#doc-add-form").dialog('close');
-        }
+      },
+      function(data) {
+        var old_div = $('#document').attr('source');
+        $('#' + old_div ).remove();
+        $('#docsearch input')[0].value = "";
+        $("#doc-add-form").dialog('close');
+      }
     );
   });
 });

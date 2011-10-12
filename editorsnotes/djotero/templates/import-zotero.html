@@ -7,6 +7,12 @@
     <script type="text/javascript" src="/media/function/citeproc-js/simple.js"></script>
     <script type="text/javascript" src="/media/function/json2.js"></script>
     <script type="text/javascript" src="/media/function/zotero-import.js"></script>
+    <script type="text/javascript">
+    {% if related_object %}
+      var related_object = '{{ related_object }}';
+      var related_id = '{{ related_id }}';
+    {% endif %}
+    </script>
 {% endblock %}
 
 {% block css %}
@@ -26,10 +32,10 @@
     padding: 0.4em;
 }
 .djotero-list li.item-hover {
-    background: none repeat scroll 0 0 #F4F4F4;
+    background: none repeat scroll 0 0 #EEEEEE;
 }
 .djotero-list li.item-selected {
-    background: #AEB4BE;
+    background: #CCCCCC;
 }
 
 </style>
@@ -48,7 +54,7 @@
     </ul>
   </section>
   
-  <section id="collections" style="display: none" class="span-10 colborder after-library">
+  <section id="collections" style="display: none" class="span-9 colborder after-library">
     <span class="top-label">
       <h6>Optional: Select a collection from within the library</h6>
     </span>
@@ -65,9 +71,9 @@
   </section>
 </div>
 
-<div id="items" class="span-24 last" style="display: none">
-  <form id="item-list" method="post" action="import">{% csrf_token %}
-  </form>
+<div id="items" class="span-16 last" style="display: none">
+  <ul id="item-list" class="djotero-list active">{% csrf_token %}
+  </ul>
 </div>
 
 <div id="doc-add-form">
