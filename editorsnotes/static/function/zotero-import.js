@@ -74,13 +74,24 @@ $(document).ready(function(){
   // Query last 10 items in selected library (or collection)
   $("#get-items").click(function(){
     $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
+    // Determine source
     if( $('#collection-list').find('.item-selected').length > 0 ) {
       var selectedSource = $("#collection-list .item-selected").attr('location');
     }
     else {
       var selectedSource = $("#library-list .item-selected").attr('location');
     }
-    $.getJSON('items/', {'loc' : selectedSource }, function(data) {
+    // Set options
+    var queryOptions = new Object
+    $('.items-option').each( function() {
+      var optVal = $(this).val()
+      var optKey = $(this).parent().attr('key')
+      if ( optVal != '' ) {
+        queryOptions[optKey] = optVal
+      }
+    });
+    console.log(queryOptions)
+    $.getJSON('items/', {'loc' : selectedSource, 'opts' : JSON.stringify(queryOptions) }, function(data) {
       $('#access').hide();
       $('#items').show();
       var i = 1
@@ -110,7 +121,7 @@ $(document).ready(function(){
         });
         var zoteroLink = $('<div class="zotero-link">')
           .append('<a class="add-to-document"><img width="10" height="10" src="/django_admin_media/img/admin/icon_addlink.gif">&nbsp;')
-          .append('<a class="zotero-object" href="' + value.url + '" target="_blank">' + value.title + '</a>');
+          .append('<a class="zotero-object" href="' + value.url + '" target="_blank">' + citation + '</a>');
         item.append(zoteroLink)
         $('#item-list').append(item);
         i++

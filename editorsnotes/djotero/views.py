@@ -52,8 +52,9 @@ def items(request):
     if not request.is_ajax():
         return HttpResponseBadRequest()
     loc = request.GET.get('loc', '')
+    opts = json.loads(request.GET.get('opts', '{}'))
     zotero_key = request.user.get_profile().zotero_key
-    latest = utils.get_items(zotero_key, loc)
+    latest = utils.get_items(zotero_key, loc, opts)
     return HttpResponse(json.dumps(latest), mimetype='text/plain')
 
 def import_items(request):

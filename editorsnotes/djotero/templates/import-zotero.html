@@ -38,6 +38,14 @@
     background: #CCCCCC;
 }
 
+.items-options-label {
+    font-size: 13px;
+    float: left;
+    height: 19px;
+    margin: 8px 0 8px 8px;
+    width: 90px;
+}
+
 </style>
 {% endblock %}
 
@@ -45,7 +53,7 @@
 
 {% if zotero_status %}
 <div id="access" class="span-24 last">
-  <section id="libraries" class="span-8">
+  <section id="libraries" class="span-6">
     <span class="top-label">
       <h6>Select a library to import from</h6>
     </span>
@@ -54,7 +62,7 @@
     </ul>
   </section>
   
-  <section id="collections" class="span-8 colborder after-library">
+  <section id="collections" style="display: none;" class="span-9 colborder after-library">
     <span class="top-label">
       <h6>Optional: Select a collection from the library</h6>
     </span>
@@ -63,12 +71,41 @@
     </ul>
   </section>
   
-  <section id="query" class="span-7 last after-library">
+  <section id="query" style="display: none;" class="span-8 last after-library">
     <span class="top-label">
       <h6>&nbsp;</h6>
     </span>
-    <div id="items">
-        <a class="button" href="#" id="get-items">Get items</a>
+    <div id="get-items">
+        <a class="button" href="#">Get items</a>
+    </div>
+    <br/>
+    <div id="items-options" style="margin-top:2em; border: 1px solid #CCC;">
+        <span key="order">
+            <label class="items-options-label">Sorted by</label>
+            <select class="items-option">
+                <option value="dateModified">Date modified</option>
+                <option value="dateAdded">Date added</option>
+                <option value="title">Title</option>
+                <option value="type">Item type</option>
+                <option value="date">Date</option>
+                <option value="publication">Publication</option>
+                <option value="language">Language</option>
+            </select>
+        </span>
+        <span key="limit" style="display: block">
+            <label class="items-options-label">Max. results</label>
+             <select class="items-option">
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50">50</option>
+            </select>
+        </span>
+        <span key="q">
+            <label class="items-options-label">Search string</label>
+            <input type="text" class="items-option" name="items-option-search-string-value"/>
+        </span>
     </div>
   </section>
 </div>

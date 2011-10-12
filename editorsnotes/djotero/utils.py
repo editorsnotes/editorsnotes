@@ -28,8 +28,9 @@ def get_collections(zotero_key, loc):
         collections['collections'].append({ 'title' : title, 'location' : loc })
     return collections
 
-def get_items(zotero_key, loc):
-    url = loc + '/items?key=' + zotero_key + '&limit=20&order=dateModified&format=atom&content=json'
+def get_items(zotero_key, loc, opts):
+    opts = ['%s=%s' % (key, str(opts[key])) for key in opts.keys()]
+    url = loc + '/items?key=%s&format=atom&content=json&%s' % (zotero_key, '&'.join(opts))
     latest = { 'zapi_version' : 'null', 'items' : []}
     for x in parse_xml(url):
         title = x.xpath('./atom:title', namespaces=NS)[0].text
