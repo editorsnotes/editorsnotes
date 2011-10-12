@@ -1,6 +1,14 @@
 $(document).ready(function(){
   var csrf_token = $("input[name='csrfmiddlewaretoken']").attr('value');
   
+  // Initiate citeproc engine
+  var sys = {retrieveItem: function(id){return bibdata[id];}, retrieveLocale: function(lang){return locale[lang];}}
+  var citeproc = new CSL.Engine(sys, chicago_fullnote_bibliography2);
+  citeproc.setOutputFormat("text");
+  CSL.Output.Formats.text["@font-style/italic"] = "<i>%%STRING%%</i>"
+  var parser = new CSL.DateParser;
+  var bibdata = new Object
+  
   // Set up selection for all lists
   $(".djotero-list.active li").live({
     mouseenter : function() {
@@ -80,20 +88,14 @@ $(document).ready(function(){
       var counter = 1
       $.each(data.items, function (key, value) {
       
-        // Start citeproc processing
+        // Citeproc processing
         var item_csl = eval( "(" + value.item_csl + ")" );
-        var bibdata = {"ITEM-1" : item_csl}
-        var citation_object = {"citationItems": [{"id" : "ITEM-1"}], "properties": {"noteIndex": 0}}
-        var sys = {retrieveItem: function(id){return bibdata[id];}, retrieveLocale: function(lang){return locale[lang];}}
-        
-        citeproc = new CSL.Engine(sys, chicago_fullnote_bibliography2);
-        citeproc.setOutputFormat("text");
-        CSL.Output.Formats.text["@font-style/italic"] = "<i>%%STRING%%</i>"
-        citeproc.appendCitationCluster( citation_object );
-        var citation = citeproc.makeBibliography()[1];
-        var parser = new CSL.DateParser;
+        bibdata[item_csl.id] = item_csl;
+        var citation = citeproc.previewCitationCluster(
+          {"citationItems": [{"id" : item_csl.id}], "properties": {}},
+          [], [], "html"
+        );
         var date = parser.parse(value.date)
-        // End citeproc processing
           
         var checkbox = $('<input>').attr({
           type: 'checkbox',

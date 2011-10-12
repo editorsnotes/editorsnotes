@@ -44,11 +44,12 @@ def latest_items(zotero_key, loc):
         except:
             item_date = ""
         if json.loads(item_json)['itemType'] not in ['note', 'attachment']:
-            item_csl = as_csl(item_json)
+            citeproc_identifier = library_url[library_url.rindex('items') + 6:]
+            item_csl = as_csl(item_json, citeproc_identifier)
             latest['items'].append({'title' : title, 'loc' : loc, 'id' : item_id, 'date' : item_date, 'url' : library_url, 'item_json' : item_json, 'item_csl' : item_csl })
     return latest
 
-def as_csl(zotero_json_string):
+def as_csl(zotero_json_string, citeproc_identifier):
     zotero_data = json.loads(zotero_json_string)
     genre = zotero_data['itemType']
     field_translation = csl_map[genre]
@@ -61,7 +62,7 @@ def as_csl(zotero_json_string):
         for contrib_type in names.keys():
             output[contrib_type] = names[contrib_type]
     output['type'] = type_map['csl'][genre]
-    output['id'] = 'ITEM-1' # For use with citeproc-js.
+    output['id'] = citeproc_identifier # For use with citeproc-js.
     try:
         if zotero_data['date']:
             output['issued'] = { 'raw' : zotero_data['date'] }
