@@ -32,7 +32,7 @@ $(document).ready(function(){
   // Get access list of Zotero libraries
   $('#get-libraries').click(function(){
     $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
-    $.getJSON('access', function(data) {
+    $.getJSON('access/', function(data) {
       $('#libraries img').remove();
       var i = 1
       $.each(data.libraries, function (key, value) {
@@ -54,7 +54,7 @@ $(document).ready(function(){
     $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
     $('#library-list').removeClass('active');
     var base = $("#library-list .item-selected").attr('location');
-    $.getJSON('collections', {'loc' : base }, function(data) {
+    $.getJSON('collections/', {'loc' : base }, function(data) {
       $('#collections img').remove();
       var i = 1
       $.each(data.collections, function (key, value) {
@@ -80,7 +80,7 @@ $(document).ready(function(){
     else {
       var selectedSource = $("#library-list .item-selected").attr('location');
     }
-    $.getJSON('items', {'loc' : selectedSource }, function(data) {
+    $.getJSON('items/', {'loc' : selectedSource }, function(data) {
       $('#access').hide();
       $('#items').show();
       var i = 1

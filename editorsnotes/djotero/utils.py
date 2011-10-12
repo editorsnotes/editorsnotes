@@ -2,39 +2,36 @@ from urllib2 import urlopen
 from lxml import etree
 import re, json
 
-NS = { 'xhtml': 'http://www.w3.org/1999/xhtml', 'zot' : "http://zotero.org/ns/api", 'atom' : "http://www.w3.org/2005/Atom" }
+NS = {'xhtml': 'http://www.w3.org/1999/xhtml',
+      'zot' : "http://zotero.org/ns/api",
+      'atom' : "http://www.w3.org/2005/Atom"}
 
-def request_permissions(zotero_uid, zotero_key):
-    url = 'https://api.zotero.org/users/' + zotero_uid + '/groups?key=' + zotero_key
-    xml_parse = etree.parse(urlopen(url))
-    root = xml_parse.getroot()
-    groups = root.xpath('./atom:entry', namespaces=NS)
-    access = { 'zapi_version' : 'null', 'libraries' : [{'title' : 'Your Zotero library', 'location': 'https://api.zotero.org/users/' + zotero_uid }]}
-    for x in groups:
+# Zotero API calls
+def libraries(zotero_uid, zotero_key):
+    url = 'https://api.zotero.org/users/%s/groups?key=%s' % (zotero_uid, zotero_key)
+    access = {'zapi_version' : 'null',
+              'libraries' : [{'title' : 'Your Zotero library',
+                              'location': 'https://api.zotero.org/users/%s' % zotero_uid }]}
+    for x in parse_xml(url):
         title = x.xpath('./atom:title', namespaces=NS)[0].text
         loc = x.xpath('./atom:link[@rel="self"]', namespaces=NS)[0].attrib['href']
         access['libraries'].append({'title' : title, 'location' : loc })
     return access
 
-def list_collections(zotero_key, loc):
-    url = loc + '/collections?key=' + zotero_key + '&limit=10&order=dateModified&format=atom&content=json'
-    xml_parse = etree.parse(urlopen(url))
-    root = xml_parse.getroot()
-    entries = root.xpath('./atom:entry', namespaces=NS)
-    collections = { 'zapi_version' : 'null', 'collections' : []}
-    for x in entries:
+def collections(zotero_key, loc):
+    url = '%s/collections?key=%s&limit=10&order=dateModified&format=atom&content=json' % (loc, zotero_key)
+    collections = { 'zapi_version' : 'null',
+                    'collections' : []}
+    for x in parse_xml(url):
         title = x.xpath('./atom:title', namespaces=NS)[0].text
         loc = x.xpath('./atom:link[@rel="self"]', namespaces=NS)[0].attrib['href']
         collections['collections'].append({ 'title' : title, 'location' : loc })
     return collections
 
-def latest_items(zotero_key, loc):
+def items(zotero_key, loc):
     url = loc + '/items?key=' + zotero_key + '&limit=20&order=dateModified&format=atom&content=json'
-    xml_parse = etree.parse(urlopen(url))
-    root = xml_parse.getroot()
-    entries = root.xpath('./atom:entry', namespaces=NS)
     latest = { 'zapi_version' : 'null', 'items' : []}
-    for x in entries:
+    for x in parse_xml(url):
         title = x.xpath('./atom:title', namespaces=NS)[0].text
         library_url = x.xpath('./atom:id', namespaces=NS)[0].text
         item_id = x.xpath('./zot:key', namespaces=NS)[0].text
@@ -46,9 +43,17 @@ def latest_items(zotero_key, loc):
         if json.loads(item_json)['itemType'] not in ['note', 'attachment']:
             citeproc_identifier = library_url[library_url.rindex('items') + 6:]
             item_csl = as_csl(item_json, citeproc_identifier)
-            latest['items'].append({'title' : title, 'loc' : loc, 'id' : item_id, 'date' : item_date, 'url' : library_url, 'item_json' : item_json, 'item_csl' : item_csl })
+            latest['items'].append(
+                {'title' : title,
+                 'loc' : loc,
+                 'id' : item_id,
+                 'date' : item_date,
+                 'url' : library_url,
+                 'item_json' : item_json,
+                 'item_csl' : item_csl })
     return latest
 
+# Helper functions
 def as_csl(zotero_json_string, citeproc_identifier):
     zotero_data = json.loads(zotero_json_string)
     genre = zotero_data['itemType']
@@ -123,6 +128,11 @@ def resolve_names(zotero_data, format):
             contribs.append({'type' : creator['creatorType'], 'label' : contrib_map['readable'][creator['creatorType']], 'value' : name, 'display_category' : 3})
     
     return contribs
+
+def parse_xml(url):
+    xml_parse = etree.parse(urlopen(url))
+    root = xml_parse.getroot()
+    return root.xpath('./atom:entry', namespaces=NS)
 
 # Map to translate JSON from Zotero to something understandable by citeproc-js CSL engine.
 # See http://gsl-nagoya-u.net/http/pub/csl-fields/
