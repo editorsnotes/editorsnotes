@@ -7,6 +7,7 @@ from fabric.api import *
 from fabric.contrib.console import confirm
 from fabric.contrib.files import exists
 from fabric.utils import abort
+from fabfile_local import *
 
 # Globals
 
@@ -14,13 +15,7 @@ env.project_name = 'editorsnotes'
 
 # Environments
 
-def dev():
-    "Use the development webserver."
-    env.hosts = ['editorsnotes.local']
-    env.user = 'ryanshaw'
-    env.path = '/Library/WebServer/Documents/%(project_name)s' % env
-    env.vhosts_path = '/etc/apache2/sites'
-    env.site_packages = ['/Library/Python/2.6/site-packages']
+
 
 def pro():
     "Use the production webserver."
@@ -28,6 +23,7 @@ def pro():
     env.user = 'ryanshaw'
     env.path = '/db/projects/%(project_name)s' % env
     env.vhosts_path = '/etc/httpd/sites.d'
+    env.python = '/usr/bin/python2.6'
     env.site_packages = ['/usr/lib64/python2.6/site-packages',
                          '/usr/lib/python2.6/site-packages']
 
@@ -52,7 +48,7 @@ def setup():
     require('path')
     run('mkdir -p %(path)s' % env)
     with cd(env.path):
-        run('virtualenv --no-site-packages .' % env)
+        run('virtualenv -p %(python)s --no-site-packages .' % env)
         run('mkdir -p logs; mkdir -p releases; mkdir -p shared; mkdir -p packages' % env)
         run('cd releases; touch none; ln -sf none current; ln -sf none previous')
     deploy()
@@ -76,7 +72,11 @@ def deploy():
     migrate()
     restart_webserver()
     sleep(2)
-    local('open http://%(host)s/' % env)
+    try:
+        type(env.gnome)
+        local('gnome-open http://%(host)s/' % env)
+    except:
+        local('open http://%(host)s/' % env)
     
 def deploy_version(version):
     "Specify a specific version to be made live."
@@ -157,7 +157,9 @@ def symlink_system_packages():
 def install_site():
     "Add the virtualhost file to apache."
     require('release', provided_by=[deploy, setup])
-    sudo('cd %(path)s/releases/%(release)s; cp -f vhost-%(host)s.conf %(vhosts_path)s' % env, pty=True)
+    put('vhost-%(host)s.conf' % env,
+        '%(path)s/vhost-%(host)s.conf.tmp' % env)
+    sudo('cd %(path)s; mv -f vhost-%(host)s.conf.tmp %(vhosts_path)s/vhost-%(host)s.conf' % env, pty=True)
 
 def symlink_current_release():
     "Symlink our current release."
