@@ -52,18 +52,3 @@ input[type="checkbox"] {
  
 #separator {background-color: #ddd; display: block; outline: none; width: 7px;}
 #separator:hover { background: #C1DDFE;}
-
-/* styles for facts display */
-#facts table { width: 910px; margin-bottom: 0; }
-#facts .statement-group { width: 910px; border: 1px solid #ccc; margin-bottom: 3em; }
-#facts .attribution {  padding: 10px; background-color: #ddd; }
-#facts td { padding: 10px; border-top: 1px solid #ccc;  vertical-align: top;  }
-/*#facts tr:last-child td { border-bottom: none; }*/
-#facts .predicate { text-align: right; text-transform: lowercase; font-weight: bold; line-height: 1; padding-top: 13px; min-width: 100px; }
-#facts .predicate a { text-decoration: none; }
-#facts .predicate a:hover { text-decoration: underline; }
-#facts .objects { line-height: 1.7; unicode-bidi: bidi-override; direction: ltr; }
-#facts .object { display: inline; padding: 2px 4px 2px 4px; }
-#facts .object .accept-reject-buttons { display: inline-block; }
-#facts .object button { display: inline; float: none; padding: 2px; margin: 0; }
-#facts .object button img { margin: 0 0 -3px 0 !important; }*/
