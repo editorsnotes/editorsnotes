@@ -1,9 +1,9 @@
-
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from editorsnotes.main.models import Document, Topic, TopicAssignment
+from editorsnotes.main.templatetags.display import as_link
 from models import ZoteroLink
 import utils
 import json, datetime
@@ -58,37 +58,40 @@ def items(request):
     return HttpResponse(json.dumps(latest), mimetype='text/plain')
 
 def import_items(request):
-    raw = request.POST.getlist('item')
+    raw = request.POST.getlist('items[]')
     items = []
     o={}
     o['imported_docs'] = []
     o['existing_docs'] = []
+    o['errors'] = []
     for item in raw:
         items.append(json.loads(item,strict=False))
     for doc_import in items:
-        if not ZoteroLink.objects.filter(zotero_url=doc_import['url']):
-            d = Document(creator=request.user, last_updater=request.user, description=doc_import['csl'])
-            d.save()
-            o['imported_docs'].append(d)
-            link = ZoteroLink(zotero_data=json.dumps(doc_import['json']), zotero_url=doc_import['url'], doc_id=d.id)
-            try:
-                doc_import['date']['year']
-                link.date_information = json.dumps(doc_import['date'])
-            except KeyError:
-                pass
-            link.save()
-        else:
-            existing_link = ZoteroLink.objects.filter(zotero_url=doc_import['url'])[0]
-            o['existing_docs'].append(existing_link.doc)
-        if doc_import['related_object'] == 'topic':
-            related_topic = Topic.objects.get(id=int(doc_import['related_id']))
-            if TopicAssignment.objects.filter(document=d, topic=related_topic):
-                pass
+        try:
+            if not ZoteroLink.objects.filter(zotero_url=doc_import['url']):
+                d = Document(creator=request.user, last_updater=request.user, description=doc_import['citation'])
+                d.save()
+                o['imported_docs'].append(as_link(d))
+                link = ZoteroLink(zotero_data=doc_import['json'], zotero_url=doc_import['url'], doc_id=d.id)
+                try:
+                    doc_import['date']['year']
+                    link.date_information = json.dumps(doc_import['date'])
+                except KeyError:
+                    pass
+                link.save()
             else:
-                new_assignment = TopicAssignment.objects.create(content_object=d, topic=related_topic, creator=request.user)
-                new_assignment.save()
-    return render_to_response(
-        'success.html', o, context_instance=RequestContext(request))
+                existing_link = ZoteroLink.objects.filter(zotero_url=doc_import['url'])[0]
+                o['existing_docs'].append(as_link(existing_link.doc))
+            if doc_import['related_object'] == 'topic':
+                related_topic = Topic.objects.get(id=int(doc_import['related_id']))
+                if TopicAssignment.objects.filter(document=d, topic=related_topic):
+                    pass
+                else:
+                    new_assignment = TopicAssignment.objects.create(content_object=d, topic=related_topic, creator=request.user)
+                    new_assignment.save()
+        except:
+            o['errors'].append(doc_import['url'])
+    return HttpResponse(json.dumps(o), mimetype='text/plain')
 
 @login_required
 def update_zotero_info(request, username=None):

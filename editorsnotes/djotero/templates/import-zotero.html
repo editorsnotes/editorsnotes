@@ -11,6 +11,9 @@
     {% if related_object %}
       var related_object = '{{ related_object }}';
       var related_id = '{{ related_id }}';
+    {% else %}
+      var related_object = ''
+      var related_id = ''
     {% endif %}
     </script>
 {% endblock %}
@@ -32,10 +35,10 @@
     padding: 0.4em;
 }
 .djotero-list li.item-hover {
-    background: none repeat scroll 0 0 #EEEEEE;
+    background: none repeat scroll 0 0 #F0F0F0;
 }
 .djotero-list li.item-selected {
-    background: #CCCCCC;
+    background: #D7DEDF;
 }
 
 .items-options-label {
@@ -45,6 +48,16 @@
     margin: 8px 0 8px 8px;
     width: 90px;
 }
+td {
+    border-bottom: 1px dotted #CCCCCC;
+}
+th, td {
+    padding: 4px;
+    text-align: left;
+    vertical-align: top;
+    font-size: 90%;
+}
+thead th {background:#D7DEDF;}
 
 </style>
 {% endblock %}
@@ -110,11 +123,32 @@
   </section>
 </div>
 
-<div id="items" class="span-16 last" style="display: none">
-  <ul id="item-list" class="djotero-list active">{% csrf_token %}
-  </ul>
+<div id="items" class="span-24 last" style="display: none">
+  <table>{% csrf_token %}
+    <thead>
+      <tr>
+        <th class="item-checkbox"><input type="checkbox"></th>
+        <th>Title</th>
+        <th>Creator</th>
+        <th>Date</th>
+        <th>Item type</th>
+      </tr>
+    </thead>
+    <tbody id="item-list">
+    </tbody>
+  </table>
+  <div>
+    <a id="post-items" class="button">Import selected items</a>
+  </div>  
 </div>
-
+<div id="success">
+    <div id="imported">
+    </div>
+    <div id="not-imported">
+    </div>
+    <div id="errors">
+    </div>
+</div>
 <div id="doc-add-form">
   <div id="document"></div>
   <div id="docsearch">

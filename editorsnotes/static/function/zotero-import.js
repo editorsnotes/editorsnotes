@@ -1,15 +1,5 @@
 $(document).ready(function(){
-  var csrf_token = $("input[name='csrfmiddlewaretoken']").attr('value');
-
-  // Initiate citeproc engine
-  var sys = {retrieveItem: function(id){return bibdata[id];}, retrieveLocale: function(lang){return locale[lang];}}
-  var citeproc = new CSL.Engine(sys, chicago_fullnote_bibliography2);
-  citeproc.setOutputFormat("text");
-  CSL.Output.Formats.text["@font-style/italic"] = "<i>%%STRING%%</i>"
-  var parser = new CSL.DateParser;
-  var bibdata = new Object
-
-  // Set up selection for lists
+  // Selection for lists
   $(".djotero-list.active li").live({
     mouseenter : function() {
       if ( $(this).hasClass('item-selected') == false ) {
@@ -29,7 +19,12 @@ $(document).ready(function(){
     $('.after-library').show();
   });
 
-  // Get access list of Zotero libraries
+  //
+  // Ajax functions
+  //
+  var csrf_token = $("input[name='csrfmiddlewaretoken']").attr('value');
+  
+  // 1. Show accessible Zotero libraries
   $('#get-libraries').click(function(){
     $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
     $.getJSON('libraries/', function(data) {
@@ -49,7 +44,7 @@ $(document).ready(function(){
     });
   });
 
-  // Get list of collections in a library
+  // 2. Show list of collections within a library
   $('#get-collections').click(function(){
     $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
     $('#library-list').removeClass('active');
@@ -71,7 +66,7 @@ $(document).ready(function(){
     });
   });
 
-  // Query last 10 items in selected library (or collection)
+  // 3. List items within library or collection
   $("#get-items").click(function(){
     $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
     // Determine source
@@ -83,53 +78,79 @@ $(document).ready(function(){
     }
     // Set options
     var queryOptions = new Object
-    $('.items-option').each( function() {
+    $('.items-option').each(function() {
       var optVal = $(this).val()
       var optKey = $(this).parent().attr('key')
       if ( optVal != '' ) {
         queryOptions[optKey] = optVal
       }
     });
-    console.log(queryOptions)
     $.getJSON('items/', {'loc' : selectedSource, 'opts' : JSON.stringify(queryOptions) }, function(data) {
       $('#access').hide();
       $('#items').show();
       var i = 1
       $.each(data.items, function (key, value) {
-        // Start citeproc processing
-        var item_csl = eval( "(" + value.item_csl + ")" );
-        bibdata[item_csl.id] = item_csl;
-        var citation = citeproc.previewCitationCluster(
-          {"citationItems": [{"id" : item_csl.id}], "properties": {}}, [], [], "text"
-        );
-        var date = parser.parse(value.date)
-        // End citeproc processing
         var itemData = {
           'json' : value.item_json,
           'url' : value.url,
-          'date' : date,
-          'citation' : citation
+          'date' : dateParser.parse(value.date),
+          'citation' : runCite(value.item_csl),
+          'related_object' : related_object,
+          'related_id' : related_id
         }
-        if ( typeof(related_object) != 'undefined' ) {
-          itemData['related_object'] = related_object;
-          itemData['related_id'] = related_id;
-        }
-        var item = $('<li>').attr({
+        var itemRow = $('<tr>').attr({
           'class' : 'item',
-          'data' : JSON.stringify(itemData),
           'id' : 'zotero-item-' + i
         });
-        var zoteroLink = $('<div class="zotero-link">')
-          .append('<a class="add-to-document"><img width="10" height="10" src="/django_admin_media/img/admin/icon_addlink.gif">&nbsp;')
-          .append('<a class="zotero-object" href="' + value.url + '" target="_blank">' + citation + '</a>');
-        item.append(zoteroLink)
-        $('#item-list').append(item);
+        itemRow.append($('<span>').attr('item', 'zotero-item-' + i).text(JSON.stringify(itemData)).hide())
+        var zoteroData = JSON.parse(value.item_json);
+        function parseCreators(creators) {
+          var parsedCreators = new Array;
+          creators.forEach(function(creator) {
+            parsedCreators.push(creator.lastName)
+          });
+          return parsedCreators.join(', ');
+        };
+        function parseItemType(itemType) {
+          
+          return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+        itemRow.append('<td class="item-checkbox"><label><input type="checkbox"></label></td>');
+        var tableData = [value.title, parseCreators(zoteroData.creators), value.date, value.item_type]
+        $.each(tableData, function(index, data) {
+          itemRow.append('<td>' + data + '</td>')
+        });
+        $('#item-list').append(itemRow);
         i++
       });
-      var submit = $('<input>').attr({type: 'submit', value: 'Import selected items'});
-      $('#item-list').append(submit);
     });
   });
+  
+  // 4. Post selected items
+  $('#post-items').click(function(){
+    $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
+    var selectedItems = $('input:checked').parents('tr').children('span')
+    var itemsArray = new Array
+    $.each(selectedItems, function(key, value) {
+      itemsArray.push($(value).text())
+    });
+    $.post("import/",
+      {'items' : itemsArray, 'csrfmiddlewaretoken': csrf_token},
+      function (response) {
+        var results = JSON.parse(response)
+        $.each(results['existing_docs'], function(key, value) {
+          $("#not-imported").append($('<li>').append(value));
+        });
+        $.each(results['imported_docs'], function(key, value) {
+          $("#imported").append($('<li>').append(value));
+        });
+        $('#items').hide();
+        $('#success').show();
+      }
+    );
+  });
+
+  // 5. Allow Zotero items to be linked to already existing documents
   $("#doc-add-form").dialog({
     autoOpen: false,
     modal: true,

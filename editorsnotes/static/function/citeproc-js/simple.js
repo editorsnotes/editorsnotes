@@ -22,11 +22,16 @@ var sys = {
     }
 }
 
-
-// instantiate the citeproc object
+// instantiate the citeproc object (and a date parser)
 var citeproc = new CSL.Engine( sys, chicago_fullnote_bibliography2 );
+var dateParser = new CSL.DateParser;
 
+// change settings
+citeproc.setOutputFormat("text");
+CSL.Output.Formats.text["@font-style/italic"] = "<i>%%STRING%%</i>"
 
+// initiate bibdata object
+var bibdata = new Object
 
 function get_formatted_citation(){
     // this returns an in-text citation as a string, as well as adding it to
@@ -40,4 +45,13 @@ function get_formatted_bib(){
     // additional information which we are ignoring in this case. 
     return citeproc.makeBibliography()[ 1 ];
 }
+
+function runCite (csl) {
+  // Return a single formatted citation for one object
+  var item_csl = JSON.parse(csl);
+  bibdata[item_csl.id] = item_csl;
+  return citeproc.previewCitationCluster(
+    {"citationItems": [{"id" : item_csl.id}], "properties": {}}, [], [], "text"
+  );
+};
 
