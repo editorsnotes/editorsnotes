@@ -17,10 +17,12 @@ def import_zotero(request, username=False):
         user = get_object_or_404(User, username=username)
     if user.get_profile().zotero_uid and user.get_profile().zotero_key:
         o['zotero_status'] = True
+        o['zotero_uid'] = user.get_profile().zotero_uid
     else:
         o['zotero_status'] = False
     o['related_object'] = request.GET.get('rel', '')
     o['related_id'] = request.GET.get('id', '')
+    o['return_to'] = request.GET.get('return_to', '/')
     if request.GET.get('apply', ''):
         o['apply_to_docs'] = True
     else:
@@ -49,13 +51,13 @@ def collections(request):
     return HttpResponse(json.dumps(collections), mimetype='text/plain')
     
 def items(request):
-    if not request.is_ajax():
-        return HttpResponseBadRequest()
+    #if not request.is_ajax():
+    #    return HttpResponseBadRequest()
     loc = request.GET.get('loc', '')
     opts = json.loads(request.GET.get('opts', '{}'))
     zotero_key = request.user.get_profile().zotero_key
-    latest = utils.get_items(zotero_key, loc, opts)
-    return HttpResponse(json.dumps(latest), mimetype='text/plain')
+    items = utils.get_items(zotero_key, loc, opts)
+    return HttpResponse(json.dumps(items), mimetype='text/plain')
 
 def import_items(request):
     raw = request.POST.getlist('items[]')
@@ -63,34 +65,31 @@ def import_items(request):
     o={}
     o['imported_docs'] = []
     o['existing_docs'] = []
-    o['errors'] = []
     for item in raw:
         items.append(json.loads(item,strict=False))
     for doc_import in items:
-        try:
-            if not ZoteroLink.objects.filter(zotero_url=doc_import['url']):
-                d = Document(creator=request.user, last_updater=request.user, description=doc_import['citation'])
-                d.save()
-                o['imported_docs'].append(as_link(d))
-                link = ZoteroLink(zotero_data=doc_import['json'], zotero_url=doc_import['url'], doc_id=d.id)
-                try:
-                    doc_import['date']['year']
-                    link.date_information = json.dumps(doc_import['date'])
-                except KeyError:
-                    pass
-                link.save()
+        if not ZoteroLink.objects.filter(zotero_url=doc_import['url']):
+            d = Document(creator=request.user, last_updater=request.user, description=doc_import['citation'])
+            d.save()
+            o['imported_docs'].append(as_link(d))
+            link = ZoteroLink(zotero_data=doc_import['json'], zotero_url=doc_import['url'], doc_id=d.id)
+            try:
+                doc_import['date']['year']
+                link.date_information = json.dumps(doc_import['date'])
+            except KeyError:
+                pass
+            link.save()
+        else:
+            existing_link = ZoteroLink.objects.filter(zotero_url=doc_import['url'])[0]
+            o['existing_docs'].append(as_link(existing_link.doc))
+            d = existing_link.doc
+        if doc_import['related_object'] == 'topic':
+            related_topic = Topic.objects.get(id=int(doc_import['related_id']))
+            if TopicAssignment.objects.filter(document=d, topic=related_topic):
+                pass
             else:
-                existing_link = ZoteroLink.objects.filter(zotero_url=doc_import['url'])[0]
-                o['existing_docs'].append(as_link(existing_link.doc))
-            if doc_import['related_object'] == 'topic':
-                related_topic = Topic.objects.get(id=int(doc_import['related_id']))
-                if TopicAssignment.objects.filter(document=d, topic=related_topic):
-                    pass
-                else:
-                    new_assignment = TopicAssignment.objects.create(content_object=d, topic=related_topic, creator=request.user)
-                    new_assignment.save()
-        except:
-            o['errors'].append(doc_import['url'])
+                new_assignment = TopicAssignment.objects.create(content_object=d, topic=related_topic, creator=request.user)
+                new_assignment.save()
     return HttpResponse(json.dumps(o), mimetype='text/plain')
 
 @login_required

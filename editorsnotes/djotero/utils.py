@@ -12,17 +12,17 @@ def get_libraries(zotero_uid, zotero_key):
     access = {'zapi_version' : 'null',
               'libraries' : [{'title' : 'Your Zotero library',
                               'location': 'https://api.zotero.org/users/%s' % zotero_uid }]}
-    for x in parse_xml(url):
+    for x in parse_xml(url)['items']:
         title = x.xpath('./atom:title', namespaces=NS)[0].text
         loc = x.xpath('./atom:link[@rel="self"]', namespaces=NS)[0].attrib['href']
         access['libraries'].append({'title' : title, 'location' : loc })
     return access
 
 def get_collections(zotero_key, loc):
-    url = '%s/collections?key=%s&limit=10&order=dateModified&format=atom&content=json' % (loc, zotero_key)
+    url = '%s/collections/top?key=%s&order=title&format=atom&content=json' % (loc, zotero_key)
     collections = { 'zapi_version' : 'null',
                     'collections' : []}
-    for x in parse_xml(url):
+    for x in parse_xml(url)['items']:
         title = x.xpath('./atom:title', namespaces=NS)[0].text
         loc = x.xpath('./atom:link[@rel="self"]', namespaces=NS)[0].attrib['href']
         collections['collections'].append({ 'title' : title, 'location' : loc })
@@ -30,9 +30,11 @@ def get_collections(zotero_key, loc):
 
 def get_items(zotero_key, loc, opts):
     opts = ['%s=%s' % (key, str(opts[key])) for key in opts.keys()]
-    url = loc + '/items/top?key=%s&format=atom&content=json&%s' % (zotero_key, '&'.join(opts))
+    url = loc + '/items?key=%s&format=atom&content=json&%s' % (zotero_key, '&'.join(opts))
     latest = { 'zapi_version' : 'null', 'items' : []}
-    for x in parse_xml(url):
+    parsed = parse_xml(url)
+    latest['total_items'] = parsed['count']
+    for x in parsed['items']:
         title = x.xpath('./atom:title', namespaces=NS)[0].text
         library_url = x.xpath('./atom:id', namespaces=NS)[0].text
         item_id = x.xpath('./zot:key', namespaces=NS)[0].text
@@ -139,7 +141,8 @@ def resolve_names(zotero_data, format):
 def parse_xml(url):
     xml_parse = etree.parse(urlopen(url))
     root = xml_parse.getroot()
-    return root.xpath('./atom:entry', namespaces=NS)
+    return {'items' : root.xpath('./atom:entry', namespaces=NS),
+            'count' : root.xpath('./zot:totalResults', namespaces=NS)[0].text}
 
 # Map to translate JSON from Zotero to something understandable by citeproc-js CSL engine.
 # See http://gsl-nagoya-u.net/http/pub/csl-fields/

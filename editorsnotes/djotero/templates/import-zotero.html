@@ -15,39 +15,28 @@
       var related_object = ''
       var related_id = ''
     {% endif %}
+      var zoteroLibrary = 'https://api.zotero.org/users/{{ zotero_uid }}'
     </script>
 {% endblock %}
 
 {% block css %}
 <style type="text/css">
-.top-label h6 {padding-bottom: .75em;}
-#collections {height: 20em;}
-.zotero-link {padding: .25em;}
-.zotero-link a {text-decoration: none;}
-.add-to-document a {text-decoration: none;}
-.zotero-link input {margin-right: .5em; margin-left: .25em;}
-#document {padding-bottom: 1em;}
-.zotero-link img { {% if not apply_to_docs %}display: none; {% endif %}vertical-align: middle; }
-.djotero-list li {
-    border: 1px none;
-    border-radius: 5px 5px 5px 5px;
-    margin: 0.2em;
-    padding: 0.4em;
-}
-.djotero-list li.item-hover {
-    background: none repeat scroll 0 0 #F0F0F0;
-}
-.djotero-list li.item-selected {
-    background: #D7DEDF;
+#collections li {
+    padding: .33em;
+    font-size: 90%;
+    border-bottom: 1px dotted #CCCCCC;
 }
 
-.items-options-label {
-    font-size: 13px;
-    float: left;
-    height: 19px;
-    margin: 8px 0 8px 8px;
-    width: 90px;
+#collections *:hover {
+    background-color: #336699;
+    color: #FFFFFF;
 }
+
+.collection-selected {
+    background-color: #336699;
+    color: #FFFFFF;
+}
+
 td {
     border-bottom: 1px dotted #CCCCCC;
 }
@@ -65,97 +54,53 @@ thead th {background:#D7DEDF;}
 {% block content %}
 
 {% if zotero_status %}
-<div id="access" class="span-24 last">
-  <section id="libraries" class="span-6">
-    <span class="top-label">
-      <h6>Select a library to import from</h6>
-    </span>
-    <a class="button" href="#" id="get-libraries">Determine access</a>
-    <ul id="library-list" class="djotero-list active">
-    </ul>
-  </section>
-  
-  <section id="collections" style="display: none;" class="span-9 colborder after-library">
-    <span class="top-label">
-      <h6>Optional: Select a collection from the library</h6>
-    </span>
-    <a class="button" href="#" id="get-collections">Determine collections</a>
-    <ul id="collection-list" class="djotero-list active">
-    </ul>
-  </section>
-  
-  <section id="query" style="display: none;" class="span-8 last after-library">
-    <span class="top-label">
-      <h6>&nbsp;</h6>
-    </span>
-    <div id="get-items">
-        <a class="button" href="#">Get items</a>
-    </div>
-    <br/>
-    <div id="items-options" style="margin-top:2em; border: 1px solid #CCC;">
-        <span key="order">
-            <label class="items-options-label">Sorted by</label>
-            <select class="items-option">
-                <option value="dateModified">Date modified</option>
-                <option value="dateAdded">Date added</option>
-                <option value="title">Title</option>
-                <option value="type">Item type</option>
-                <option value="date">Date</option>
-                <option value="publication">Publication</option>
-                <option value="language">Language</option>
-            </select>
-        </span>
-        <span key="limit" style="display: block">
-            <label class="items-options-label">Max. results</label>
-             <select class="items-option">
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="30">30</option>
-                <option value="40">40</option>
-                <option value="50">50</option>
-            </select>
-        </span>
-        <span key="q">
-            <label class="items-options-label">Search string</label>
-            <input type="text" class="items-option" name="items-option-search-string-value"/>
-        </span>
-    </div>
-  </section>
+
+<div id="query" class="span-6 colborder">
+  <ul id="collections">
+    <li id="collection-0" class="collection-item" location="https://api.zotero.org/users/{{ zotero_uid }}"><h3>Your Zotero library</h3></li>
+  </ul>
 </div>
 
-<div id="items" class="span-24 last" style="display: none">
-  <table>{% csrf_token %}
-    <thead>
-      <tr>
-        <th class="item-checkbox"><input type="checkbox"></th>
-        <th>Title</th>
-        <th>Creator</th>
-        <th>Date</th>
-        <th>Item type</th>
-      </tr>
-    </thead>
-    <tbody id="item-list">
-    </tbody>
-  </table>
-  <div>
-    <a id="post-items" class="button">Import selected items</a>
-  </div>  
-</div>
-<div id="success">
-    <div id="imported">
+<div id="items" class="span-17 last">
+  <div id="items-table" style="display: none">
+    <div id="items-browsing" style="height: 42px;" class="span-16 last">
+      <span id="items-browsing-count" style="height: 42px; margin-top: 7px;" class="span-8">
+      </span>
+      <span id="items-browsing-search" style="height: 42px;" class="span-8 last">
+        <a class="button" style="float:right; margin-left: 5px; margin-top: 3px;" id="zotero-search-submit">Search</a>
+        <input id="zotero-search" style="float:right" type="text">
+      </span>
     </div>
-    <div id="not-imported">
+    <table class="span-16 last">{% csrf_token %}
+      <thead>
+        <tr>
+          <th class="item-checkbox"><input type="checkbox"></th>
+          <th>Title</th>
+          <th>Creator</th>
+          <th>Date</th>
+          <th>Item type</th>
+        </tr>
+      </thead>
+      <tbody id="item-list">
+      </tbody>
+    </table>
+    <div>
+      <a id="post-items" class="button">Import selected items</a>
     </div>
-    <div id="errors">
-    </div>
-</div>
-<div id="doc-add-form">
-  <div id="document"></div>
-  <div id="docsearch">
-    <span>Search for item:<span>
-    <input type="text" class="text" name="q"/>
-    <a class="button" style="display: none;" id="link-document">Submit</a>
   </div>
+  <img class="loader" src="/media/style/icons/ajax-loader.gif" style="display: none">
+</div>
+
+<div id="success" style="display: none;">
+    <a class="button" href="{{ return_to }}">Return to previous page</a>
+    <hr style="background: white;"/>
+    <ul id="imported">
+        <h6>Items imported</h6>
+    </ul>
+    <ul id="not-imported">
+    </ul>
+    <ul id="errors">
+    </ul>
 </div>
 
 {% else %}
