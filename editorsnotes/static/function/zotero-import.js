@@ -53,10 +53,43 @@ $(document).ready(function(){
       $table.show();
     }
     var query = $('#zotero-search').attr('value');
-    var queryOptions = { 'start' : 0, 'limit' : pageInterval, 'order' : 'dateModified', 'sort' : 'desc', 'q' : encodeURIComponent(query) }
+    var queryOptions = { 'start' : 0,
+                         'limit' : pageInterval,
+                         'order' : 'dateModified',
+                         'sort' : 'desc',
+                         'q' : encodeURIComponent(query) }
     loadItems(selectedSource, queryOptions, afterLoad);
     $('#zotero-search').attr('value', '');
   });
+  
+  $('#items-continue').click(function() {
+    var selectedItems = $('input:checked').parents('tr').children('input')
+    $.each(selectedItems, function(counter, data) {
+      var itemData = JSON.parse($(data).attr('value'));
+      var newContainer = $('<div>').append(data).append(itemData['citation']);
+      var relatedTopics = $('<ul class="related-topics">').html('<h6>Related Topics:</h6>');
+      if ( itemData.tags.length > 0 ) {
+        var tags = itemData.tags
+        $.each(tags, function(counter, data) {
+          $.getJSON('/api/topics/', {'q' : data.tag.replace(/\./g, ' ') }, function(data) {
+            if (data.length > 0) {
+              var topic = $('<li>').attr({ 'class' : 'related-topic', 'rel_id' : data[0].id }).text(data[0].preferred_name);
+              relatedTopics.append(topic);
+            }
+          });
+        });
+      }
+      if ( related_object != '' ) {
+        relatedTopics.append('<li class="related-topic" rel_id="' + related_id + '">Topic referral</li>');
+      }
+      newContainer.append(relatedTopics);
+      $('#items-to-post').append(newContainer)
+    });
+    $('#browse').hide();
+    $('#items-to-post').append(selectedItems)
+    $('#continue').show();
+  });
+  
   
   // 4. Post selected items
   $('#post-items').click(function(){
@@ -158,20 +191,23 @@ $(document).ready(function(){
       var start = i;
       var totalItems = data.total_items;
       $.each(data.items, function (key, value) {
+        var zoteroData = JSON.parse(value.item_json);
         var itemData = {
           'json' : value.item_json,
           'url' : value.url,
           'date' : dateParser.parse(value.date),
           'citation' : runCite(value.item_csl),
-          'related_object' : related_object,
-          'related_id' : related_id
+          'tags' : zoteroData['tags']
         }
         var itemRow = $('<tr>').attr({
           'class' : 'item',
           'id' : 'zotero-item-' + i
         });
-        itemRow.append($('<span>').attr('item', 'zotero-item-' + i).text(JSON.stringify(itemData)).hide())
-        var zoteroData = JSON.parse(value.item_json);
+        var itemInformation = $('<input>')
+          .attr({'item' : ('zotero-item-' + i),
+                 'type' : 'hidden',
+                 'value' : JSON.stringify(itemData)});
+        itemRow.append(itemInformation);
         function parseCreators(creators) {
           var parsedCreators = new Array;
           creators.forEach(function(creator) {
