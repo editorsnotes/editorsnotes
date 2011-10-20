@@ -246,7 +246,6 @@ $(document).ready(function(){
   }
     
   // Get collections on page load
-
   loadCollections(zoteroLibrary)
   
 });

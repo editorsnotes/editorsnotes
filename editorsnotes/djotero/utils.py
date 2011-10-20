@@ -139,7 +139,9 @@ def resolve_names(zotero_data, format):
     return contribs
 
 def parse_xml(url):
-    xml_parse = etree.parse(urlopen(url))
+    page = urlopen(url)
+    xml_parse = etree.parse(page)
+    page.close()
     root = xml_parse.getroot()
     return {'items' : root.xpath('./atom:entry', namespaces=NS),
             'count' : root.xpath('./zot:totalResults', namespaces=NS)[0].text}

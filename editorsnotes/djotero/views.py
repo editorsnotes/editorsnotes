@@ -51,8 +51,8 @@ def collections(request):
     return HttpResponse(json.dumps(collections), mimetype='text/plain')
     
 def items(request):
-    #if not request.is_ajax():
-    #    return HttpResponseBadRequest()
+    if not request.is_ajax():
+        return HttpResponseBadRequest()
     loc = request.GET.get('loc', '')
     opts = json.loads(request.GET.get('opts', '{}'))
     zotero_key = request.user.get_profile().zotero_key
