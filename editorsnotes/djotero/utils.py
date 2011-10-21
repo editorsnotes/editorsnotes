@@ -1,4 +1,4 @@
-from urllib2 import urlopen
+from urllib2 import urlopen, HTTPError
 from lxml import etree
 import re, json
 
@@ -139,12 +139,16 @@ def resolve_names(zotero_data, format):
     return contribs
 
 def parse_xml(url):
-    page = urlopen(url)
-    xml_parse = etree.parse(page)
-    page.close()
-    root = xml_parse.getroot()
-    return {'items' : root.xpath('./atom:entry', namespaces=NS),
-            'count' : root.xpath('./zot:totalResults', namespaces=NS)[0].text}
+    try:
+        page = urlopen(url)
+        xml_parse = etree.parse(page)
+        page.close()
+        root = xml_parse.getroot()
+        return {'items' : root.xpath('./atom:entry', namespaces=NS),
+                'count' : root.xpath('./zot:totalResults', namespaces=NS)[0].text}
+    except HTTPError, error:
+        error_content = error.read()
+        raise Exception
 
 # Map to translate JSON from Zotero to something understandable by citeproc-js CSL engine.
 # See http://gsl-nagoya-u.net/http/pub/csl-fields/

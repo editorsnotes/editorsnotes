@@ -21,13 +21,6 @@
 
 {% block css %}
 <style type="text/css">
-.related-topics {
-    width: 600px;
-}
-.related-topics li {
-    display: inline-block;
-    padding-right: 2em;
-}
 #collections li {
     padding: .33em;
     font-size: 90%;
@@ -63,7 +56,9 @@ thead th {background:#D7DEDF;}
 {% if zotero_status %}
 <div id="browse">
   <div id="library" class="span-6 colborder">
-    <ul id="collections">
+    <div id="collections-loading">
+    </div>
+    <ul id="collections" style="display: none;">
       <li id="collection-0" class="collection-item" location="https://api.zotero.org/users/{{ zotero_uid }}"><h3>Your Zotero library</h3></li>
     </ul>
   </div>
@@ -95,7 +90,8 @@ thead th {background:#D7DEDF;}
         <a id="items-continue" class="button">Continue</a>
       </div>
     </div>
-    <img class="loader" src="/media/style/icons/ajax-loader.gif" style="display: none">
+    <div id="items-loading">
+    </div>
   </div>
 </div>
 
@@ -103,19 +99,12 @@ thead th {background:#D7DEDF;}
   <p>You have selected to import the following documents.</p>
   <div id="items-to-post" class="span-24 last">
   </div>
-  <a id="post-items" class="button">Submit</a>
-</div>
-
-<div id="success" style="display: none;">
-    <a class="button" href="{{ return_to }}">Return to previous page</a>
-    <hr style="background: white;"/>
-    <ul id="imported">
-        <h6>Items imported</h6>
-    </ul>
-    <ul id="not-imported">
-    </ul>
-    <ul id="errors">
-    </ul>
+  <div id="post-items">
+    <a id="post-items-submit" class="button">Submit</a>
+    <div id="post-items-loading" style="display: none;">
+    </div>
+    <a class="button" id="post-items-success" style="display: none" href="{{ return_to }}">Return to previous page</a>
+  </div>
 </div>
 
 {% else %}
