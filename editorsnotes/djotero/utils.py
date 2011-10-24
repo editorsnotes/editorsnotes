@@ -10,7 +10,7 @@ NS = {'xhtml': 'http://www.w3.org/1999/xhtml',
 def get_libraries(zotero_uid, zotero_key):
     url = 'https://api.zotero.org/users/%s/groups?key=%s' % (zotero_uid, zotero_key)
     access = {'zapi_version' : 'null',
-              'libraries' : [{'title' : 'Your Zotero library',
+              'libraries' : [{'title' : 'Your library',
                               'location': 'https://api.zotero.org/users/%s' % zotero_uid }]}
     for x in parse_xml(url)['items']:
         title = x.xpath('./atom:title', namespaces=NS)[0].text
@@ -18,14 +18,18 @@ def get_libraries(zotero_uid, zotero_key):
         access['libraries'].append({'title' : title, 'location' : loc })
     return access
 
-def get_collections(zotero_key, loc):
-    url = '%s/collections/top?key=%s&order=title&format=atom&content=json' % (loc, zotero_key)
+def get_collections(zotero_key, loc, top):
+    if top:
+        url = '%s/collections/top?key=%s&order=title&format=atom&content=json' % (loc, zotero_key)
+    else:
+        url = '%s/collections?key=%s&format=atom&content=json' % (loc, zotero_key)
     collections = { 'zapi_version' : 'null',
                     'collections' : []}
     for x in parse_xml(url)['items']:
         title = x.xpath('./atom:title', namespaces=NS)[0].text
         loc = x.xpath('./atom:link[@rel="self"]', namespaces=NS)[0].attrib['href']
-        collections['collections'].append({ 'title' : title, 'location' : loc })
+        has_children = bool(int(x.xpath('./zot:numCollections', namespaces=NS)[0].text))
+        collections['collections'].append({ 'title' : title, 'location' : loc, 'has_children' : int(has_children) })
     return collections
 
 def get_items(zotero_key, loc, opts):

@@ -8,33 +8,40 @@
     <script type="text/javascript" src="/media/function/json2.js"></script>
     <script type="text/javascript" src="/media/function/zotero-import.js"></script>
     <script type="text/javascript">
-    {% if related_object %}
-      var related_object = '{{ related_object }}';
-      var related_id = '{{ related_id }}';
-    {% else %}
-      var related_object = ''
-      var related_id = ''
-    {% endif %}
+      var relatedTopic = '{{ related_topic }}';
+      var relatedNote = '{{ related_note }}';
       var zoteroLibrary = 'https://api.zotero.org/users/{{ zotero_uid }}'
     </script>
 {% endblock %}
 
 {% block css %}
 <style type="text/css">
-#collections li {
+#collections li, #libraries li {
     padding: .33em;
     font-size: 90%;
     border-bottom: 1px dotted #CCCCCC;
 }
 
-#collections *:hover {
+.collection-item:hover, #libraries li:hover {
     background-color: #336699;
     color: #FFFFFF;
 }
 
-.collection-selected {
+.collection-selected span {
     background-color: #336699;
     color: #FFFFFF;
+}
+
+.collection-child {
+    margin: 0px 0px 0px 12px;
+}
+
+.collection-children-toggle {
+    position: absolute;
+    left: 188px;
+    height: 12px;
+    width: 12px;
+    padding-top: 7px;
 }
 
 td {
@@ -55,12 +62,20 @@ thead th {background:#D7DEDF;}
 
 {% if zotero_status %}
 <div id="browse">
-  <div id="library" class="span-6 colborder">
-    <div id="collections-loading">
+  <div id="source-selection" class="span-7">
+    <div id="libraries-container">
+      <div id="libraries-loading">
+      </div>
+      <ul id="libraries" style="display: none;">
+        <h3>Select a library</h3>
+      </ul>
     </div>
-    <ul id="collections" style="display: none;">
-      <li id="collection-0" class="collection-item" location="https://api.zotero.org/users/{{ zotero_uid }}"><h3>Your Zotero library</h3></li>
-    </ul>
+    <div id="collections-container">
+      <div id="collections-loading">
+      </div>
+      <ul id="collections" style="display: none;">
+      </ul>
+    </div>
   </div>
 
   <div id="items" class="span-17 last">

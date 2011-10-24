@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
-from editorsnotes.main.models import Document, Topic, TopicAssignment
+from editorsnotes.main.models import Document, Topic, TopicAssignment, Note, Citation
 from editorsnotes.main.templatetags.display import as_link
 import datetime
 from models import ZoteroLink
@@ -21,8 +21,8 @@ def import_zotero(request, username=False):
         o['zotero_uid'] = user.get_profile().zotero_uid
     else:
         o['zotero_status'] = False
-    o['related_object'] = request.GET.get('rel', '')
-    o['related_id'] = request.GET.get('id', '')
+    o['related_topic'] = request.GET.get('reltopic', '')
+    o['related_note'] = request.GET.get('relnote', '')
     o['return_to'] = request.GET.get('return_to', '/')
     if request.GET.get('apply', ''):
         o['apply_to_docs'] = True
@@ -44,16 +44,17 @@ def libraries(request):
     return HttpResponse(json.dumps(libraries), mimetype='application/json')
 
 def collections(request):
-    if not request.is_ajax():
-        return HttpResponseBadRequest()
-    loc = request.GET.get('loc', '') 
+    #if not request.is_ajax():
+    #    return HttpResponseBadRequest()
+    loc = request.GET.get('loc', '')
+    top_level = request.GET.get('top', 0)
     zotero_key = request.user.get_profile().zotero_key
-    collections = utils.get_collections(zotero_key, loc)
+    collections = utils.get_collections(zotero_key, loc, int(top_level))
     return HttpResponse(json.dumps(collections), mimetype='application/json')
     
 def items(request):
-    if not request.is_ajax():
-        return HttpResponseBadRequest()
+    #if not request.is_ajax():
+    #    return HttpResponseBadRequest()
     loc = request.GET.get('loc', '')
     opts = json.loads(request.GET.get('opts', '{}'))
     zotero_key = request.user.get_profile().zotero_key
@@ -95,14 +96,27 @@ def import_items(request):
             except KeyError:
                 pass
             link.save()
-            
-        #if doc_import['related_object'] == 'topic':
-        #    related_topic = Topic.objects.get(id=int(doc_import['related_id']))
-        #    if TopicAssignment.objects.filter(document=d, topic=related_topic):
-        #        pass
-        #    else:
-        #        new_assignment = TopicAssignment.objects.create(content_object=d, topic=related_topic, creator=request.user)
-        #        new_assignment.save()
+        if doc_import['related_topic']:
+            try:
+                related_topic = Topic.objects.get(id=int(doc_import['related_topic']))
+                if not TopicAssignment.objects.filter(document=d, topic=related_topic):
+                    new_assignment = TopicAssignment.objects.create(
+                        content_object=d,
+                        topic=related_topic,
+                        creator=request.user
+                        )
+                    new_assignment.save()
+            except:
+                pass
+        if doc_import['related_note']:
+            related_note = Note.objects.get(id=int(doc_import['related_note']))
+            if not Citation.objects.filter(note=related_note, document=d):
+                new_citation = Citation.objects.create(
+                    content_object=related_note,
+                    document=d,
+                    creator=request.user
+                )
+                new_citation.save()
     return HttpResponse(json.dumps(o), mimetype='application/json')
 
 @login_required
