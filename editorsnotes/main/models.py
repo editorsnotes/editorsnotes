@@ -397,6 +397,8 @@ class Project(models.Model, URLAccessible):
         return ('index_view', [self.slug])
     def as_text(self):
         return self.name
+    def get_members(self):
+        return UserProfile.objects.filter(affiliation=self)
         
 class UserProfile(models.Model, URLAccessible):
     user = models.ForeignKey(User, unique=True)
