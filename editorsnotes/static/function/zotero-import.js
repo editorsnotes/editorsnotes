@@ -23,7 +23,7 @@ $(document).ready(function(){
   });
 
   $(".collection-item").live('click', function(){
-    $(this).parent().children().removeClass('collection-selected');
+    $('#collections').find('li').removeClass('collection-selected');
     $(this).addClass('collection-selected');
 
     var loaderContainer = $('#items-loading');
