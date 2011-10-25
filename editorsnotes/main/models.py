@@ -398,7 +398,7 @@ class Project(models.Model, URLAccessible):
     def as_text(self):
         return self.name
     def get_members(self):
-        return UserProfile.objects.filter(affiliation=self)
+        return User.objects.filter(userprofile__affiliation=self)
         
 class UserProfile(models.Model, URLAccessible):
     user = models.ForeignKey(User, unique=True)
