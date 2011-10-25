@@ -22,26 +22,21 @@
     border-bottom: 1px dotted #CCCCCC;
 }
 
-.collection-item:hover, #libraries li:hover {
-    background-color: #336699;
-    color: #FFFFFF;
-}
-
-.collection-selected span {
+.collection-item:hover, #libraries li:hover, .collection-selected {
     background-color: #336699;
     color: #FFFFFF;
 }
 
 .collection-child {
     margin: 0px 0px 0px 12px;
+    border-left: 1px solid #CCCCCC;
 }
 
-.collection-children-toggle {
-    position: absolute;
-    left: 188px;
-    height: 12px;
-    width: 12px;
-    padding-top: 7px;
+.collection-has-children:before {
+    content: "▼ ";
+}
+.collection-has-children.collection-collapsed:before {
+    content: "▶ ";
 }
 
 td {
@@ -71,6 +66,8 @@ thead th {background:#D7DEDF;}
       </ul>
     </div>
     <div id="collections-container">
+      <div id="collections-blank">
+      </div>
       <div id="collections-loading">
       </div>
       <ul id="collections" style="display: none;">
@@ -88,7 +85,7 @@ thead th {background:#D7DEDF;}
           <input id="zotero-search" style="float:right" type="text">
         </span>
       </div>
-      <table class="span-16 last">{% csrf_token %}
+      <table class="span-17 last">{% csrf_token %}
         <thead>
           <tr>
             <th class="item-checkbox"><input type="checkbox"></th>

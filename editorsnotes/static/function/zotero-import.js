@@ -15,7 +15,13 @@ $(document).ready(function(){
     collectionsContainer.append(firstCollectionItem);
     loadCollections(selectedLibrary.attr('location'), 1, collectionsContainer, collectionsLoaderContainer);
   });
-  
+
+  $('#load-collections-retry').live('click', function() {
+    var itemsContainer = $('#collections');
+    var loaderContainer = $('#collections-loading');
+    loadCollections(zoteroLibrary, 1, itemsContainer, loaderContainer);
+  });
+
   $(".collection-item").live('click', function(){
     $(this).parent().children().removeClass('collection-selected');
     $(this).addClass('collection-selected');
@@ -31,10 +37,9 @@ $(document).ready(function(){
     loadItems(selectedSource, queryOptions, itemsTable, loaderContainer);
   });
   
-  $('.collection-children-toggle').live('click', function(){
-    var topCollection = $(this).next('.collection-item');
+  $('.collection-has-children').live('click', function(){
+    var topCollection = $(this);
     if (topCollection.hasClass('collection-collapsed')) {
-      $(this).attr('src', '/media/style/icons/collapse.png');
       var loadingContainer = $('<div>')
       var collectionChildrenContainer = $('<ul>')
         .attr({'id' : topCollection.attr('id') + '-children', 'class' : 'collection-child'});
@@ -43,7 +48,6 @@ $(document).ready(function(){
       topCollection.toggleClass('collection-collapsed');
     }
     else {
-      $(this).attr('src', '/media/style/icons/expand.png');
       topCollection.next('ul').remove()
       topCollection.toggleClass('collection-collapsed');
     }
@@ -76,8 +80,6 @@ $(document).ready(function(){
     $('#continue').show();
   });
   
-  
-  // 4. Post selected items
   $('#post-items-submit').click(function(){
     $(this).hide();
     loader = $(this).next();
@@ -100,57 +102,7 @@ $(document).ready(function(){
     );
   });
 
-  // 5. Allow Zotero items to be linked to already existing documents
-  $("#doc-add-form").dialog({
-    autoOpen: false,
-    modal: true,
-    width: 500,
-    title: 'Connect to existing document'
-  });
-  $('.add-to-document').live('click', function(){
-    var link = $(this).parent()
-    $('#document')
-      .html(link.find('.zotero-object')[0].text)
-      .attr('source', link.attr('id'))
-      .attr('value', link.find('input').attr('value'));
-    $("#doc-add-form").dialog('open');
-  });
-  $('#docsearch input')
-    .autocomplete({
-      source: function(request, response) {
-        $.getJSON('/api/documents/', { q: request.term }, function(data) {
-          response($.map(data, function(item, index) {
-            return { label: item.description, id: item.id };
-          }));
-        });
-      },
-      minLength: 3,
-      select: function(event, ui) {
-        if (ui.item) {
-          $('#link-document').show()
-            .attr('document', ui.item.id);
-        }
-      }
-  });
-  $('#link-document').click(function(){
-    $.post("update_link/",
-      {
-        'doc_id' : $(this).attr('document'),
-        'zotero_info' : $('#document').attr('value'),
-        'csrfmiddlewaretoken': csrf_token
-      },
-      function(data) {
-        var old_div = $('#document').attr('source');
-        $('#' + old_div ).remove();
-        $('#docsearch input')[0].value = "";
-        $("#doc-add-form").dialog('close');
-      }
-    );
-  });
-
-  
-
-// Ajax calls
+// Ajax functions
   var loadLibraries = function (libraryContainer, loaderContainer) {
     loaderContainer.html('Connecting to Zotero... <img class="loader" src="/media/style/icons/ajax-loader.gif">').show();
     $.getJSON('libraries/', function(data) {
@@ -188,11 +140,7 @@ $(document).ready(function(){
         if (value.has_children) {
           collection.addClass('collection-has-children collection-collapsed');
           var collectionOffset = collection.offset();
-          var toggler = $('<img src="/media/style/icons/expand.png">')
-            .attr({'class' : 'collection-children-toggle collection-collapsed'});
-          if (!topLevel){toggler.addClass('collection-child');}
         }
-        if (typeof(toggler)!='undefined'){collectionContainer.append(toggler);}
         collectionContainer.append(collection);
         collectionCounter++
       });
@@ -219,52 +167,57 @@ $(document).ready(function(){
     }
     var queryOptions = buildQueryOptions(opts);
     $.getJSON('items/', {'loc' : sourceLocation, 'opts' : JSON.stringify(queryOptions) }, function(data) {
-      var i = queryOptions['start'] + 1
-      var start = i;
-      var totalItems = data.total_items;
-      $.each(data.items, function (key, value) {
-        var zoteroData = JSON.parse(value.item_json);
-        var itemData = {
-          'json' : value.item_json,
-          'url' : value.url,
-          'date' : dateParser.parse(value.date),
-          'citation' : runCite(value.item_csl),
-          'tags' : zoteroData['tags']
-        }
-        var itemRow = $('<tr>').attr({'class' : 'item', 'id' : 'zotero-item-' + i});
-        var itemInformation = $('<input>')
-          .attr({'item' : ('zotero-item-' + i),
-                 'type' : 'hidden',
-                 'value' : JSON.stringify(itemData)});
-        itemRow.append(itemInformation);
-        itemRow.append('<td class="item-checkbox"><label><input type="checkbox"></label></td>');
-        var parseCreators = function(creators) {
-          var parsedCreators = new Array;
-          creators.forEach(function(creator) {
-            parsedCreators.push(creator.lastName)
+      if (data.total_items > 0) {
+        var i = queryOptions['start'] + 1
+        var start = i;
+        var totalItems = data.total_items;
+        $.each(data.items, function (key, value) {
+          var zoteroData = JSON.parse(value.item_json);
+          var itemData = {
+            'json' : value.item_json,
+            'url' : value.url,
+            'date' : dateParser.parse(value.date),
+            'citation' : runCite(value.item_csl),
+            'tags' : zoteroData['tags']
+          }
+          var itemRow = $('<tr>').attr({'class' : 'item', 'id' : 'zotero-item-' + i});
+          var itemInformation = $('<input>')
+            .attr({'item' : ('zotero-item-' + i),
+                   'type' : 'hidden',
+                   'value' : JSON.stringify(itemData)});
+          itemRow.append(itemInformation);
+          itemRow.append('<td class="item-checkbox"><label><input type="checkbox"></label></td>');
+          var parseCreators = function(creators) {
+            var parsedCreators = new Array;
+            creators.forEach(function(creator) {
+              parsedCreators.push(creator.lastName)
+            });
+            return parsedCreators.join(', ');
+          };
+          var parseItemType = function(itemType) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+          }
+          var tableData = [value.title, parseCreators(zoteroData.creators), value.date, value.item_type]
+          $.each(tableData, function(index, data) {
+            itemRow.append('<td>' + data + '</td>')
           });
-          return parsedCreators.join(', ');
-        };
-        var parseItemType = function(itemType) {
-          return string.charAt(0).toUpperCase() + string.slice(1);
-        }
-        var tableData = [value.title, parseCreators(zoteroData.creators), value.date, value.item_type]
-        $.each(tableData, function(index, data) {
-          itemRow.append('<td>' + data + '</td>')
+          itemList.append(itemRow);
+          i++
         });
-        itemList.append(itemRow);
-        i++
-      });
-      updateCounter(start, totalItems);
-      loaderContainer.hide();
-      itemsContainer.attr('location', sourceLocation).show();
+        updateCounter(start, totalItems);
+        loaderContainer.hide();
+        itemsContainer.attr('location', sourceLocation).show();
+      }
+      else {
+        loaderContainer.html('No items to display.');
+      }
     })
     .error( function() {
       loaderContainer.html('<p>Error connecting to Zotero server</p>');
     });
   }
 
-
+  //Page counter for items
   var pageInterval = 25;
   var $itemsCount = $('#items-browsing-count');
   var updateCounter = function(initial, total) {
@@ -277,19 +230,6 @@ $(document).ready(function(){
     }
     $itemsCount.html('Viewing items ' + start + '-' + end + ' of ' + total)
   }
-  
-  
-  // Get collections on page load
-  var initialCollectionsLoad = function () {
-    var itemsContainer = $('#collections');
-    var loaderContainer = $('#collections-loading');
-    loadCollections(zoteroLibrary, 1, itemsContainer, loaderContainer);
-  }
-  $('#load-collections-retry').live('click', function() {
-    var itemsContainer = $('#collections');
-    var loaderContainer = $('#collections-loading');
-    initialCollectionsLoad(zoteroLibrary, itemsContainer, loaderContainer);
-  });
   
   //Get libraries on page load
   var initialLibrariesLoad = function () {
