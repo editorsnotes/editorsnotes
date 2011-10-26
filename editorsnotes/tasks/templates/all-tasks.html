@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% load typogrify display %}
+
+{% block content %}
+
+  {% for task in tasks %}
+    {{ task|as_link }}
+  {% endfor %}
+  
+{% endblock %}

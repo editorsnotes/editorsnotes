@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% load typogrify display %}
+
+{% block js %}
+<script type="text/javascript" src="/media/function/json2.js"></script>
+<script type="text/javascript" src="/media/function/wymeditor/jquery.wymeditor.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+  var csrf_token = $("input[name='csrfmiddlewaretoken']").attr('value');
+  $('#submit-comment').click(function() {
+    var comment = $('#comment-text').val()
+    $.post("comment/",
+      {'comment' : comment, 'csrfmiddlewaretoken': csrf_token},
+      function (response) {
+        var response_object = JSON.parse(response);
+        $('#comments').append($(response_object.new_comment));
+      }
+    );
+  });
+});
+
+</script>
+{% endblock %}
+
+{% block content %}
+<h3>{{ task.title }}</h3>
+Description:
+    {{ task.description }}
+<hr/>
+<div id="comments">
+{% for comment in task.comments.all %}
+  {{ comment.text }}
+{% endfor %}
+</div>
+<hr/>
+
+<div id="add-comment">
+  {% csrf_token %}
+  <h5>Comment:</h5>
+    <input id="comment-text" type="text"/>
+    <br/><a class="button" id="submit-comment">Submit</a>
+</div>
+{% endblock %}

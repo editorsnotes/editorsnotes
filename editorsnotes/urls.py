@@ -57,3 +57,9 @@ urlpatterns += patterns('editorsnotes.djotero.views',
 urlpatterns += patterns('editorsnotes.refine.views',
     url(r'^topics/clusters/$', 'show_clusters', name='show_clusters_view'),
 )
+urlpatterns += patterns('editorsnotes.tasks.views',
+    url(r'^tasks/all/$', 'all_tasks', name='all_tasks_view'),
+    url(r'^tasks/(?P<task_id>[-a-z0-9]+)/$', 'task', name='task_view'),
+    url(r'^tasks/(?P<task_id>[-a-z0-9]+)/comment/$', 'add_comment', name='add_comment_view'),
+)
+
