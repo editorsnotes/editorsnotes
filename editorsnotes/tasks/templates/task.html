@@ -15,7 +15,7 @@ $(document).ready(function(){
     var attachment = $('<div>')
         .attr({'id' : attachmentTitle, 'class' : 'attachment'})
         .append(selector)
-        .append('<input class="attachment-item" type="text"><input class="attachment-id" type="hidden" name="attachment-id">');
+        .append('<input class="attachment-item" type="text"><input class="attachment-id" type="hidden" name="attachment">');
     $('.attachment-item', attachment).autocomplete(autocompleteOpts('notes', attachment));
     $(this).parent().append(attachment);
   });
@@ -39,7 +39,7 @@ $(document).ready(function(){
       minLength: 2,
       select: function(event, ui) {
         if (ui.item) {
-          $container.find('input.attachment-id').val(ui.item.id);
+          $container.find('input.attachment-id').val(src + ' ' + ui.item.id);
         }
       }
     }
@@ -95,7 +95,7 @@ $(document).ready(function(){
       <textarea class="span-18 first" style="height:7em;" name="comment-text"></textarea>
     </div>
     <div id="comment-attachments">
-      <select name="attachment-type" id="comment-attachment-categories" style="display: none;">
+      <select id="comment-attachment-categories" style="display: none;">
         <option value="notes">Note</option>
         <option value="topics">Topic</option>
         <option value="documents">Document</option>

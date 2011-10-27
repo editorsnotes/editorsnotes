@@ -21,7 +21,8 @@ def all_tasks(request):
 def add_comment(request, task_id):
     o = {}
     u = request.user
-    message = request.POST.get('comment', '')
+    message = request.POST.get('comment-text', '')
+    attachments = request.POST.getlist('attachment')
     if message:
         c = Comment.objects.create(creator=u,
                                    task=Task.objects.get(id=task_id),

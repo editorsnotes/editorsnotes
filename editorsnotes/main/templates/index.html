@@ -6,6 +6,9 @@
 
 {% block content %}
 {% if project %}<header><h2 style="margin-bottom:1em;">{{ project }}</h2></header>{% else %}{% endif %}
+    <section id="tasks" class="span-24 last">
+      <a href="/tasks/all/">View all tasks</a>
+    </section>
     <section id="documents" class="span-24 last">
       <h3>Recently Edited Documents</h3>
       <ul>
