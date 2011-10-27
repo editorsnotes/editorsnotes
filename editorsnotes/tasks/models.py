@@ -21,12 +21,12 @@ class Comment(CreationMetadata):
     task = models.ForeignKey(Task, related_name='comments')
     text = models.TextField(blank=True)
     def has_attachments(self):
-        pass
-    def get_attachments(self):
-        pass
+        return len(self.attachments.all()) > 0
 
 class AttachmentAssignment(CreationMetadata):
     comment = models.ForeignKey(Comment, related_name='attachments')
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     content_object = generic.GenericForeignKey()
+    def __unicode__(self):
+        return '%s attachment (comment %s)' % (self.content_type.name, self.comment.id)

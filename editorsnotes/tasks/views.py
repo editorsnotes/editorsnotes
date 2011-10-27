@@ -31,4 +31,5 @@ def add_comment(request, task_id):
         o['new_comment'] = c.text
     else:
         o['status'] = 'broke'
+    raise Exception
     return HttpResponse(json.dumps(o), mimetype='text/plain')

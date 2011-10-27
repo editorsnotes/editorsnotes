@@ -7,38 +7,106 @@
 <script type="text/javascript" src="/media/function/wymeditor/jquery.wymeditor.min.js"></script>
 <script type="text/javascript">
 $(document).ready(function(){
-  var csrf_token = $("input[name='csrfmiddlewaretoken']").attr('value');
-  $('#submit-comment').click(function() {
-    var comment = $('#comment-text').val()
-    $.post("comment/",
-      {'comment' : comment, 'csrfmiddlewaretoken': csrf_token},
-      function (response) {
-        var response_object = JSON.parse(response);
-        $('#comments').append($(response_object.new_comment));
-      }
-    );
+  var attachmentCounter = 1;
+  $('#comment-attachments-add').click(function() {
+    var attachmentTitle = 'comment-attachment-' + attachmentCounter
+    var selector = $('#comment-attachment-categories').clone().show()
+      .attr({'id' : attachmentTitle + '-category', 'class' : 'attachment-categories'});
+    var attachment = $('<div>')
+        .attr({'id' : attachmentTitle, 'class' : 'attachment'})
+        .append(selector)
+        .append('<input class="attachment-item" type="text"><input class="attachment-id" type="hidden" name="attachment-id">');
+    $('.attachment-item', attachment).autocomplete(autocompleteOpts('notes', attachment));
+    $(this).parent().append(attachment);
   });
+  
+  $('.attachment-categories').live('change', function() {
+    var container = $(this);
+    container.next('.attachment-item').autocomplete(autocompleteOpts(container.val(), container.parent()));
+  });
+  
+  var autocompleteOpts = function(src, $container){
+    var JSONreturn = {'topics' : 'preferred_name', 'notes' : 'description', 'documents' : 'description'}
+    return {
+      source: function(request, response) {
+        $.getJSON('/api/'+ src + '/', { q: request.term }, function(data) {
+          response($.map(data, function(item, index) {
+            return { label: item[JSONreturn[src]], id: item.id };
+          }));
+        });
+      },
+      position: 'above',
+      minLength: 2,
+      select: function(event, ui) {
+        if (ui.item) {
+          $container.find('input.attachment-id').val(ui.item.id);
+        }
+      }
+    }
+  }
+
 });
 
 </script>
 {% endblock %}
 
-{% block content %}
-<h3>{{ task.title }}</h3>
-Description:
-    {{ task.description }}
-<hr/>
-<div id="comments">
-{% for comment in task.comments.all %}
-  {{ comment.text }}
-{% endfor %}
-</div>
-<hr/>
+{% block css %}
+<style type="text/css">
+.comment {
+    border-bottom: 1px solid #BBB;
+    margin: 1em 0 1em 0;
+    padding: .5em;
+}
+.attachment-item {
+    margin-left: 1em !important;
+    width: 400px;
+}
+</style>
+{% endblock %}
 
-<div id="add-comment">
-  {% csrf_token %}
-  <h5>Comment:</h5>
-    <input id="comment-text" type="text"/>
-    <br/><a class="button" id="submit-comment">Submit</a>
-</div>
+{% block content %}
+<section id="task" class="span-18 last">
+  <div id="task-description" class="span-18">
+    <h3>{{ task.title }}</h3>
+    <p>{{ task.description }}</p>
+    {{ task|display_edit_history }}
+  </div>
+  <div id="comments" class="span-18">
+  <h5>Comments</h5>
+  {% for comment in task.comments.all %}
+    <div class="comment">
+      <p>{{ comment.text|escape }}</p>
+      {% if comment.has_attachments %}
+        <h6>Attachments</h6>
+        <ul class="comment-attachments">
+        {% for attachment in comment.attachments.all %}
+          <li>{{ attachment.content_object|as_link }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+      <div class="quiet edit-history">Posted by {{ comment.creator.get_profile|as_link }} {{ comment.created|timeago }}</div>
+    </div>
+  {% endfor %}
+  </div>
+  <form id="add-comment" class="span-18" action="comment/" method="POST">
+    {% csrf_token %}
+    <span class="large">Add comment:</span>
+    <div id="comment-text-container" class="span-18">
+      <textarea class="span-18 first" style="height:7em;" name="comment-text"></textarea>
+    </div>
+    <div id="comment-attachments">
+      <select name="attachment-type" id="comment-attachment-categories" style="display: none;">
+        <option value="notes">Note</option>
+        <option value="topics">Topic</option>
+        <option value="documents">Document</option>
+      </select>
+      <a href="#_" id="comment-attachments-add">Add attachment</a>
+    </div>
+    <span class="span-18">
+      <input class="button" type="submit" id="submit-comment" value="Submit">
+    </span>
+  </form>
+</section>
+
+
 {% endblock %}

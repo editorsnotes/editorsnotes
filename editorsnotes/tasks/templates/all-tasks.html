@@ -3,9 +3,9 @@
 {% load typogrify display %}
 
 {% block content %}
-
+  <ul>
   {% for task in tasks %}
-    {{ task|as_link }}
+    <li>{{ task|as_link }}</li>
   {% endfor %}
-  
+  </ul>
 {% endblock %}

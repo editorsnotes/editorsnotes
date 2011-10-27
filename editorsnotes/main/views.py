@@ -293,6 +293,30 @@ def api_topic(request, topic_ids):
     topics = [ topic_to_dict(t) for t in topics_by_id.values() ]
     return HttpResponse(json.dumps(topics), mimetype='text/plain')
 
+def note_to_dict(note):
+    return { 'description': note.as_text(),
+             'id': note.id,
+             'uri': 'http://%s%s' % (Site.objects.get_current().domain, 
+                                     note.get_absolute_url()) }
+
+def api_notes(request):
+    query = ''
+    results = EmptySearchQuerySet()
+
+    if request.GET.get('q'):
+        query = ' AND '.join([ 'title:%s*' % term for term 
+                               in request.GET.get('q').split() 
+                               if len(term) > 1 ])
+        results = SearchQuerySet().models(Note).narrow(query).load_all()
+    
+    notes = [ note_to_dict(r.object) for r in results ]
+    return HttpResponse(json.dumps(notes), mimetype='text/plain')
+
+def api_note(request, note_ids):
+    notes_by_id = Note.objects.in_bulk(note_ids.split(','))
+    notes = [ note_to_dict(t) for t in notes_by_id.values() ]
+    return HttpResponse(json.dumps(notes), mimetype='text/plain')
+
 def document_to_dict(document):
     return { 'description': document.as_text(),
              'id': document.id,
