@@ -34,6 +34,8 @@ urlpatterns += patterns('editorsnotes.main.views',
     url(r'^api/documents/(?P<document_id>\d+)/$', 'api_document', name='api_document_view'),
     url(r'^api/transcripts/$', 'api_transcripts', name='api_transcripts_view'),
     url(r'^api/transcripts/(?P<transcript_id>\d+)/$', 'api_transcript', name='api_transcript_view'),
+    url(r'^api/notes/$', 'api_notes', name='api_notes_view'),
+    url(r'^api/notes/(?P<topic_ids>\d+(,\d+)*)/$', 'api_note', name='api_note_view'),
 )
 index_patterns = patterns('editorsnotes.main.views',
     url(r'^$', 'index', name='index_view'),
