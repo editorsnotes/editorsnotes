@@ -16,12 +16,6 @@ $(document).ready(function(){
     loadCollections(selectedLibrary.attr('location'), 1, collectionsContainer, collectionsLoaderContainer);
   });
 
-  $('#load-collections-retry').live('click', function() {
-    var itemsContainer = $('#collections');
-    var loaderContainer = $('#collections-loading');
-    loadCollections(zoteroLibrary, 1, itemsContainer, loaderContainer);
-  });
-
   $(".collection-item").live('click', function(){
     $('#collections').find('li').removeClass('collection-selected');
     $(this).addClass('collection-selected');
@@ -70,14 +64,7 @@ $(document).ready(function(){
   
   $('#items-continue').click(function() {
     var selectedItems = $('input:checked').parents('tr').children('input')
-    $.each(selectedItems, function(counter, data) {
-      var itemData = JSON.parse($(data).attr('value'));
-      var newContainer = $('<div class="zotero-item-selected">').append(data).append(itemData['citation']);
-      newContainer.append(data);
-      $('#items-to-post').append(newContainer)
-    });
-    $('#browse').hide();
-    $('#continue').show();
+    $('#items-continue-form').append(selectedItems).submit();
   });
   
   $('#post-items-submit').click(function(){
@@ -92,10 +79,9 @@ $(document).ready(function(){
       itemData.related_note = relatedNote;
       itemsArray.push(JSON.stringify(itemData));
     });
-    $.post("import/",
+    $.post("continue/",
       {'items' : itemsArray, 'csrfmiddlewaretoken': csrf_token},
       function (response) {
-        var results = response;
         loader.html('<p style="color: red;">Items sucessfully imported.</p>');
         $('#post-items-success').show();
       }
@@ -122,7 +108,7 @@ $(document).ready(function(){
       libraryContainer.show();
     })
     .error(function() {
-      loaderContainer.html('<p>Error reaching Zotero server.<p><a href="#" class="button" id="load-libraries-retry">Retry</a>').show();
+      loaderContainer.html('<p>Error reaching Zotero server.<p><a style="display: none;" href="#" class="button" id="load-libraries-retry">Retry</a>').show();
     });
   };
 
@@ -148,7 +134,7 @@ $(document).ready(function(){
       collectionContainer.show();
     })
     .error(function() {
-      loaderContainer.html('<p>Error reaching Zotero server.<p><a href="#" class="button" id="load-collections-retry">Retry</a>').show();
+      loaderContainer.html('<p>Error reaching Zotero server.<p><a style="display: none" href="#" class="button" id="load-collections-retry">Retry</a>').show();
     });
   };
 
@@ -183,6 +169,7 @@ $(document).ready(function(){
           var itemRow = $('<tr>').attr({'class' : 'item', 'id' : 'zotero-item-' + i});
           var itemInformation = $('<input>')
             .attr({'item' : ('zotero-item-' + i),
+                   'name' : 'zotero-item',
                    'type' : 'hidden',
                    'value' : JSON.stringify(itemData)});
           itemRow.append(itemInformation);

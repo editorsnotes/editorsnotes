@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% load display %}
+
+{% block js %}
+<script type="text/javascript">
+  $(document).ready(function(){
+    $('.related-topics li').hover(
+      function() {
+        var $li = $(this);
+        var position = $li.offset();
+        $li.find('.related-topic-remove')
+          .css({'top' : position.top + 'px', 'left' : position.left + 4 + 'px'}).show();
+      },
+      function() {
+        $(this).find('.related-topic-remove').hide();
+      }
+    );
+    $('.zotero-item-duplicate a.document-link').attr('target', '_blank');
+    $('input.search-documents').autocomplete({
+      source: function(request, response) {
+        $.getJSON('/api/documents/', { q: request.term }, function(data) {
+          response($.map(data, function(item, index) {
+            return { label: item.description, id: item.id };
+          }));
+        });
+      },
+      minLength: 2,
+      select: function(event, ui) {
+        if (ui.item) {
+          $(this).next('input[type="hidden"]').val(ui.item.id);
+        }
+      }
+    });
+    $('.zotero-item-new input[type="radio"]').change(function(){
+      var $selected = $(this);
+      if($selected.val() == 'update') {
+        $selected.parent().find('.existing-document-select').removeClass('hide');
+      }
+      else {
+        $selected.parent().find('.existing-document-select').addClass('hide');
+      }
+    });
+
+  });
+</script>
+{% endblock %}
+
+{% block css %}
+<style type="text/css">
+#items-list {
+    list-style-type: decimal;
+}
+.zotero-item-options div.item-option{
+    border: 1px solid #EEE;
+    padding: .5em .5em .5em 1em;
+}
+.zotero-item{
+    padding-bottom:1.33em;
+}
+.related-topics li {
+    margin: 10px 0px 10px 0px;
+    padding: 0px 0px 0px 20px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="span-24 last">
+  <h3>Items to be imported</h3>
+  <form id="items-list-form" action="../import/" method="post">
+    {% csrf_token %}
+    <ul id="items-list" class="span-24 last">
+      {% for item in items %}
+        <li class="zotero-item span-24 last{% if not item.existing %} to-post{% endif %}">
+          <p class="item-citation bottom">{{ item.citation|safe }}</p>
+          <div class="zotero-item-info hide">
+            <input type="hidden" name="changed-citation" value="">
+            <input type="hidden" name="data" value="{{ item.data }}">
+          </div>
+          <div class="zotero-item-options span-20 last">
+            {% if item.existing %}
+            <div class="zotero-item-duplicate item-option span-20 last">
+              <h6>Found {{ item.existing.0 }} match for this document:</h6>
+              {{ item.existing.1|as_link }}
+              <div class="duplicate-options">
+                {% if item.existing.0 == "exact" %}
+                  <input type="radio" name="import-action-{{ forloop.counter }}" value="skip" checked="checked">Skip<br/>
+                {% else %}
+                  <input type="radio" name="import-action-{{ forloop.counter }}" value="create" checked="checked">Create a new document<br/>
+                {% endif %}
+                  <input type="radio" name="import-action-{{ forloop.counter }}" value="update">Update existing item with new Zotero information<br/>
+                  <input type="hidden" name="item-update-{{ forloop.counter }}" value="{{ item.existing.1.id }}">
+              </div>
+            </div>
+            {% else %}
+            <div class="item-option zotero-item-new span-20 last">
+              <input type="radio" name="import-action-{{ forloop.counter }}" value="create" checked="checked">Create a new document<br/>
+              <input type="radio" class="existing-document" name="import-action-{{ forloop.counter }}" value="update">Link to an existing document<br/>
+              <span class="existing-document-select hide" style="position: relative; left: 1.7em;">
+                Document: <input class="search-documents" type="text"><input type="hidden" name="item-update-{{ forloop.counter }}"><br/>
+              </span>
+              <input type="radio" name="import-action-{{ forloop.counter }}" value="skip">Skip<br/>
+            </div>
+            {% endif %}
+            {% comment %}
+            <div class="related-topics item-option span-20 last">
+              <h6>Related topics</h6>
+              <ul class="related-topics">
+                {% for related_topic in item.related_topics %}
+                <li>
+                  {% for candidate in related_topic %}
+                    <span class="related-topic-candidate" value="{{ candidate.1 }}">{{ candidate.0 }}</span>{% if not forloop.last %} or {% endif %}
+                  {% endfor %}
+                  <a href='#_' class="related-topic-remove" style="position: absolute; display: none"><img src="/media/style/icons/cross.png"></a>
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+            {% endcomment %}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+    <button type="submit">Import</button>
+  </form>
+</div>
+{% endblock %}

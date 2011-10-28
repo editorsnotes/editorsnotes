@@ -85,7 +85,7 @@ thead th {background:#D7DEDF;}
           <input id="zotero-search" style="float:right" type="text">
         </span>
       </div>
-      <table class="span-17 last">{% csrf_token %}
+      <table class="span-17 last">
         <thead>
           <tr>
             <th class="item-checkbox"><input type="checkbox"></th>
@@ -99,7 +99,10 @@ thead th {background:#D7DEDF;}
         </tbody>
       </table>
       <div>
-        <a id="items-continue" class="button">Continue</a>
+        <form id="items-continue-form" action="continue/" method="POST">
+            {% csrf_token %}
+            <a id="items-continue" class="button">Continue</a>
+        </form>
       </div>
     </div>
     <div id="items-loading">

@@ -2,9 +2,9 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
+from haystack.query import SearchQuerySet
 from editorsnotes.main.models import Document, Topic, TopicAssignment, Note, Citation
 from editorsnotes.main.templatetags.display import as_link
-import datetime
 from models import ZoteroLink
 import utils
 import json, datetime
@@ -61,63 +61,76 @@ def items(request):
     items = utils.get_items(zotero_key, loc, opts)
     return HttpResponse(json.dumps(items), mimetype='application/json')
 
-def import_items(request):
-    raw = request.POST.getlist('items[]')
-    items = []
-    o={}
-    o['imported_docs'] = []
-    o['existing_docs'] = []
-    for item in raw:
-        items.append(json.loads(item,strict=False))
-    for doc_import in items:
-        if not ZoteroLink.objects.filter(zotero_url=doc_import['url']):
-            d = Document(creator=request.user, last_updater=request.user, description=doc_import['citation'])
-            d.save()
-            o['imported_docs'].append(as_link(d))
-            link = ZoteroLink(zotero_data=doc_import['json'], zotero_url=doc_import['url'], doc_id=d.id)
-            try:
-                doc_import['date']['year']
-                link.date_information = json.dumps(doc_import['date'])
-            except KeyError:
-                pass
-            link.save()
+def items_continue(request):
+    request.session['import_complete'] = False
+    selected_items_list = request.POST.getlist('zotero-item')
+    selected_items = [json.loads(item, strict=False) for item in selected_items_list]
+    o = {}
+    o['items'] = []
+    for item in selected_items:
+        item_return = {}
+        #Check if this exact item has been imported before
+        if ZoteroLink.objects.filter(zotero_url=item['url']):
+            item_return['existing'] = ('exact',
+                ZoteroLink.objects.filter(zotero_url=item['url'])[0].doc)
         else:
-            existing_link = ZoteroLink.objects.filter(zotero_url=doc_import['url'])[0]
-            d = existing_link.doc
+            item_return['existing'] = False
+        #TODO: Check if item with this title/creators/date has been imported
+        
+        #Get related topics for tags
+        item_return['related_topics'] = []
+        for tag in item['tags']:
+            query = ' AND '.join([ 'title:%s' % term for term 
+                               in tag['tag'].split() if len(term) > 1 ])
+            topic_match_set = [(result.object.preferred_name, result.object.id) for result
+                               in SearchQuerySet().models(Topic).narrow(query)
+                               if result.score >= 40]
+            if topic_match_set:
+                item_return['related_topics'].append(topic_match_set)
+        item_return['data'] = json.dumps(item)
+        item_return['citation'] = item['citation']
+        o['items'].append(item_return)
+    return render_to_response(
+        'continue.html', o, context_instance=RequestContext(request))
+
+def import_items(request):
+    if request.session.get('import_complete', False):
+        return HttpResponse('Please only submit items once')
+    item_data = request.POST.getlist('data')
+    item_citations = request.POST.getlist('changed-citation')
+    o={}
+    o['created_items'] = []
+    item_counter = 0
+    for item_data_string, updated_citation in zip(item_data, item_citations):
+        item_counter += 1
+        action = request.POST.get('import-action-%s' % item_counter)
+        if action not in ['create', 'update']:
+            continue
+        item_data = json.loads(item_data_string)
+        if updated_citation:
+            citation = updated_citation
+        else:
+            citation = item_data['citation']
+        if action == "create":
+            d = Document(creator=request.user, last_updater=request.user, description=citation)
+            d.save()
+        elif action == "update":
+            update_id = request.POST.get('item-update-%s' % item_counter)
+            d = Document.objects.get(id=update_id)
             d.last_updated = datetime.datetime.now()
             d.last_updater = request.user
             d.save()
-            # Overwrite old link if it exists
-            existing_link.delete()
-            link = ZoteroLink(zotero_data=doc_import['json'], zotero_url=doc_import['url'], doc_id=d.id)
-            try:
-                doc_import['date']['year']
-                link.date_information = json.dumps(doc_import['date'])
-            except KeyError:
-                pass
-            link.save()
-        if doc_import['related_topic']:
-            try:
-                related_topic = Topic.objects.get(id=int(doc_import['related_topic']))
-                if not TopicAssignment.objects.filter(document=d, topic=related_topic):
-                    new_assignment = TopicAssignment.objects.create(
-                        content_object=d,
-                        topic=related_topic,
-                        creator=request.user
-                        )
-                    new_assignment.save()
-            except:
-                pass
-        if doc_import['related_note']:
-            related_note = Note.objects.get(id=int(doc_import['related_note']))
-            if not Citation.objects.filter(note=related_note, document=d):
-                new_citation = Citation.objects.create(
-                    content_object=related_note,
-                    document=d,
-                    creator=request.user
-                )
-                new_citation.save()
-    return HttpResponse(json.dumps(o), mimetype='application/json')
+        link = ZoteroLink(zotero_data=item_data['json'], zotero_url=item_data['url'], doc_id=d.id)
+        try:
+            item_data['date']['year']
+            link.date_information = json.dumps(item_data['date'])
+        except KeyError:
+            pass
+        link.save()
+        o['created_items'].append(d)
+    request.session['import_complete'] = True
+    redirect_url = request.GET.get('return_to', '/')
+    return HttpResponseRedirect('/')
 
 @login_required
 def update_zotero_info(request, username=None):
@@ -129,7 +142,7 @@ def update_zotero_info(request, username=None):
     profile.zotero_uid = request.POST.__getitem__('zotero-id')
     profile.zotero_key = request.POST.__getitem__('zotero-key')
     profile.save()
-    redirect_url = request.GET.get('return_to', '')
+    redirect_url = request.GET.get('return_to', '/')
     return HttpResponseRedirect(redirect_url)
 
 def batch_import(request):
