@@ -1,40 +1,46 @@
-from urllib2 import urlopen
+from urllib2 import urlopen, HTTPError
 from lxml import etree
 import re, json
 
-NS = { 'xhtml': 'http://www.w3.org/1999/xhtml', 'zot' : "http://zotero.org/ns/api", 'atom' : "http://www.w3.org/2005/Atom" }
+NS = {'xhtml': 'http://www.w3.org/1999/xhtml',
+      'zot' : "http://zotero.org/ns/api",
+      'atom' : "http://www.w3.org/2005/Atom"}
 
-def request_permissions(zotero_uid, zotero_key):
-    url = 'https://api.zotero.org/users/' + zotero_uid + '/groups?key=' + zotero_key
-    xml_parse = etree.parse(urlopen(url))
-    root = xml_parse.getroot()
-    groups = root.xpath('./atom:entry', namespaces=NS)
-    access = { 'zapi_version' : 'null', 'libraries' : [{'title' : 'Your Zotero library', 'location': 'https://api.zotero.org/users/' + zotero_uid }]}
-    for x in groups:
+ZOTERO_BASE_URL = 'https://api.zotero.org'
+
+# Zotero API calls
+def get_libraries(zotero_uid, zotero_key):
+    url = '/users/%s/groups?key=%s' % (zotero_uid, zotero_key)
+    access = {'zapi_version' : 'null',
+              'libraries' : [{'title' : 'Your library',
+                              'location': '/users/%s' % (zotero_uid) }]}
+    for x in parse_xml(url)['items']:
         title = x.xpath('./atom:title', namespaces=NS)[0].text
-        loc = x.xpath('./atom:link[@rel="self"]', namespaces=NS)[0].attrib['href']
+        loc = x.xpath('./atom:link[@rel="self"]', namespaces=NS)[0].attrib['href'].replace(ZOTERO_BASE_URL, '')
         access['libraries'].append({'title' : title, 'location' : loc })
     return access
 
-def list_collections(zotero_key, loc):
-    url = loc + '/collections?key=' + zotero_key + '&limit=10&order=dateModified&format=atom&content=json'
-    xml_parse = etree.parse(urlopen(url))
-    root = xml_parse.getroot()
-    entries = root.xpath('./atom:entry', namespaces=NS)
-    collections = { 'zapi_version' : 'null', 'collections' : []}
-    for x in entries:
+def get_collections(zotero_key, loc, top):
+    if top:
+        url = '%s/collections/top?key=%s&order=title&format=atom&content=json' % (loc, zotero_key)
+    else:
+        url = '%s/collections?key=%s&format=atom&content=json' % (loc, zotero_key)
+    collections = { 'zapi_version' : 'null',
+                    'collections' : []}
+    for x in parse_xml(url)['items']:
         title = x.xpath('./atom:title', namespaces=NS)[0].text
-        loc = x.xpath('./atom:link[@rel="self"]', namespaces=NS)[0].attrib['href']
-        collections['collections'].append({ 'title' : title, 'location' : loc })
+        loc = x.xpath('./atom:link[@rel="self"]', namespaces=NS)[0].attrib['href'].replace(ZOTERO_BASE_URL, '')
+        has_children = bool(int(x.xpath('./zot:numCollections', namespaces=NS)[0].text))
+        collections['collections'].append({ 'title' : title, 'location' : loc, 'has_children' : int(has_children) })
     return collections
 
-def latest_items(zotero_key, loc):
-    url = loc + '/items?key=' + zotero_key + '&limit=20&order=dateModified&format=atom&content=json'
-    xml_parse = etree.parse(urlopen(url))
-    root = xml_parse.getroot()
-    entries = root.xpath('./atom:entry', namespaces=NS)
+def get_items(zotero_key, loc, opts):
+    opts = ['%s=%s' % (key, str(opts[key])) for key in opts.keys()]
+    url = '%s/items?key=%s&format=atom&content=json&%s' % (loc, zotero_key, '&'.join(opts))
     latest = { 'zapi_version' : 'null', 'items' : []}
-    for x in entries:
+    parsed = parse_xml(url)
+    latest['total_items'] = parsed['count']
+    for x in parsed['items']:
         title = x.xpath('./atom:title', namespaces=NS)[0].text
         library_url = x.xpath('./atom:id', namespaces=NS)[0].text
         item_id = x.xpath('./zot:key', namespaces=NS)[0].text
@@ -44,30 +50,42 @@ def latest_items(zotero_key, loc):
         except:
             item_date = ""
         if json.loads(item_json)['itemType'] not in ['note', 'attachment']:
-            item_csl = as_csl(item_json)
-            latest['items'].append({'title' : title, 'loc' : loc, 'id' : item_id, 'date' : item_date, 'url' : library_url, 'item_json' : item_json, 'item_csl' : item_csl })
+            citeproc_identifier = library_url[library_url.rindex('items') + 6:]
+            item_csl = as_csl(item_json, citeproc_identifier)
+            latest['items'].append(
+                {'title' : title,
+                 'item_type' : type_map['readable'][json.loads(item_json)['itemType']],
+                 'loc' : loc,
+                 'id' : item_id,
+                 'date' : item_date,
+                 'url' : library_url,
+                 'item_json' : item_json,
+                 'item_csl' : item_csl })
     return latest
 
-def as_csl(zotero_json_string):
+# Helper functions
+def as_csl(zotero_json_string, citeproc_identifier):
     zotero_data = json.loads(zotero_json_string)
-    genre = zotero_data['itemType']
-    field_translation = csl_map[genre]
+    
     output = {}
-    for old, new in field_translation.items():
-        if zotero_data[old]:
-            output[new] = zotero_data[old]
-    if zotero_data['creators']:
+    output['type'] = type_map['csl'][zotero_data['itemType']]
+    output['id'] = citeproc_identifier # For use with citeproc-js.
+    
+    # Translate fields for CSL processing
+    zotero_fields = zotero_data.keys()
+    skip = ['date', 'creators', 'itemType']
+    fields_for_translation = [key for key in zotero_data.keys() if key not in skip and zotero_data[key]]
+    for field in fields_for_translation:
+        try:
+            output[csl_map[field]] = zotero_data[field]
+        except KeyError:
+            pass
+    if 'creators' in zotero_fields:
         names = resolve_names(zotero_data, 'csl')
         for contrib_type in names.keys():
             output[contrib_type] = names[contrib_type]
-    output['type'] = type_map['csl'][genre]
-    output['id'] = 'ITEM-1' # For use with citeproc-js.
-    try:
-        if zotero_data['date']:
-            output['issued'] = { 'raw' : zotero_data['date'] }
-    except KeyError:
-        if zotero_data['dateDecided']:
-            output['issued'] = { 'raw' : zotero_data['dateDecided'] }
+    if 'date' in zotero_fields:
+        output['issued'] = { 'raw' : zotero_data['date'] }
     return json.dumps(output)
 
 def as_readable(zotero_json_string):
@@ -100,7 +118,10 @@ def resolve_names(zotero_data, format):
                 name = { "family" : creator['lastName'], "given" : creator['firstName'] }
             except:
                 name = { "literal" : creator['name'] }
-            contribs.setdefault(contrib_map['csl'][creator['creatorType']], []).append(name)
+            try:
+                contribs.setdefault(contrib_map['csl'][creator['creatorType']], []).append(name)
+            except KeyError:
+                pass
 
     if format == 'facets':
         # Data to be used in facets only needs a sortable name, either 'lastName' or 'name'
@@ -123,476 +144,102 @@ def resolve_names(zotero_data, format):
     
     return contribs
 
+def parse_xml(url):
+    try:
+        zotero_url = ZOTERO_BASE_URL + url
+        page = urlopen(zotero_url)
+        xml_parse = etree.parse(page)
+        page.close()
+        root = xml_parse.getroot()
+        return {'items' : root.xpath('./atom:entry', namespaces=NS),
+                'count' : root.xpath('./zot:totalResults', namespaces=NS)[0].text}
+    except HTTPError, error:
+        error_content = error.read()
+        raise Exception
+
 # Map to translate JSON from Zotero to something understandable by citeproc-js CSL engine.
 # See http://gsl-nagoya-u.net/http/pub/csl-fields/
 csl_map = {
-    "artwork": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "artworkMedium": "medium", 
-        "artworkSize": "genre", 
-        "callNumber": "call-number", 
-        "extra": "note", 
-        "title": "title", 
-        "url": "URL"
-    }, 
-    "audioRecording": {
-        "ISBN": "ISBN", 
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "audioRecordingFormat": "medium", 
-        "callNumber": "call-number", 
-        "extra": "note", 
-        "label": "publisher", 
-        "numberOfVolumes": "number-of-volumes", 
-        "place": "publisher-place", 
-        "seriesTitle": "collection-title", 
-        "title": "title", 
-        "url": "URL", 
-        "volume": "volume"
-    }, 
-    "bill": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "billNumber": "number", 
-        "code": "container-title", 
-        "codePages": "page", 
-        "codeVolume": "volume", 
-        "extra": "note", 
-        "history": "references", 
-        "section": "section", 
-        "title": "title", 
-        "url": "URL"
-    }, 
-    "blogPost": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "blogTitle": "container-title", 
-        "extra": "note", 
-        "title": "title", 
-        "url": "URL", 
-        "websiteType": "genre"
-    }, 
-    "book": {
-        "ISBN": "ISBN", 
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "callNumber": "call-number", 
-        "edition": "edition", 
-        "extra": "note", 
-        "numPages": "number-of-pages", 
-        "numberOfVolumes": "number-of-volumes", 
-        "place": "publisher-place", 
-        "publisher": "publisher", 
-        "series": "collection-title", 
-        "seriesNumber": "collection-number", 
-        "title": "title", 
-        "url": "URL", 
-        "volume": "volume"
-    }, 
-    "bookSection": {
-        "ISBN": "ISBN", 
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "bookTitle": "container-title", 
-        "callNumber": "call-number", 
-        "edition": "edition", 
-        "extra": "note", 
-        "numberOfVolumes": "number-of-volumes", 
-        "pages": "page", 
-        "place": "publisher-place", 
-        "publisher": "publisher", 
-        "series": "collection-title", 
-        "seriesNumber": "collection-number", 
-        "title": "title", 
-        "url": "URL", 
-        "volume": "volume"
-    }, 
-    "case": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "caseName": "title", 
-        "court": "authority", 
-        "dateDecided": "issued", 
-        "docketNumber": "number", 
-        "extra": "note", 
-        "firstPage": "page", 
-        "history": "references", 
-        "reporter": "container-title", 
-        "reporterVolume": "volume", 
-        "url": "URL"
-    }, 
-    "computerProgram": {
-        "ISBN": "ISBN", 
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "callNumber": "call-number", 
-        "company": "publisher", 
-        "extra": "note", 
-        "place": "publisher-place", 
-        "seriesTitle": "collection-title", 
-        "title": "title", 
-        "url": "URL", 
-        "version": "version"
-    }, 
-    "conferencePaper": {
-        "DOI": "DOI", 
-        "ISBN": "ISBN", 
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "callNumber": "call-number", 
-        "conferenceName": "event", 
-        "extra": "note", 
-        "pages": "page", 
-        "place": "publisher-place", 
-        "proceedingsTitle": "container-title", 
-        "publisher": "publisher", 
-        "series": "collection-title", 
-        "title": "title", 
-        "url": "URL", 
-        "volume": "volume"
-    }, 
-    "dictionaryEntry": {
-        "ISBN": "ISBN", 
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "callNumber": "call-number", 
-        "dictionaryTitle": "container-title", 
-        "edition": "edition", 
-        "extra": "note", 
-        "numberOfVolumes": "number-of-volumes", 
-        "pages": "page", 
-        "place": "publisher-place", 
-        "publisher": "publisher", 
-        "series": "collection-title", 
-        "seriesNumber": "collection-number", 
-        "title": "title", 
-        "url": "URL", 
-        "volume": "volume"
-    }, 
-    "document": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "extra": "extra", 
-        "language": "language", 
-        "publisher": "publisher", 
-        "rights": "rights", 
-        "title": "title", 
-        "url": "URL"
-    }, 
-    "email": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "extra": "note", 
-        "subject": "title", 
-        "url": "URL"
-    }, 
-    "encyclopediaArticle": {
-        "ISBN": "ISBN", 
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "callNumber": "call-number", 
-        "edition": "edition", 
-        "encyclopediaTitle": "container-title", 
-        "extra": "note", 
-        "numberOfVolumes": "number-of-volumes", 
-        "pages": "page", 
-        "place": "publisher-place", 
-        "publisher": "publisher", 
-        "series": "collection-title", 
-        "seriesNumber": "collection-number", 
-        "title": "title", 
-        "url": "URL", 
-        "volume": "volume"
-    }, 
-    "film": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "callNumber": "call-number", 
-        "distributor": "publisher", 
-        "extra": "note", 
-        "genre": "genre", 
-        "title": "title", 
-        "url": "URL", 
-        "videoRecordingFormat": "medium"
-    }, 
-    "forumPost": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "extra": "note", 
-        "forumTitle": "container-title", 
-        "postType": "genre", 
-        "title": "title", 
-        "url": "URL"
-    }, 
-    "hearing": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "documentNumber": "number", 
-        "extra": "note", 
-        "history": "references", 
-        "numberOfVolumes": "number-of-volumes", 
-        "pages": "page", 
-        "place": "publisher-place", 
-        "publisher": "publisher", 
-        "title": "title", 
-        "url": "URL"
-    }, 
-    "instantMessage": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "extra": "note", 
-        "title": "title", 
-        "url": "URL"
-    }, 
-    "interview": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "callNumber": "call-number", 
-        "extra": "note", 
-        "interviewMedium": "medium", 
-        "title": "title", 
-        "url": "URL"
-    }, 
-    "journalArticle": {
-        "DOI": "DOI", 
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "callNumber": "call-number", 
-        "extra": "note", 
-        "issue": "issue", 
-        "pages": "page", 
-        "publicationTitle": "container-title", 
-        "series": "collection-title", 
-        "seriesTitle": "collection-title", 
-        "title": "title", 
-        "url": "URL", 
-        "volume": "volume"
-    }, 
-    "letter": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "callNumber": "call-number", 
-        "extra": "note", 
-        "letterType": "genre", 
-        "title": "title", 
-        "url": "URL"
-    }, 
-    "magazineArticle": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "callNumber": "call-number", 
-        "extra": "note", 
-        "issue": "issue", 
-        "pages": "page", 
-        "publicationTitle": "container-title", 
-        "title": "title", 
-        "url": "URL", 
-        "volume": "volume"
-    }, 
-    "manuscript": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "callNumber": "call-number", 
-        "extra": "note", 
-        "manuscriptType": "genre", 
-        "numPages": "number-of-pages", 
-        "place": "publisher-place", 
-        "title": "title", 
-        "url": "URL"
-    }, 
-    "map": {
-        "ISBN": "ISBN", 
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "callNumber": "call-number", 
-        "edition": "edition", 
-        "extra": "note", 
-        "mapType": "genre", 
-        "place": "publisher-place", 
-        "publisher": "publisher", 
-        "seriesTitle": "collection-title", 
-        "title": "title", 
-        "url": "URL"
-    }, 
-    "newspaperArticle": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "callNumber": "call-number", 
-        "edition": "edition", 
-        "extra": "note", 
-        "pages": "page", 
-        "place": "publisher-place", 
-        "publicationTitle": "container-title", 
-        "section": "section", 
-        "title": "title", 
-        "url": "URL"
-    }, 
-    "patent": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "extra": "note", 
-        "issueDate": "issued", 
-        "pages": "page", 
-        "patentNumber": "number", 
-        "place": "publisher-place", 
-        "references": "references", 
-        "title": "title", 
-        "url": "URL"
-    }, 
-    "podcast": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "audioFileType": "medium", 
-        "episodeNumber": "number", 
-        "extra": "note", 
-        "seriesTitle": "collection-title", 
-        "title": "title", 
-        "url": "URL"
-    }, 
-    "presentation": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "extra": "note", 
-        "meetingName": "event", 
-        "place": "publisher-place", 
-        "presentationType": "genre", 
-        "title": "title", 
-        "url": "URL"
-    }, 
-    "radioBroadcast": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "audioRecordingFormat": "medium", 
-        "callNumber": "call-number", 
-        "episodeNumber": "number", 
-        "extra": "note", 
-        "network": "publisher", 
-        "place": "publisher-place", 
-        "programTitle": "container-title", 
-        "title": "title", 
-        "url": "URL"
-    }, 
-    "report": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "callNumber": "call-number", 
-        "extra": "note", 
-        "institution": "publisher", 
-        "pages": "page", 
-        "place": "publisher-place", 
-        "reportNumber": "number", 
-        "reportType": "genre", 
-        "seriesTitle": "collection-title", 
-        "title": "title", 
-        "url": "URL"
-    }, 
-    "statute": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "code": "container-title", 
-        "dateEnacted": "issued", 
-        "extra": "note", 
-        "history": "references", 
-        "nameOfAct": "title", 
-        "pages": "page", 
-        "publicLawNumber": "number", 
-        "section": "section", 
-        "url": "URL"
-    }, 
-    "thesis": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "callNumber": "call-number", 
-        "extra": "note", 
-        "numPages": "number-of-pages", 
-        "place": "publisher-place", 
-        "thesisType": "genre", 
-        "title": "title", 
-        "university": "publisher", 
-        "url": "URL"
-    }, 
-    "tvBroadcast": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "callNumber": "call-number", 
-        "episodeNumber": "number", 
-        "extra": "note", 
-        "network": "publisher", 
-        "place": "publisher-place", 
-        "programTitle": "container-title", 
-        "title": "title", 
-        "url": "URL", 
-        "videoRecordingFormat": "medium"
-    }, 
-    "videoRecording": {
-        "ISBN": "ISBN", 
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "archive": "archive", 
-        "archiveLocation": "archive_location", 
-        "callNumber": "call-number", 
-        "extra": "note", 
-        "numberOfVolumes": "number-of-volumes", 
-        "place": "publisher-place", 
-        "seriesTitle": "collection-title", 
-        "studio": "publisher", 
-        "title": "title", 
-        "url": "URL", 
-        "videoRecordingFormat": "medium", 
-        "volume": "volume"
-    }, 
-    "webpage": {
-        "abstractNote": "abstract", 
-        "accessDate": "accessed", 
-        "extra": "note", 
-        "title": "title", 
-        "url": "URL", 
-        "websiteTitle": "container-title", 
-        "websiteType": "genre"
-    }
+    "publicationTitle": "container-title", 
+    "letterType": "genre", 
+    "DOI": "DOI", 
+    "ISBN": "ISBN", 
+    "meetingName": "event", 
+    "bookTitle": "container-title", 
+    "extra": "note", 
+    "series": "collection-title", 
+    "caseName": "title", 
+    "blogTitle": "container-title", 
+    "codeVolume": "volume", 
+    "edition": "edition", 
+    "code": "container-title", 
+    "references": "references", 
+    "distributor": "publisher", 
+    "seriesNumber": "collection-number", 
+    "abstractNote": "abstract", 
+    "label": "publisher", 
+    "dateEnacted": "issued", 
+    "archive": "archive", 
+    "numberOfVolumes": "number-of-volumes", 
+    "subject": "title", 
+    "encyclopediaTitle": "container-title", 
+    "episodeNumber": "number", 
+    "programTitle": "container-title", 
+    "court": "authority", 
+    "network": "publisher", 
+    "title": "title", 
+    "proceedingsTitle": "container-title", 
+    "section": "section", 
+    "reporter": "container-title", 
+    "forumTitle": "container-title", 
+    "archiveLocation": "archive_location", 
+    "documentNumber": "number", 
+    "version": "version", 
+    "websiteType": "genre", 
+    "mapType": "genre", 
+    "postType": "genre", 
+    "presentationType": "genre", 
+    "dictionaryTitle": "container-title", 
+    "videoRecordingFormat": "medium", 
+    "issue": "issue", 
+    "company": "publisher", 
+    "nameOfAct": "title", 
+    "seriesTitle": "collection-title", 
+    "thesisType": "genre", 
+    "institution": "publisher", 
+    "patentNumber": "number", 
+    "accessDate": "accessed", 
+    "manuscriptType": "genre", 
+    "billNumber": "number", 
+    "firstPage": "page", 
+    "volume": "volume", 
+    "callNumber": "call-number", 
+    "reporterVolume": "volume", 
+    "studio": "publisher", 
+    "publicLawNumber": "number", 
+    "reportNumber": "number", 
+    "genre": "genre", 
+    "interviewMedium": "medium", 
+    "codePages": "page", 
+    "pages": "page", 
+    "numPages": "number-of-pages", 
+    "publisher": "publisher", 
+    "dateDecided": "issued", 
+    "language": "language", 
+    "audioRecordingFormat": "medium", 
+    "conferenceName": "event", 
+    "url": "URL", 
+    "issueDate": "issued", 
+    "university": "publisher", 
+    "rights": "rights", 
+    "artworkMedium": "medium", 
+    "artworkSize": "genre", 
+    "audioFileType": "medium", 
+    "place": "publisher-place", 
+    "docketNumber": "number", 
+    "reportType": "genre", 
+    "websiteTitle": "container-title", 
+    "history": "references"
 }
 
 readable_map = {

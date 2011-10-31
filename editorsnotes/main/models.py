@@ -15,7 +15,7 @@ from django.contrib.contenttypes import generic
 from django.core import urlresolvers
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.urlresolvers import NoReverseMatch
-from django.utils.html import conditional_escape
+from django.utils.html import conditional_escape, escape
 from django.utils.safestring import mark_safe
 from io import StringIO
 
@@ -145,8 +145,8 @@ class Document(LastUpdateMetadata, Administered, URLAccessible):
     def as_html(self):
         if self.zotero_link():
             data_attributes = ''.join(
-                [ ' data-%s="%s"' % (k, v) 
-                  for k, v in self.zotero_link().get_zotero_fields() if v != "" and k!= "tags" ])
+                [ ' data-%s="%s"' % (k, escape(v)) 
+                  for k, v in self.zotero_link().get_zotero_fields() if v != "" and k not in ['tags', 'extra'] ])
         else:
             data_attributes = ''
         return mark_safe(
