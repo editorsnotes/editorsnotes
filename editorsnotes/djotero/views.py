@@ -77,15 +77,15 @@ def items_continue(request):
         #TODO: Check if item with this title/creators/date has been imported
         
         #Get related topics for tags
-        item_return['related_topics'] = []
-        for tag in item['tags']:
-            query = ' AND '.join([ 'title:%s' % term for term 
-                               in tag['tag'].split() if len(term) > 1 ])
-            topic_match_set = [(result.object.preferred_name, result.object.id) for result
-                               in SearchQuerySet().models(Topic).narrow(query)
-                               if result.score >= 40]
-            if topic_match_set:
-                item_return['related_topics'].append(topic_match_set)
+        #item_return['related_topics'] = []
+        #for tag in item['tags']:
+        #    query = ' AND '.join([ 'title:%s' % term for term 
+        #                       in tag['tag'].split() if len(term) > 1 ])
+        #    topic_match_set = [(result.object.preferred_name, result.object.id) for result
+        #                       in SearchQuerySet().models(Topic).narrow(query)
+        #                       if result.score >= 40]
+        #    if topic_match_set:
+        #        item_return['related_topics'].append(topic_match_set)
         item_return['data'] = json.dumps(item)
         item_return['citation'] = item['citation']
         o['items'].append(item_return)
@@ -97,6 +97,7 @@ def import_items(request):
         return HttpResponse('Please only submit items once')
     item_data = request.POST.getlist('data')
     item_citations = request.POST.getlist('changed-citation')
+    user = request.user
     o={}
     o['created_items'] = []
     item_counter = 0
@@ -111,13 +112,13 @@ def import_items(request):
         else:
             citation = item_data['citation']
         if action == "create":
-            d = Document(creator=request.user, last_updater=request.user, description=citation)
+            d = Document(creator=user, last_updater=user, description=citation)
             d.save()
         elif action == "update":
             update_id = request.POST.get('item-update-%s' % item_counter)
             d = Document.objects.get(id=update_id)
             d.last_updated = datetime.datetime.now()
-            d.last_updater = request.user
+            d.last_updater = user
             d.save()
             if d.zotero_link():
                 d.zotero_link().delete()
@@ -128,6 +129,15 @@ def import_items(request):
         except KeyError:
             pass
         link.save()
+        reltopic = request.GET.get('reltopic', False)
+        if reltopic:
+            related_topic = Topic.objects.get(id=int(reltopic))
+            new_assignment = TopicAssignment.objects.create(
+                content_object=d,
+                topic=related_topic,
+                creator=user
+                )
+            new_assignment.save()
         o['created_items'].append(d)
     request.session['import_complete'] = True
     redirect_url = request.GET.get('return_to', '/')
@@ -145,29 +155,3 @@ def update_zotero_info(request, username=None):
     profile.save()
     redirect_url = request.GET.get('return_to', '/')
     return HttpResponseRedirect(redirect_url)
-
-def batch_import(request):
-    o = {}
-    return render_to_response('batch-import.html', o, context_instance=RequestContext(request))
-
-def update_link(request):
-    if not request.is_ajax():
-        return HttpResponseBadRequest()
-    doc_id = request.POST.get('doc_id')
-    json_string = request.POST.get('zotero_info')
-    doc_information = json.loads(json_string, strict=False)
-    document = Document.objects.get(id=doc_id)
-    if document.zotero_link():
-        document.zotero_link().delete()
-    
-    link = ZoteroLink(zotero_data=json.dumps(doc_information['json']), zotero_url=doc_information['url'], doc_id=document.id)
-    try:
-        doc_information['date']['year']
-        link.date_information = json.dumps(doc_information['date'])
-    except KeyError:
-        pass
-    link.save()
-    document.last_updated = datetime.datetime.now()
-    document.save()
-    
-    return HttpResponse(document, mimetype='text/plain')
