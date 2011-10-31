@@ -31,6 +31,16 @@ $(document).ready(function(){
     loadItems(selectedSource, queryOptions, itemsTable, loaderContainer);
   });
   
+  $('#more-items').click(function(){
+    var loaderContainer = $('#items-loading');
+    var itemsTable = $('#items-table');
+    var selectedSource = itemsTable.attr('location');
+    var queryOptions = {'start' : parseInt($('#items-browsing-count').attr('end'))};
+    var queryString = itemsTable.attr('q');
+    if (queryString) {queryOptions['q'] = queryString}
+    loadItems(selectedSource, queryOptions, itemsTable, loaderContainer);
+  });
+  
   $('.collection-has-children').live('click', function(){
     var topCollection = $(this);
     if (topCollection.hasClass('collection-collapsed')) {
@@ -191,9 +201,15 @@ $(document).ready(function(){
           itemList.append(itemRow);
           i++
         });
-        updateCounter(start, totalItems);
+        updateCounter(start, parseInt(totalItems));
         loaderContainer.hide();
-        itemsContainer.attr('location', sourceLocation).show();
+        if (queryOptions['q']) {
+          var queryString = queryOptions['q'];
+        }
+        else {
+          var queryString = '';
+        }
+        itemsContainer.attr({'location' : sourceLocation, 'q' : queryString}).show();
       }
       else {
         loaderContainer.html('No items to display.');
@@ -207,15 +223,18 @@ $(document).ready(function(){
   //Page counter for items
   var pageInterval = 25;
   var $itemsCount = $('#items-browsing-count');
+  var $moreItems = $('#more-items');
   var updateCounter = function(initial, total) {
-    var start = initial;
+    var start = parseInt(initial);
     if (start + pageInterval < total) {
       var end = start + pageInterval - 1;
+      $moreItems.show();
     }
     else {
       var end = total;
+      $moreItems.hide();
     }
-    $itemsCount.html('Viewing items ' + start + '-' + end + ' of ' + total)
+    $itemsCount.html('Viewing items 1-' + end + ' of ' + total).attr('end', end);
   }
   
   //Get libraries on page load

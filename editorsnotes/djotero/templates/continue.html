@@ -68,7 +68,7 @@
 {% block content %}
 <div class="span-24 last">
   <h3>Items to be imported</h3>
-  <form id="items-list-form" action="../import/" method="post">
+  <form id="items-list-form" action="../import/{% if get_params %}?{{ get_params }}{% endif %}" method="post">
     {% csrf_token %}
     <ul id="items-list" class="span-24 last">
       {% for item in items %}

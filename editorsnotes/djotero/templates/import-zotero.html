@@ -33,10 +33,10 @@
 }
 
 .collection-has-children:before {
-    content: "▼ ";
+    content: "▾ ";
 }
 .collection-has-children.collection-collapsed:before {
-    content: "▶ ";
+    content: "▸ ";
 }
 
 td {
@@ -99,13 +99,14 @@ thead th {background:#D7DEDF;}
         </tbody>
       </table>
       <div>
-        <form id="items-continue-form" action="continue/" method="POST">
+        <button id="more-items" style="display: none">Load more...</button>
+        <form id="items-continue-form" action="continue/{% if get_params %}?{{ get_params }}{% endif %}" method="POST">
             {% csrf_token %}
             <a id="items-continue" class="button">Continue</a>
         </form>
       </div>
     </div>
-    <div id="items-loading">
+    <div id="items-loading" class="span-17 last">
     </div>
   </div>
 </div>

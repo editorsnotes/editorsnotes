@@ -21,9 +21,7 @@ def import_zotero(request, username=False):
         o['zotero_uid'] = user.get_profile().zotero_uid
     else:
         o['zotero_status'] = False
-    o['related_topic'] = request.GET.get('reltopic', '')
-    o['related_note'] = request.GET.get('relnote', '')
-    o['return_to'] = request.GET.get('return_to', '/')
+    o['get_params'] = request.GET.urlencode().replace('%2F', '/')
     if request.GET.get('apply', ''):
         o['apply_to_docs'] = True
     else:
@@ -67,6 +65,7 @@ def items_continue(request):
     selected_items = [json.loads(item, strict=False) for item in selected_items_list]
     o = {}
     o['items'] = []
+    o['get_params'] = request.GET.urlencode().replace('%2F', '/')
     for item in selected_items:
         item_return = {}
         #Check if this exact item has been imported before
@@ -120,6 +119,8 @@ def import_items(request):
             d.last_updated = datetime.datetime.now()
             d.last_updater = request.user
             d.save()
+            if d.zotero_link():
+                d.zotero_link().delete()
         link = ZoteroLink(zotero_data=item_data['json'], zotero_url=item_data['url'], doc_id=d.id)
         try:
             item_data['date']['year']
@@ -130,7 +131,7 @@ def import_items(request):
         o['created_items'].append(d)
     request.session['import_complete'] = True
     redirect_url = request.GET.get('return_to', '/')
-    return HttpResponseRedirect('/')
+    return HttpResponseRedirect(redirect_url)
 
 @login_required
 def update_zotero_info(request, username=None):
