@@ -6,15 +6,17 @@ NS = {'xhtml': 'http://www.w3.org/1999/xhtml',
       'zot' : "http://zotero.org/ns/api",
       'atom' : "http://www.w3.org/2005/Atom"}
 
+ZOTERO_BASE_URL = 'https://api.zotero.org'
+
 # Zotero API calls
 def get_libraries(zotero_uid, zotero_key):
-    url = 'https://api.zotero.org/users/%s/groups?key=%s' % (zotero_uid, zotero_key)
+    url = '/users/%s/groups?key=%s' % (zotero_uid, zotero_key)
     access = {'zapi_version' : 'null',
               'libraries' : [{'title' : 'Your library',
-                              'location': 'https://api.zotero.org/users/%s' % zotero_uid }]}
+                              'location': '/users/%s' % (zotero_uid) }]}
     for x in parse_xml(url)['items']:
         title = x.xpath('./atom:title', namespaces=NS)[0].text
-        loc = x.xpath('./atom:link[@rel="self"]', namespaces=NS)[0].attrib['href']
+        loc = x.xpath('./atom:link[@rel="self"]', namespaces=NS)[0].attrib['href'].replace(ZOTERO_BASE_URL, '')
         access['libraries'].append({'title' : title, 'location' : loc })
     return access
 
@@ -27,14 +29,14 @@ def get_collections(zotero_key, loc, top):
                     'collections' : []}
     for x in parse_xml(url)['items']:
         title = x.xpath('./atom:title', namespaces=NS)[0].text
-        loc = x.xpath('./atom:link[@rel="self"]', namespaces=NS)[0].attrib['href']
+        loc = x.xpath('./atom:link[@rel="self"]', namespaces=NS)[0].attrib['href'].replace(ZOTERO_BASE_URL, '')
         has_children = bool(int(x.xpath('./zot:numCollections', namespaces=NS)[0].text))
         collections['collections'].append({ 'title' : title, 'location' : loc, 'has_children' : int(has_children) })
     return collections
 
 def get_items(zotero_key, loc, opts):
     opts = ['%s=%s' % (key, str(opts[key])) for key in opts.keys()]
-    url = loc + '/items?key=%s&format=atom&content=json&%s' % (zotero_key, '&'.join(opts))
+    url = '%s/items?key=%s&format=atom&content=json&%s' % (loc, zotero_key, '&'.join(opts))
     latest = { 'zapi_version' : 'null', 'items' : []}
     parsed = parse_xml(url)
     latest['total_items'] = parsed['count']
@@ -144,7 +146,8 @@ def resolve_names(zotero_data, format):
 
 def parse_xml(url):
     try:
-        page = urlopen(url)
+        zotero_url = ZOTERO_BASE_URL + url
+        page = urlopen(zotero_url)
         xml_parse = etree.parse(page)
         page.close()
         root = xml_parse.getroot()
