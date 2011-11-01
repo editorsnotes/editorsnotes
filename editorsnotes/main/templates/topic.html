@@ -127,7 +127,7 @@
             <ul id="document-itemtype-facet">
             </ul>
             <div id="import-documents">
-              <a class="button" href="/document/upload/?rel=topic&id={{ topic.id }}">Import documents</a>
+              <a class="button" href="/document/upload/?reltopic={{ topic.id }}&return_to={{ topic.get_absolute_url }}">Import documents</a>
             </div>
           </div>
         </div>
@@ -136,7 +136,7 @@
         {% else %}
           There are no documents related to <em>{{ topic.preferred_name }}</em>.
             <div id="import-documents">
-              <a class="button" href="/document/upload/?rel=topic&id={{ topic.id }}">Import documents</a>
+              <a class="button" href="/document/upload/?reltopic={{ topic.id }}&return_to={{ topic.get_absolute_url }}">Import documents</a>
             </div>
         {% endif %}
       </section>

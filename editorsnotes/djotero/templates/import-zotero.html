@@ -1,210 +1,125 @@
 {% extends "base.html" %}
 
 {% block js %}
-
     <script type="text/javascript; e4x=1" src="/media/function/citeproc-js/xmle4x.js"></script> 
     <script type="text/javascript" src="/media/function/citeproc-js/xmldom.js"></script>
     <script type="text/javascript" src="/media/function/citeproc-js/citeproc.js"></script>
     <script type="text/javascript" src="/media/function/citeproc-js/simple.js"></script>
     <script type="text/javascript" src="/media/function/json2.js"></script>
+    <script type="text/javascript" src="/media/function/zotero-import.js"></script>
     <script type="text/javascript">
-
-    </script>
-    <script type="text/javascript">
-    $(document).ready(function(){
-      var csrf_token = $("input[name='csrfmiddlewaretoken']").attr('value');
-      
-      // Get access list of Zotero libraries
-      $('#get-libraries').click(function(){
-        $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
-        $.getJSON('access', function(data) {
-          $('#libraries img').remove();
-          var i = 1
-          $.each(data.libraries, function (key, value) {
-            var radio = $('<input>').attr({
-              type: 'radio', name: 'library', value: value.location, id: i
-            });
-            $('#library-list').append(radio).append(value.title + '<br>');
-            i++
-          });
-        });
-      });
-
-      $('#libraries input').live('click', function(){
-        $('.after-library').show();
-      });
-
-      // Get list of collections in a library
-      $('#get-collections').click(function(){
-        $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
-        $('#library-list input').attr('disabled', true);
-        var blah = $("#libraries input[type='radio']:checked").val();
-        $.getJSON('collections', {'loc' : blah }, function(data) {
-          $('#collections img').remove();
-          var i = 1
-          $.each(data.collections, function (key, value) {
-            var radio = $('<input>').attr({
-              type: 'radio', name: 'collection', value: value.location, id: i
-            });
-            $('#collection-list').append(radio).append(value.title + '<br>');
-            i++
-          });
-        });
-      });
-      
-      // Query last 10 items in selected library (or collection)
-      $("#get-items").click(function(){
-        $(this).replaceWith('<img src="/media/style/icons/ajax-loader.gif">');
-        if($('#collections').find('input:checked').length > 0) {
-          var selectedSource = $("#collections input[type='radio']:checked").val();
-        }
-        else {
-          var selectedSource = $("#libraries input[type='radio']:checked").val();
-        }
-        $.getJSON('items', {'loc' : selectedSource }, function(data) {
-          $('#access').hide();
-          $('#items').show();
-          var counter = 1
-          $.each(data.items, function (key, value) {
-          
-            // Start citeproc processing
-            var item_csl = eval( "(" + value.item_csl + ")" );
-            var bibdata = {"ITEM-1" : item_csl}
-            var citation_object = {"citationItems": [{"id" : "ITEM-1"}], "properties": {"noteIndex": 0}}
-            var sys = {retrieveItem: function(id){return bibdata[id];}, retrieveLocale: function(lang){return locale[lang];}}
-            
-            citeproc = new CSL.Engine(sys, chicago_fullnote_bibliography2);
-            citeproc.setOutputFormat("text");
-            CSL.Output.Formats.text["@font-style/italic"] = "<i>%%STRING%%</i>"
-            citeproc.appendCitationCluster( citation_object );
-            var citation = citeproc.makeBibliography()[1];
-            var parser = new CSL.DateParser;
-            var date = parser.parse(value.date)
-            // End citeproc processing
-              
-            var checkbox = $('<input>').attr({
-              type: 'checkbox',
-              name: 'item',
-              value: '{ "json" : ' + value.item_json + ', "url" : \"' + value.url + '\", "date" : ' + JSON.stringify(date) + ', "csl" : \"' + citation + '\", "related_object" : \"' + "{{ related_object }}" + '\", "related_id" : \"' + "{{ related_id }}" + '\"}'
-            });
-            
-            var input = $('<div class="zotero-link">').attr("id", "z" + counter).append('<a class="add-to-document"><img width="10" height="10" alt="Add Another" src="/django_admin_media/img/admin/icon_addlink.gif">&nbsp;').append(checkbox).append('<a class="zotero-object" href="' + value.url + '" target="_blank">' + value.title + '</a>');
-            
-            counter = counter + 1
-            
-            $('#item-list').append(input);
-          
-          });
-          var submit = $('<input>').attr({type: 'submit', value: 'Import selected items'});
-          $('#item-list').append(submit);
-        });
-      });
-      
-      $("#doc-add-form").dialog({
-        autoOpen: false,
-        modal: true,
-        width: 500,
-        title: 'Connect to existing document'
-      });
-      
-      $('.add-to-document').live('click', function(){
-        var link = $(this).parent()
-        $('#document')
-          .html(link.find('.zotero-object')[0].text)
-          .attr('source', link.attr('id'))
-          .attr('value', link.find('input').attr('value'));
-        $("#doc-add-form").dialog('open');
-      });
-      
-      $('#docsearch input')
-        .autocomplete({
-          source: function(request, response) {
-            $.getJSON('/api/documents/', { q: request.term }, function(data) {
-              response($.map(data, function(item, index) {
-                return { label: item.description, id: item.id };
-              }));
-            });
-          },
-          minLength: 3,
-          select: function(event, ui) {
-            if (ui.item) {
-              $('#link-document').show()
-                .attr('document', ui.item.id);
-            }
-          }
-        });
-        $('#link-document').click(function(){
-          $.post("update_link/", { 
-              'doc_id' : $(this).attr('document'),
-              'zotero_info' : $('#document').attr('value'),
-              'csrfmiddlewaretoken': csrf_token
-          },
-              function(data) {
-                  var old_div = $('#document').attr('source');
-                  $('#' + old_div ).remove();
-                  $('#docsearch input')[0].value = "";
-                  $("#doc-add-form").dialog('close');
-              }
-          );
-        });
-    });
+      var relatedTopic = '{{ related_topic }}';
+      var relatedNote = '{{ related_note }}';
+      var zoteroLibrary = 'https://api.zotero.org/users/{{ zotero_uid }}'
     </script>
 {% endblock %}
 
 {% block css %}
 <style type="text/css">
-.top-label h6 {padding-bottom: .75em;}
-#collections {height: 20em;}
-.zotero-link {padding: .25em;}
-.zotero-link a {text-decoration: none;}
-.add-to-document a {text-decoration: none;}
-.zotero-link input {margin-right: .5em; margin-left: .25em;}
-#document {padding-bottom: 1em;}
-.zotero-link img { {% if not apply_to_docs %}display: none; {% endif %}vertical-align: middle; }
+#collections li, #libraries li {
+    padding: .33em;
+    font-size: 90%;
+    border-bottom: 1px dotted #CCCCCC;
+}
+
+.collection-item:hover, #libraries li:hover, .collection-selected {
+    background-color: #336699;
+    color: #FFFFFF;
+}
+
+.collection-child {
+    margin: 0px 0px 0px 12px;
+    border-left: 1px solid #CCCCCC;
+}
+
+.collection-has-children:before {
+    content: "▾ ";
+}
+.collection-has-children.collection-collapsed:before {
+    content: "▸ ";
+}
+
+td {
+    border-bottom: 1px dotted #CCCCCC;
+}
+th, td {
+    padding: 4px;
+    text-align: left;
+    vertical-align: top;
+    font-size: 90%;
+}
+thead th {background:#D7DEDF;}
+
 </style>
 {% endblock %}
 
 {% block content %}
 
 {% if zotero_status %}
-<div id="access" class="span-24 last">
-  <section id="libraries" class="span-8">
-    <span class="top-label">
-      <h6>Select a library to import from</h6>
-    </span>
-    <a class="button" href="#" id="get-libraries">Determine access</a>
-    <form id="library-list" name="libraries" action="">
-    </form>
-  </section>
-  
-  <section id="collections" style="display: none" class="span-10 colborder after-library">
-    <span class="top-label">
-      <h6>Optional: Select a collection from within the library</h6>
-    </span>
-    <a class="button" href="#" id="get-collections">Determine collections</a>
-    <form id="collection-list" name="collections" action="">
-    </form>
-  </section>
-  
-  <section id="query" style="display: none" class="span-4 after-library">
-    <span class="top-label">
-      <h6>&nbsp;</h6>
-    </span>
-    <a class="button" href="#" id="get-items">Get items</a>
-  </section>
+<div id="browse">
+  <div id="source-selection" class="span-7">
+    <div id="libraries-container">
+      <div id="libraries-loading">
+      </div>
+      <ul id="libraries" style="display: none;">
+        <h3>Select a library</h3>
+      </ul>
+    </div>
+    <div id="collections-container">
+      <div id="collections-blank">
+      </div>
+      <div id="collections-loading">
+      </div>
+      <ul id="collections" style="display: none;">
+      </ul>
+    </div>
+  </div>
+
+  <div id="items" class="span-17 last">
+    <div id="items-table" style="display: none">
+      <div id="items-browsing" style="height: 42px;" class="span-16 last">
+        <span id="items-browsing-count" style="height: 42px; margin-top: 7px;" class="span-8">
+        </span>
+        <span id="items-browsing-search" style="height: 42px;" class="span-8 last">
+          <a class="button" style="float:right; margin-left: 5px; margin-top: 3px;" id="zotero-search-submit">Search</a>
+          <input id="zotero-search" style="float:right" type="text">
+        </span>
+      </div>
+      <table class="span-17 last">
+        <thead>
+          <tr>
+            <th class="item-checkbox"><input type="checkbox"></th>
+            <th>Title</th>
+            <th>Creator</th>
+            <th>Date</th>
+            <th>Item type</th>
+          </tr>
+        </thead>
+        <tbody id="item-list">
+        </tbody>
+      </table>
+      <div>
+        <button id="more-items" style="display: none">Load more...</button>
+        <form id="items-continue-form" action="continue/{% if get_params %}?{{ get_params }}{% endif %}" method="POST">
+            {% csrf_token %}
+            <a id="items-continue" class="button">Continue</a>
+        </form>
+      </div>
+    </div>
+    <div id="items-loading" class="span-17 last">
+    </div>
+  </div>
 </div>
 
-<div id="items" class="span-24 last" style="display: none">
-  <form id="item-list" method="post" action="import">{% csrf_token %}
-  </form>
-</div>
-
-<div id="doc-add-form">
-  <div id="document"></div>
-  <div id="docsearch">
-    <span>Search for item:<span>
-    <input type="text" class="text" name="q"/>
-    <a class="button" style="display: none;" id="link-document">Submit</a>
+<div id="continue" style="display: none;">
+  <p>You have selected to import the following documents.</p>
+  <div id="items-to-post" class="span-24 last">
+  </div>
+  <div id="post-items">
+    <a id="post-items-submit" class="button">Submit</a>
+    <div id="post-items-loading" style="display: none;">
+    </div>
+    <a class="button" id="post-items-success" style="display: none" href="{{ return_to }}">Return to previous page</a>
   </div>
 </div>
 

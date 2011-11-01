@@ -160,7 +160,7 @@ def topic(request, topic_slug):
     note_citations = [ _sort_citations(n) for n in notes ]
     o['notes'] = zip(notes, note_topics, note_citations)
     o['documents'] = []
-    for d in o['topic'].related_objects(Document):
+    for d in [d for d in o['topic'].related_objects(Document) if not d.import_id]:
             o['documents'].append(d)
     for note, topics, citations in o['notes']:
        for cite in citations['all']:

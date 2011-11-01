@@ -11,7 +11,7 @@ $(function() {
     var loader = $('<img src="/media/style/icons/ajax-loader.gif">');
     var button = $(this).replaceWith(loader);
     $.ajax({
-      url: '/document/upload/access',
+      url: '/document/upload/libraries/',
       data: {
         validate: "1",
         zotero_uid: $("#zotero-id").val(),
