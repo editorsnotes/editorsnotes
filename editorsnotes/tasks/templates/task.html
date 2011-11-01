@@ -7,6 +7,7 @@
 <script type="text/javascript" src="/media/function/wymeditor/jquery.wymeditor.min.js"></script>
 <script type="text/javascript">
 $(document).ready(function(){
+  $('#task a.model-link').attr('target', '_blank');
   var attachmentCounter = 1;
   $('#comment-attachments-add').click(function() {
     var attachmentTitle = 'comment-attachment-' + attachmentCounter
@@ -17,7 +18,8 @@ $(document).ready(function(){
         .append(selector)
         .append('<input class="attachment-item" type="text"><input class="attachment-id" type="hidden" name="attachment">');
     $('.attachment-item', attachment).autocomplete(autocompleteOpts('notes', attachment));
-    $(this).parent().append(attachment);
+    $('#comment-attachments').append(attachment);
+    attachmentCounter++;
   });
   
   $('.attachment-categories').live('change', function() {
@@ -53,14 +55,22 @@ $(document).ready(function(){
 {% block css %}
 <style type="text/css">
 .comment {
-    border-bottom: 1px solid #BBB;
-    margin: 1em 0 1em 0;
-    padding: .5em;
+    border-top: 1px solid #BBB;
+    padding: .5em 0;
 }
 .attachment-item {
     margin-left: 1em !important;
     width: 400px;
 }
+.comment-attachments {
+    border: 1px dashed #EEE;
+    border-radius: 2px;
+    padding: 10px;
+}
+.comment-attachments .model-link{
+    font-size: 13px;
+}
+#task-description {margin-bottom: 2em;}
 </style>
 {% endblock %}
 
@@ -72,40 +82,46 @@ $(document).ready(function(){
     {{ task|display_edit_history }}
   </div>
   <div id="comments" class="span-18">
-  <h5>Comments</h5>
-  {% for comment in task.comments.all %}
-    <div class="comment">
-      <p>{{ comment.text|escape }}</p>
-      {% if comment.has_attachments %}
-        <h6>Attachments</h6>
-        <ul class="comment-attachments">
-        {% for attachment in comment.attachments.all %}
-          <li>{{ attachment.content_object|as_link }}</li>
-        {% endfor %}
-        </ul>
-      {% endif %}
-      <div class="quiet edit-history">Posted by {{ comment.creator.get_profile|as_link }} {{ comment.created|timeago }}</div>
+    <div id="comments-stripe">
+      <h5 class="bottom">Comments</h5>
     </div>
-  {% endfor %}
+    {% for comment in task.comments.all %}
+      <div class="comment">
+        <p>{{ comment.text|escape }}</p>
+        {% if comment.has_attachments %}
+          <ul class="comment-attachments">
+            <h6>Attachments</h6>
+            <table class="bottom">
+          {% for attachment in comment.attachments.all %}
+              <li><tr><td><em>{{ attachment.content_type|title }}</em></td><td>{{ attachment.content_object|as_link }}</td></tr></li>
+          {% endfor %}
+            </table>
+          </ul>
+        {% endif %}
+        <div class="quiet">by {{ comment.creator.get_profile|as_link }} on {{ comment.created|date:"M d Y, g:iA T" }}</div>
+      </div>
+    {% endfor %}
   </div>
-  <form id="add-comment" class="span-18" action="comment/" method="POST">
+  {% if user.is_authenticated %}
+  <form id="add-comment" class="span-18" action="comment/?return_to={{ task.get_absolute_url }}" method="POST">
     {% csrf_token %}
     <span class="large">Add comment:</span>
     <div id="comment-text-container" class="span-18">
       <textarea class="span-18 first" style="height:7em;" name="comment-text"></textarea>
     </div>
-    <div id="comment-attachments">
+    <div id="comment-attachments" class="span-18">
       <select id="comment-attachment-categories" style="display: none;">
         <option value="notes">Note</option>
         <option value="topics">Topic</option>
         <option value="documents">Document</option>
       </select>
-      <a href="#_" id="comment-attachments-add">Add attachment</a>
     </div>
-    <span class="span-18">
-      <input class="button" type="submit" id="submit-comment" value="Submit">
+    <button type="button" id="comment-attachments-add">Add attachment</button>
+    <span class="span-18" style="margin-top: 1.5em">
+      <button type="submit" id="submit-comment">Submit</button>
     </span>
   </form>
+  {% endif %}
 </section>
 
 
