@@ -16,12 +16,6 @@ $(document).ready(function(){
     loadCollections(selectedLibrary.attr('location'), 1, collectionsContainer, collectionsLoaderContainer);
   });
 
-  $('#load-collections-retry').live('click', function() {
-    var itemsContainer = $('#collections');
-    var loaderContainer = $('#collections-loading');
-    loadCollections(zoteroLibrary, 1, itemsContainer, loaderContainer);
-  });
-
   $(".collection-item").live('click', function(){
     $('#collections').find('li').removeClass('collection-selected');
     $(this).addClass('collection-selected');
@@ -34,6 +28,16 @@ $(document).ready(function(){
     $('#item-list').html('');
 
     var queryOptions = {}
+    loadItems(selectedSource, queryOptions, itemsTable, loaderContainer);
+  });
+  
+  $('#more-items').click(function(){
+    var loaderContainer = $('#items-loading');
+    var itemsTable = $('#items-table');
+    var selectedSource = itemsTable.attr('location');
+    var queryOptions = {'start' : parseInt($('#items-browsing-count').attr('end'))};
+    var queryString = itemsTable.attr('q');
+    if (queryString) {queryOptions['q'] = queryString}
     loadItems(selectedSource, queryOptions, itemsTable, loaderContainer);
   });
   
@@ -70,14 +74,7 @@ $(document).ready(function(){
   
   $('#items-continue').click(function() {
     var selectedItems = $('input:checked').parents('tr').children('input')
-    $.each(selectedItems, function(counter, data) {
-      var itemData = JSON.parse($(data).attr('value'));
-      var newContainer = $('<div class="zotero-item-selected">').append(data).append(itemData['citation']);
-      newContainer.append(data);
-      $('#items-to-post').append(newContainer)
-    });
-    $('#browse').hide();
-    $('#continue').show();
+    $('#items-continue-form').append(selectedItems).submit();
   });
   
   $('#post-items-submit').click(function(){
@@ -92,10 +89,9 @@ $(document).ready(function(){
       itemData.related_note = relatedNote;
       itemsArray.push(JSON.stringify(itemData));
     });
-    $.post("import/",
+    $.post("continue/",
       {'items' : itemsArray, 'csrfmiddlewaretoken': csrf_token},
       function (response) {
-        var results = response;
         loader.html('<p style="color: red;">Items sucessfully imported.</p>');
         $('#post-items-success').show();
       }
@@ -122,7 +118,7 @@ $(document).ready(function(){
       libraryContainer.show();
     })
     .error(function() {
-      loaderContainer.html('<p>Error reaching Zotero server.<p><a href="#" class="button" id="load-libraries-retry">Retry</a>').show();
+      loaderContainer.html('<p>Error reaching Zotero server.<p><a style="display: none;" href="#" class="button" id="load-libraries-retry">Retry</a>').show();
     });
   };
 
@@ -148,7 +144,7 @@ $(document).ready(function(){
       collectionContainer.show();
     })
     .error(function() {
-      loaderContainer.html('<p>Error reaching Zotero server.<p><a href="#" class="button" id="load-collections-retry">Retry</a>').show();
+      loaderContainer.html('<p>Error reaching Zotero server.<p><a style="display: none" href="#" class="button" id="load-collections-retry">Retry</a>').show();
     });
   };
 
@@ -183,6 +179,7 @@ $(document).ready(function(){
           var itemRow = $('<tr>').attr({'class' : 'item', 'id' : 'zotero-item-' + i});
           var itemInformation = $('<input>')
             .attr({'item' : ('zotero-item-' + i),
+                   'name' : 'zotero-item',
                    'type' : 'hidden',
                    'value' : JSON.stringify(itemData)});
           itemRow.append(itemInformation);
@@ -204,9 +201,15 @@ $(document).ready(function(){
           itemList.append(itemRow);
           i++
         });
-        updateCounter(start, totalItems);
+        updateCounter(start, parseInt(totalItems));
         loaderContainer.hide();
-        itemsContainer.attr('location', sourceLocation).show();
+        if (queryOptions['q']) {
+          var queryString = queryOptions['q'];
+        }
+        else {
+          var queryString = '';
+        }
+        itemsContainer.attr({'location' : sourceLocation, 'q' : queryString}).show();
       }
       else {
         loaderContainer.html('No items to display.');
@@ -220,15 +223,18 @@ $(document).ready(function(){
   //Page counter for items
   var pageInterval = 25;
   var $itemsCount = $('#items-browsing-count');
+  var $moreItems = $('#more-items');
   var updateCounter = function(initial, total) {
-    var start = initial;
+    var start = parseInt(initial);
     if (start + pageInterval < total) {
       var end = start + pageInterval - 1;
+      $moreItems.show();
     }
     else {
       var end = total;
+      $moreItems.hide();
     }
-    $itemsCount.html('Viewing items ' + start + '-' + end + ' of ' + total)
+    $itemsCount.html('Viewing items 1-' + end + ' of ' + total).attr('end', end);
   }
   
   //Get libraries on page load
