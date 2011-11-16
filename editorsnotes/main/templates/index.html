@@ -7,7 +7,16 @@
 {% block content %}
 {% if project %}<header><h2 style="margin-bottom:1em;">{{ project }}</h2></header>{% else %}{% endif %}
     <section id="tasks" class="span-24 last">
-      <a href="/tasks/all/">View all tasks</a>
+    {% with request.user.get_profile.affiliation as project_affiliation %}
+      {% if project_affiliation and not project %}
+        <h3>Tasks for {{ project_affiliation }}</h3>
+        <ul>
+          {% for task in project_affiliation.tasks.all %}
+          <li>{{ task|as_link }}</li>
+          {% endfor %}
+      <a href="/tasks/all/">All tasks</a>
+      {% endif %}
+    {% endwith %}
     </section>
     <section id="documents" class="span-24 last">
       <h3>Recently Edited Documents</h3>
