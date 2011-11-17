@@ -1,7 +1,8 @@
 # Django settings for editorsnotes project.
 
 ADMINS = (
-    ('Ryan Shaw', 'ryanshaw@ischool.berkeley.edu'),
+    ('Ryan Shaw', 'ryanshaw@unc.edu'),
+    ('Patrick Golden', 'ptgolden@berkeley.edu'),
 )
 
 MANAGERS = ADMINS
