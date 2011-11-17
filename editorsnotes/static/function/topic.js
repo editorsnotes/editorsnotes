@@ -114,13 +114,34 @@ $(document).ready(function() {
   // get before sidebar is hidden by tabs
   var initial_facet_height = $('#content').innerHeight() + 'px';
 
-  $('#tabs').tabs({
+  var tabs = $('#tabs');
+  var tab_selector = 'ul.ui-tabs-nav a';
+
+  tabs.tabs({
     show: function(event, ui) {
       if (ui.panel.id == 'documents') {
         init_isotope();
       }
-    }
+    },
+    event: 'change'
   });
+
+  // Enable jquery-bbq
+  tabs.find(tab_selector).click(function() {
+      var state = {}
+      id = $(this).closest('.tabs').attr('id');
+      index = $(this).parent().prevAll().length;
+      state[id] = index;
+      $.bbq.pushState(state);
+  });
+
+  $(window).bind('hashchange', function(e) {
+    tabs.each(function() {
+      var index = $.bbq.getState(this.id, true) || 0;
+      $(this).find(tab_selector).eq(index).triggerHandler('change');
+    });
+  })
+  .trigger('hashchange');
 
   var objMain = $('#main');
   function showSidebar(){
