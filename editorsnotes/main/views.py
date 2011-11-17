@@ -208,15 +208,6 @@ def document(request, document_id):
         o['zotero_data'] = as_readable(o['document'].zotero_link().zotero_data)
         o['zotero_url'] = o['document'].zotero_link().zotero_url
         o['zotero_date_information'] = o['document'].zotero_link().date_information
-    # view transcript on page open if only it exists
-    if not o['scans'] and o['document'].transcript:
-        redirect_url = o['document'].get_absolute_url() + "?redirect=1#transcript"
-        if request.REQUEST.get('redirect', ''):
-            pass
-        else:
-            return HttpResponseRedirect(redirect_url)
-    else:
-        pass
     return render_to_response(
         'document.html', o, context_instance=RequestContext(request))
 
