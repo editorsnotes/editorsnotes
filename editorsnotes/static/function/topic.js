@@ -135,6 +135,12 @@ $(document).ready(function() {
       $.bbq.pushState(state);
   });
 
+  // If no hash is present in URL, load default tab into history
+  var url = $.param.fragment();
+  if ( url == '' ) {
+    window.location.replace(window.location.href + '#tabs=article');
+  }
+
   $(window).bind('hashchange', function(e) {
     tabs.each(function() {
       var index = $.bbq.getState(this.id, true) || 0;
