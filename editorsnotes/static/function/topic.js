@@ -114,13 +114,43 @@ $(document).ready(function() {
   // get before sidebar is hidden by tabs
   var initial_facet_height = $('#content').innerHeight() + 'px';
 
-  $('#tabs').tabs({
+  var tabs = $('#tabs');
+  var tab_selector = 'ul.ui-tabs-nav a';
+
+  tabs.tabs({
     show: function(event, ui) {
       if (ui.panel.id == 'documents') {
         init_isotope();
       }
-    }
+    },
+    event: 'change'
   });
+
+  // If no hash is present in URL, load default tab into history
+  var url = $.param.fragment();
+  if ( url == '' ) {
+    window.location.replace(window.location.href + '#article');
+    url = $.param.fragment();
+  }
+
+  // Enable jquery-bbq
+  tabs.find(tab_selector).click(function() {
+      index = $(this).attr('href').substr(1);
+      $.bbq.pushState(index, 2);
+  });
+
+  var tabOptions = tabs.find(tab_selector);
+
+  $(window).bind('hashchange', function(e) {
+    var index = $.bbq.getState();
+    $.each(index, function(key, value) {
+      var tabSearch = tabOptions.filter('a[href$="' + key + '"]')
+      if ( tabSearch.length > 0 ) {
+        tabSearch.triggerHandler('change');
+      }
+    });
+  })
+  .trigger('hashchange');
 
   var objMain = $('#main');
   function showSidebar(){
