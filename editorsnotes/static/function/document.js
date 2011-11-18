@@ -222,27 +222,28 @@ $(document).ready(function() {
     event: 'change'
   });
 
-  // Enable jquery-bbq
-  tabs.find(tab_selector).click(function() {
-      var state = {}
-      id = $(this).closest('.tabs').attr('id');
-      index = $(this).attr('href').substr(1);
-      state[id] = index;
-      $.bbq.pushState(state);
-  });
-
   // If no hash is present in URL, load default tab into history
   var url = $.param.fragment();
   if ( url == '' ) {
-    window.location.replace(window.location.href + '#tabs=info');
+    window.location.replace(window.location.href + '#info');
+    url = $.param.fragment();
   }
 
+  // Enable jquery-bbq
+  tabs.find(tab_selector).click(function() {
+      index = $(this).attr('href').substr(1);
+      $.bbq.pushState(index, 2);
+  });
+
+  var tabOptions = tabs.find(tab_selector);
+
   $(window).bind('hashchange', function(e) {
-    tabs.each(function() {
-      var index = $.bbq.getState(this.id, true) || 0;
-      $(this).find(tab_selector)
-        .filter('a[href$="' + index + '"]')
-        .triggerHandler('change');
+    var index = $.bbq.getState();
+    $.each(index, function(key, value) {
+      var tabSearch = tabOptions.filter('a[href$="' + key + '"]')
+      if ( tabSearch.length > 0 ) {
+        tabSearch.triggerHandler('change');
+      }
     });
   })
   .trigger('hashchange');
