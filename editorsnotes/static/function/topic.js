@@ -130,7 +130,7 @@ $(document).ready(function() {
   tabs.find(tab_selector).click(function() {
       var state = {}
       id = $(this).closest('.tabs').attr('id');
-      index = $(this).parent().prevAll().length;
+      index = $(this).attr('href').substr(1);
       state[id] = index;
       $.bbq.pushState(state);
   });
@@ -138,7 +138,9 @@ $(document).ready(function() {
   $(window).bind('hashchange', function(e) {
     tabs.each(function() {
       var index = $.bbq.getState(this.id, true) || 0;
-      $(this).find(tab_selector).eq(index).triggerHandler('change');
+      $(this).find(tab_selector)
+        .filter('a[href$="' + index + '"]')
+        .triggerHandler('change');
     });
   })
   .trigger('hashchange');
