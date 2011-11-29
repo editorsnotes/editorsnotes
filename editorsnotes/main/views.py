@@ -159,9 +159,7 @@ def topic(request, topic_slug):
     note_topics = [ [ ta.topic for ta in n.topics.exclude(topic=o['topic']) ] for n in notes ]
     note_citations = [ _sort_citations(n) for n in notes ]
     o['notes'] = zip(notes, note_topics, note_citations)
-    o['documents'] = []
-    for d in [d for d in o['topic'].related_objects(Document) if not d.import_id]:
-            o['documents'].append(d)
+    o['documents'] = o['topic'].related_objects(Document)
     for note, topics, citations in o['notes']:
        for cite in citations['all']:
            if not cite.document in o['documents']:
@@ -210,15 +208,6 @@ def document(request, document_id):
         o['zotero_data'] = as_readable(o['document'].zotero_link().zotero_data)
         o['zotero_url'] = o['document'].zotero_link().zotero_url
         o['zotero_date_information'] = o['document'].zotero_link().date_information
-    # view transcript on page open if only it exists
-    if not o['scans'] and o['document'].transcript:
-        redirect_url = o['document'].get_absolute_url() + "?redirect=1#transcript"
-        if request.REQUEST.get('redirect', ''):
-            pass
-        else:
-            return HttpResponseRedirect(redirect_url)
-    else:
-        pass
     return render_to_response(
         'document.html', o, context_instance=RequestContext(request))
 
