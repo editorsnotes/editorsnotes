@@ -18,14 +18,21 @@ $(document).ready(function(){
         .attr({'id' : attachmentTitle, 'class' : 'attachment'})
         .append(selector)
         .append('<input class="attachment-item" type="text"><input class="attachment-id" type="hidden" name="attachment">');
-    $('.attachment-item', attachment).autocomplete(autocompleteOpts('notes', attachment));
+    $('.attachment-item', attachment)
+      .autocomplete(autocompleteOpts('notes', attachment))
+      .focus(function() {
+        if ( $(this).val() == '' ) {
+          $(this).autocomplete("search", "last_updated");
+        }
+      });
     $('#comment-attachments').append(attachment);
     attachmentCounter++;
   });
   
   $('.attachment-categories').live('change', function() {
     var container = $(this);
-    container.next('.attachment-item').autocomplete(autocompleteOpts(container.val(), container.parent()));
+    container.next('.attachment-item')
+      .autocomplete(autocompleteOpts(container.val(), container.parent()));
   });
   
   var autocompleteOpts = function(src, $container){
@@ -38,7 +45,7 @@ $(document).ready(function(){
           }));
         });
       },
-      position: 'above',
+      position: {collision: 'flip'},
       minLength: 2,
       select: function(event, ui) {
         if (ui.item) {
@@ -87,19 +94,19 @@ $(document).ready(function(){
         <div id="task-description" class="span-23">
           <h3>{{ task.title }}</h3>
           <p>{{ task.description }}</p>
-          {{ task|display_edit_history }}
         </div>
         <div id="task-assigned">
-          {% if assignees %}
-            <span class="large">Assigned to task:</span>
-            <div id="assigned">
-              {% for assignee in assignees %}
-              {{ assignee.get_profile|as_link }}<br/>
+          {% if assigned_users %}
+            <span class="large">{{ assigned_users|length }} users assigned</span>
+            <ul id="assigned">
+              {% for assignee in assigned_users %}
+              <li>{{ assignee.get_profile|as_link }}</li>
               {% endfor %}
-            </div>
+            </ul>
           {% else %}
           {% endif %}
         </div>
+        {{ task|display_edit_history }}
       </section>
       <section id="comments" class="span-23 last">
         {% if task.comments.all %}

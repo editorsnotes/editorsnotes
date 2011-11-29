@@ -12,6 +12,7 @@ def task(request, task_id):
     o = {}
     o['task'] = Task.objects.get(id=task_id)
     o['user'] = request.user
+    o['assigned_users'] = o['task'].assigned_users.all()
     notes_query = o['task'].attachments.filter(content_type__name='note')
     notes = [note.content_object for note in notes_query]
     note_topics = [ [ ta.topic for ta in n.topics.all() ] for n in notes ]

@@ -303,13 +303,17 @@ def api_notes(request):
     query = ''
     results = EmptySearchQuerySet()
 
-    if request.GET.get('q'):
+    query_string = request.GET.get('q')
+    if query_string == 'last_updated':
+        if request.user:
+            results = Note.objects.filter(creator=request.user)[:10]
+            notes = [ note_to_dict(r) for r in results]
+    elif query_string:
         query = ' AND '.join([ 'title:%s*' % term for term 
-                               in request.GET.get('q').split() 
+                               in query_string.split() 
                                if len(term) > 1 ])
         results = SearchQuerySet().models(Note).narrow(query).load_all()
-    
-    notes = [ note_to_dict(r.object) for r in results ]
+        notes = [ note_to_dict(r.object) for r in results ]
     return HttpResponse(json.dumps(notes), mimetype='text/plain')
 
 def api_note(request, note_ids):
