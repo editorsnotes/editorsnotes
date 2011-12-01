@@ -10,6 +10,7 @@ smartypants==1.6.0.3
 PIL==1.1.7
 pytz==2011b
 refine-client==0.2.1
+ordereddict==1.1
 
 # Symlinks to system packages
 # symlink: _xapian.so
