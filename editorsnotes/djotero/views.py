@@ -7,7 +7,9 @@ from editorsnotes.main.models import Document, Topic, TopicAssignment, Note, Cit
 from editorsnotes.main.templatetags.display import as_link
 from models import ZoteroLink
 import utils
-import json, datetime
+import datetime
+import simplejson as json
+from ordereddict import OrderedDict
 
 @login_required
 def import_zotero(request, username=False):
@@ -106,7 +108,7 @@ def import_items(request):
         action = request.POST.get('import-action-%s' % item_counter)
         if action not in ['create', 'update']:
             continue
-        item_data = json.loads(item_data_string)
+        item_data = json.loads(item_data_string, object_pairs_hook=OrderedDict)
         if updated_citation:
             citation = updated_citation
         else:
