@@ -1,4 +1,5 @@
 import simplejson as json
+import re
 from ordereddict import OrderedDict
 from django.forms import Widget
 from django.forms.util import flatatt
@@ -12,25 +13,40 @@ class ZoteroWidget(Widget):
     """
     def render(self, name, value, attrs=None):
         data = json.loads(value, object_pairs_hook=OrderedDict)
-        html = '<br/><br/><br/><div id="zotero-information">'
+        html = ''
+        wrapper_attrs = {'class' : 'zotero-entry'}
+        key_counter = 0
+        
         for key, val in data.items():
 
-            wrapper_attrs = {'class' : 'zotero-entry',
-                             'zotero-key' : key}
             item = ''
+            itemAttrs = {'name' : 'zotero-key-%s|%s' % ("%02d" % key_counter, key )}
 
             if key == 'itemType':
+                itemAttrs['type'] = 'hidden'
+                itemAttrs['value'] = val
                 item += '<label>%s</label>' % key
-                item += '<span zotero-item-type="%s">%s</span><br/><br/>' % (val, val)
+                item += '<input%s>' % (flatatt(itemAttrs))
+                item += '<span>%s</span><br/><br/>' % val
             elif key == 'creators':
                 creators = val
+                itemAttrs['type'] = 'hidden'
                 if not creators:
-                    pass
+                    itemAttrs['value'] = '[]'
+                    item += '<input%s>' % flatatt(itemAttrs)
                 for creator in creators:
-                    creator_attrs = {}
-                    creator_attrs['class'] = 'zotero-creator'
-                    creator_attrs['creator-type'] = creator['creatorType']
 
+                    # Value that's posted is a json string inside a hidden
+                    # input. If a creator is edited, this input must be updated
+                    # with javascript.
+                    itemAttrs['type'] = 'hidden'
+                    itemAttrs['value'] = json.dumps(creator)
+                    item += '<input%s>' % flatatt(itemAttrs)
+
+                    # Along with that hidden input, create nameless textareas
+                    # for either a full name, or first + last name.
+                    creator_attrs = {'class' : 'zotero-creator',
+                                     'creator-type' : creator['creatorType']}
                     creator_html = ''
                     creator_html += '<label>%s</label>&nbsp;' % creator['creatorType']
                     if creator.get('name'):
@@ -51,15 +67,45 @@ class ZoteroWidget(Widget):
                         flatatt(creator_attrs),creator_html
                     )
             elif key == 'tags':
-                pass
+                tags = val
+                itemAttrs['type'] = 'hidden'
+                if not tags:
+                    itemAttrs['value'] = '[]'
+                    item += '<input%s>' % flatatt(itemAttrs)
+                for tag in tags:
+                    # Like the creator field, this must also be updated with
+                    # javascript.
+                    itemAttrs['value'] = json.dumps(tag)
+                    item += '<input%s>' % flatatt(itemAttrs) 
             elif isinstance(val, unicode) :
                 item += '<label>%s</label>&nbsp;' % (key)
-                item += '<textarea%s>%s</textarea><br/>' % ('', val)
+                item += '<textarea%s>%s</textarea><br/>' % (flatatt(itemAttrs), val)
 
             if item:
                 html += '<span%s>%s</span>' % (flatatt(wrapper_attrs), item)
-        html += '</div>'
+            key_counter += 1
+        html += '<input type="hidden" name="zotero-data-string"></input>'
         return mark_safe(html)
 
-    def get_creators(self):
-        pass
+    def value_from_datadict(self, data, files, name):
+        zotero_items = []
+        key_finder = re.compile('zotero-key-(\d+)\|(.*)')
+        for key, val in data.items():
+            get_key = re.search(key_finder, key)
+            if get_key:
+                zotero_key = get_key.groups()
+                zotero_items.append(
+                    (zotero_key[0], zotero_key[1], data.getlist(key))
+                )
+        zotero_items.sort(key=lambda field: field[0])
+        zotero_dict = OrderedDict()
+        for item in zotero_items:
+            zotero_key = item[1]
+            if zotero_key == 'creators':
+                zotero_data = [json.loads(creator) for creator in item[2] if creator != u'[]']
+            elif zotero_key == 'tags':
+                zotero_data = [json.loads(tag) for tag in item[2] if tag != u'[]']
+            else:
+                zotero_data = item[2][0]
+            zotero_dict[zotero_key] = zotero_data
+        return json.dumps(zotero_dict)
