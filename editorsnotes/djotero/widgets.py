@@ -12,7 +12,7 @@ class ZoteroWidget(Widget):
     """
     def render(self, name, value, attrs=None):
         data = json.loads(value, object_pairs_hook=OrderedDict)
-        html = '<br/><br/><div id="zotero-information">'
+        html = '<br/><br/><br/><div id="zotero-information">'
         for key, val in data.items():
 
             wrapper_attrs = {'class' : 'zotero-entry',
@@ -20,7 +20,8 @@ class ZoteroWidget(Widget):
             item = ''
 
             if key == 'itemType':
-                pass
+                item += '<label>%s</label>' % key
+                item += '<span zotero-item-type="%s">%s</span><br/><br/>' % (val, val)
             elif key == 'creators':
                 creators = val
                 if not creators:
