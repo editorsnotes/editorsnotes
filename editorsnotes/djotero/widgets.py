@@ -35,14 +35,17 @@ class ZoteroWidget(Widget):
                     creator_html += '<label>%s</label>&nbsp;' % creator['creatorType']
                     if creator.get('name'):
                         creator_html += '<textarea%s>%s</textarea>' % (
-                            ' creator-key="name"', creator['name']
+                            ' class="creator-attr" creator-key="name"',
+                            creator['name']
                         )
                     else:
                         creator_html += '<textarea%s>%s</textarea>, ' % (
-                            ' creator-key="lastName"', creator['lastName']
+                            ' class="creator-attr" creator-key="lastName"',
+                            creator['lastName']
                         )
                         creator_html += '<textarea%s>%s</textarea>' % (
-                            ' creator-key="firstName"', creator['firstName']
+                            ' class="creator-attr" creator-key="firstName"',
+                            creator['firstName']
                         )
                     item += '<span%s>%s</span><br/>' % (
                         flatatt(creator_attrs),creator_html
