@@ -4,6 +4,7 @@ from ordereddict import OrderedDict
 from django.forms import Widget
 from django.forms.util import flatatt
 from django.utils.safestring import mark_safe
+from django.utils.encoding import force_unicode
 from utils import readable_map
 
 class ZoteroWidget(Widget):
@@ -14,7 +15,6 @@ class ZoteroWidget(Widget):
     def render(self, name, value, attrs=None):
         data = json.loads(value, object_pairs_hook=OrderedDict)
         html = ''
-        wrapper_attrs = {'class' : 'zotero-entry'}
         key_counter = 0
         
         for key, val in data.items():
@@ -28,7 +28,10 @@ class ZoteroWidget(Widget):
                 item += '<label>%s</label>' % key
                 item += '<input%s>' % (flatatt(itemAttrs))
                 item += '<span>%s</span><br/><br/>' % val
+
             elif key == 'creators':
+                # Parse array of different creator objects which have the property
+                # 'creatorType' as well as 1) name or 2) firstName and lastName
                 creators = val
                 itemAttrs['type'] = 'hidden'
                 if not creators:
@@ -36,7 +39,7 @@ class ZoteroWidget(Widget):
                     item += '<input%s>' % flatatt(itemAttrs)
                 for creator in creators:
 
-                    # Value that's posted is a json string inside a hidden
+                    # Value to be posted is a json string inside a hidden
                     # input. If a creator is edited, this input must be updated
                     # with javascript.
                     itemAttrs['type'] = 'hidden'
@@ -66,6 +69,7 @@ class ZoteroWidget(Widget):
                     item += '<span%s>%s</span><br/>' % (
                         flatatt(creator_attrs),creator_html
                     )
+
             elif key == 'tags':
                 tags = val
                 itemAttrs['type'] = 'hidden'
@@ -77,14 +81,15 @@ class ZoteroWidget(Widget):
                     # javascript.
                     itemAttrs['value'] = json.dumps(tag)
                     item += '<input%s>' % flatatt(itemAttrs) 
+
             elif isinstance(val, unicode) :
                 item += '<label>%s</label>&nbsp;' % (key)
                 item += '<textarea%s>%s</textarea><br/>' % (flatatt(itemAttrs), val)
 
             if item:
+                wrapper_attrs = {'class' : 'zotero-entry', 'zotero-key' : key}
                 html += '<span%s>%s</span>' % (flatatt(wrapper_attrs), item)
             key_counter += 1
-        html += '<input type="hidden" name="zotero-data-string"></input>'
         return mark_safe(html)
 
     def value_from_datadict(self, data, files, name):
