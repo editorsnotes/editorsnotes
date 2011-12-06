@@ -63,6 +63,17 @@ def get_items(zotero_key, loc, opts):
                  'item_csl' : item_csl })
     return latest
 
+def get_item_template(item_type):
+    url = '%s/items/new?itemType=%s' % (ZOTERO_BASE_URL, item_type)
+    page = urlopen(url)
+    if page.code == 200:
+        new_item = page.read()
+        return new_item
+    else:
+        #TODO: make this more descriptive (duh)
+        raise Exception
+
+
 # Helper functions
 def as_csl(zotero_json_string, citeproc_identifier):
     zotero_data = json.loads(zotero_json_string)

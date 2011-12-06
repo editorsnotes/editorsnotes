@@ -6,6 +6,7 @@ from haystack.query import SearchQuerySet
 from editorsnotes.main.models import Document, Topic, TopicAssignment, Note, Citation
 from editorsnotes.main.templatetags.display import as_link
 from models import ZoteroLink
+from widgets import ZoteroWidget
 import utils
 import datetime
 import simplejson as json
@@ -157,3 +158,10 @@ def update_zotero_info(request, username=None):
     profile.save()
     redirect_url = request.GET.get('return_to', '/')
     return HttpResponseRedirect(redirect_url)
+
+def get_blank_item(request):
+    item_type = request.GET.get('itemType')
+    blank_item = utils.get_item_template(item_type)
+    form = ZoteroWidget()
+    new_form = form.render('', blank_item)
+    return HttpResponse(new_form, mimetype='text/plain')

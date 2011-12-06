@@ -32,4 +32,14 @@ $(document).ready(function() {
     });
     return zoteroDataObject;
   }
+
+  var getItemTemplate = function(itemType, existingFormData) {
+    $.ajax({
+      url: '/document/blank/',
+      data: {'itemType' : itemType},
+      success: function(data){
+        console.log(data)
+      }
+    });
+  };
 });
