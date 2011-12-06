@@ -8,8 +8,7 @@ class ZoteroLink(models.Model):
     zotero_url = models.URLField(blank=True)
     zotero_data = models.TextField()
     date_information = models.TextField(blank=True)
-    def __str__(self):
-        return 'Zotero data: %s' % self.doc.__str__()
+    last_updated = models.DateTimeField(auto_now=True)    
     def get_zotero_fields(self):
         z = json.loads(self.zotero_data)
         z['itemType'] = utils.type_map['readable'][z['itemType']]

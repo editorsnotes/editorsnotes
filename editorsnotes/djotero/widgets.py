@@ -5,7 +5,7 @@ from django.forms import Widget
 from django.forms.util import flatatt
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode
-from utils import readable_map
+from utils import readable_map, type_map
 
 class ZoteroWidget(Widget):
     """
@@ -13,8 +13,22 @@ class ZoteroWidget(Widget):
 
     """
     def render(self, name, value, attrs=None):
-        data = json.loads(value, object_pairs_hook=OrderedDict)
-        html = ''
+
+        ITEM_TYPE_SELECT = '<select id="zotero-item-type-select">%s</select>' % (
+            '<option value=""></option>' +
+            ''.join(['<option value="%s">%s</option>'% (
+                item[0], item[1]) for item in type_map['readable'].items()]
+            )
+        )
+
+        html = u'<div id="zotero-information"><br/><br/>'
+        
+        if not value:
+            html += 'Add for item type: %s<br/>' % ITEM_TYPE_SELECT
+            html += '</div>'
+            return mark_safe(html)
+
+        data = json.loads(force_unicode(value), object_pairs_hook=OrderedDict)
         key_counter = 0
         
         for key, val in data.items():
@@ -90,6 +104,7 @@ class ZoteroWidget(Widget):
                 wrapper_attrs = {'class' : 'zotero-entry', 'zotero-key' : key}
                 html += '<span%s>%s</span>' % (flatatt(wrapper_attrs), item)
             key_counter += 1
+        html += '</div>'
         return mark_safe(html)
 
     def value_from_datadict(self, data, files, name):

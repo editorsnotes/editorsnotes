@@ -160,6 +160,8 @@ def update_zotero_info(request, username=None):
     return HttpResponseRedirect(redirect_url)
 
 def get_blank_item(request):
+    if not request.is_ajax() or not request.GET.get('itemType', False):
+        return HttpResponseBadRequest()
     item_type = request.GET.get('itemType')
     blank_item = utils.get_item_template(item_type)
     form = ZoteroWidget()

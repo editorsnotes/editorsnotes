@@ -16,6 +16,8 @@ from urllib import urlencode
 from io import StringIO
 from utils import xhtml_to_text
 from fields import XHTMLField
+from editorsnotes.djotero.models import ZoteroLink
+from editorsnotes.djotero.widgets import ZoteroWidget
 
 class FootnoteAdminForm(forms.ModelForm):
     stamp = forms.CharField(required=False, widget=forms.HiddenInput)
@@ -70,6 +72,13 @@ class DocumentLinkInline(admin.StackedInline):
     verbose_name_plural = 'External document links'
     extra = 0
 
+class ZoteroLinkInline(admin.StackedInline):
+    model = ZoteroLink
+    fields = ('zotero_data',)
+    formfield_overrides = {
+        models.TextField : {'widget' : ZoteroWidget},
+    }
+
 class ScanInline(admin.StackedInline):
     model = Scan
 
@@ -88,10 +97,11 @@ class VersionAdmin(reversion_admin.VersionAdmin):
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
         for instance in instances:
-            try:
-                instance.creator
-            except ObjectDoesNotExist:
-                instance.creator = request.user
+            if 'creator' in instance._meta.get_all_field_names():
+                try:
+                    instance.creator
+                except ObjectDoesNotExist:
+                    instance.creator = request.user
             if 'last_updated' in instance._meta.get_all_field_names():
                 instance.last_updater = request.user
             instance.save()
@@ -185,7 +195,7 @@ class NoteAdmin(VersionAdmin):
 
 class DocumentAdmin(VersionAdmin):
     form = DocumentAdminForm
-    inlines = (TopicAssignmentInline, DocumentLinkInline, ScanInline)
+    inlines = (ZoteroLinkInline, TopicAssignmentInline, DocumentLinkInline, ScanInline)
     formfield_overrides = { 
         models.ForeignKey: { 
             'widget': forms.widgets.HiddenInput(
@@ -197,7 +207,8 @@ class DocumentAdmin(VersionAdmin):
               'function/jquery-ui-1.8.10.custom.min.js',
               'function/wymeditor/jquery.wymeditor.pack.js',
               'function/jquery.timeago.js',
-              'function/admin.js')
+              'function/admin.js',
+              'function/zotero-admin-inline.js')
 
 class TranscriptAdmin(VersionAdmin):
     inlines = (FootnoteInline,)

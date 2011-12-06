@@ -33,13 +33,34 @@ $(document).ready(function() {
     return zoteroDataObject;
   }
 
-  var getItemTemplate = function(itemType, existingFormData) {
+  var getItemTemplate = function(itemType) {
     $.ajax({
       url: '/document/blank/',
       data: {'itemType' : itemType},
-      success: function(data){
-        console.log(data)
-      }
+      success: function(data){return data},
+      error: function(){return false}
     });
   };
+
+  $('#zotero-item-type-select').change(function() {
+    var $selector = $(this);
+    var $container = $selector.parent('#zotero-information');
+    if ($selector.val() != '') {
+      var itemType = $selector.val();
+      $container.children().hide();
+      $container.append('<div id="zotero-loading">Loading...</div>');
+      $.ajax({
+        url: '/document/blank/',
+        data: {'itemType' : itemType},
+        success: function(data){
+          $container.replaceWith(data);
+        },
+        error: function(){
+          $('#zotero-loading').html('<p>Error getting new item template</p>');
+          $container.children().show();
+        }
+      });
+    }
+  });
+
 });
