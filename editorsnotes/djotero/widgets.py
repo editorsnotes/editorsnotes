@@ -39,9 +39,16 @@ class ZoteroWidget(Widget):
             if key == 'itemType':
                 itemAttrs['type'] = 'hidden'
                 itemAttrs['value'] = val
-                item += '<label>%s</label>' % key
-                item += '<input%s>' % (flatatt(itemAttrs))
-                item += '<span>%s</span><br/><br/>' % val
+                item += """
+<label>%s</label>
+<input%s>
+<span>%s&nbsp;</span>
+<a href="#_" id="zotero-change-item-type">
+    <img src="/django_admin_media/img/admin/icon_changelink.gif">
+</a>
+<div style="display: none" id="zotero-item-type-list">%s</div>
+<br/><br/>
+                """ % (key, flatatt(itemAttrs), val, ITEM_TYPE_SELECT)
 
             elif key == 'creators':
                 # Parse array of different creator objects which have the property

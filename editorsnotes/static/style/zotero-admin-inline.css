@@ -1,5 +1,12 @@
-.zotero-key {
-    display: inline-block;
-    width: 110px;
+/* min-width is 760px! */
+.zotero-entry textarea {
+    width: 50em;
+    height: 1.25em;
+}
+.zotero-entry .zotero-creator textarea {
+    width: 24.25em;
+    height: 1.25em;
+}
+.zotero-entry label {
     text-align: right;
 }
