@@ -167,3 +167,10 @@ def get_blank_item(request):
     form = ZoteroWidget()
     new_form = form.render('', blank_item)
     return HttpResponse(new_form, mimetype='text/plain')
+
+def zotero_json_to_csl(request):
+    #if not request.is_ajax() or not request.GET.get('zotero-json', False):
+    #    return HttpResponseBadRequest()
+    zotero_json = request.GET.get('zotero-json')
+    csl = utils.as_csl(zotero_json, 'ITEM-1')
+    return HttpResponse(csl, mimetype='application/json')

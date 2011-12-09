@@ -209,7 +209,12 @@ class DocumentAdmin(VersionAdmin):
               'function/wymeditor/jquery.wymeditor.pack.js',
               'function/jquery.timeago.js',
               'function/admin.js',
-              'function/zotero-admin-inline.js')
+              'function/zotero-admin-inline.js',
+              'function/citeproc-js/xmle4x.js',
+              'function/citeproc-js/xmldom.js',
+              'function/citeproc-js/citeproc.js',
+              'function/citeproc-js/simple.js',
+             )
 
 class TranscriptAdmin(VersionAdmin):
     inlines = (FootnoteInline,)
