@@ -32,20 +32,48 @@ $(document).ready(function() {
         zoteroDataObject[fieldKey] = fieldVal.val()
       }
     });
-    return zoteroDataObject;
+    return JSON.stringify(zoteroDataObject);
   }
   
-  console.log(buildZoteroJson());
-  $.ajax({
-    url: '/api/document/csl/',
-    data: {'zotero-json' : JSON.stringify(buildZoteroJson())},
-    success: function(data){
-      console.log(runCite(JSON.stringify(data)));
-      console.log(data);
-    },
-    error: function(){
-      console.log('error');
-    }
+  var json_to_reference = function() {
+    var zoteroJSON = buildZoteroJson();
+    $.ajax({
+      url: '/api/document/csl/',
+      data: {'zotero-json' : zoteroJSON},
+      success: function(data){
+        var formattedRef = runCite(JSON.stringify(data));
+
+        var wymconfig = {
+          skin: 'custom',
+          toolsItems: [
+            {'name': 'Bold', 'title': 'Strong', 'css': 'wym_tools_strong'}, 
+            {'name': 'Italic', 'title': 'Emphasis', 'css': 'wym_tools_emphasis'},
+            {'name': 'InsertOrderedList', 'title': 'Ordered_List', 'css': 'wym_tools_ordered_list'},
+            {'name': 'InsertUnorderedList', 'title': 'Unordered_List', 'css': 'wym_tools_unordered_list'},
+            {'name': 'Undo', 'title': 'Undo', 'css': 'wym_tools_undo'},
+            {'name': 'Redo', 'title': 'Redo', 'css': 'wym_tools_redo'},
+            {'name': 'CreateLink', 'title': 'Link', 'css': 'wym_tools_link'},
+            {'name': 'Unlink', 'title': 'Unlink', 'css': 'wym_tools_unlink'},
+            {'name': 'ToggleHtml', 'title': 'HTML', 'css': 'wym_tools_html'}
+          ],
+          updateSelector: 'input:submit',
+          updateEvent: 'click',
+          classesHtml: ''
+        };
+
+        var $textArea = $('#id_description');
+        $textArea.siblings('div.wym_box').remove();
+        $textArea.text(formattedRef);
+        $textArea.wymeditor(wymconfig);
+      }
+    });
+  }
+
+  var generateLink = '<a href="#_" id="generate-citation">Generate from Zotero information</a>'
+  $('#id_description').parent().append(generateLink);
+
+  $('#generate-citation').live('click', function() {
+    json_to_reference();
   });
 
   // Cache values entered into the form if (for example) itemType is changed.
