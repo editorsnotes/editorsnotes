@@ -107,7 +107,7 @@ class ZoteroWidget(Widget):
                             ' class="creator-attr" creator-key="firstName"',
                             creator['firstName']
                         )
-                    item += '<span%s>%s%s</span><br/>' % (
+                    item += '<span%s>%s%s<br/></span>' % (
                         flatatt(creator_attrs),creator_html, CREATOR_ADD_REMOVE
                     )
 

@@ -132,6 +132,16 @@ $(document).ready(function() {
     $creatorSelect.parent().attr('creator-type', selectedCreatorType);
   });
 
+  $('.creator-add').live('click', function() {
+    var $newCreator = $(this).parent().clone();
+    $newCreator.find('textarea').val('');
+    $newCreator.insertAfter($(this).parent());
+  });
+
+  $('.creator-remove').live('click', function() {
+    $(this).parent().remove();
+  });
+
 
   // Cache values entered into the form if (for example) itemType is changed.
   var zoteroDataCache = new Object;
