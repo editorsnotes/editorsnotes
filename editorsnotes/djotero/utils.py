@@ -73,6 +73,14 @@ def get_item_template(item_type):
         #TODO: make this more descriptive (duh)
         raise Exception
 
+def get_creator_types(item_type):
+    url = '%s/itemTypeCreatorTypes?itemType=%s' % (ZOTERO_BASE_URL, item_type)
+    page = urlopen(url)
+    if page.code == 200:
+        new_item = page.read()
+        return new_item
+    else:
+        raise Exception
 
 # Helper functions
 def as_csl(zotero_json_string, citeproc_identifier):

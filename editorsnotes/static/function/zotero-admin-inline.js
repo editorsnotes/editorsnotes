@@ -76,6 +76,34 @@ $(document).ready(function() {
     json_to_reference();
   });
 
+  //
+  // For dealing with contributor types
+  //
+
+  $('select.creator-select').live('click', function() {
+    $creatorSelect = $(this);
+    if (!$creatorSelect.hasClass('creators-select-queried')) {
+      var itemType = $(this).closest('.zotero-entry').siblings('[zotero-key="itemType"]')
+        .find('input[type="hidden"]').val();
+      $creatorSelect.children().hide();
+      $.ajax({
+        url: '/api/document/creators/',
+        data: {'itemType' : itemType},
+        success: function(data) {
+          $creatorSelect.children().remove();
+          $.each(data, function(index, creatorType) {
+            var creatorOption = $('<option>' + creatorType.localized + '</option>')
+              .val(creatorType.creatorType);
+            $creatorSelect.append(creatorOption);
+            $creatorSelect.addClass('creators-select-queried');
+          });
+        }
+      });
+    }
+  });
+
+
+
   // Cache values entered into the form if (for example) itemType is changed.
   var zoteroDataCache = new Object;
 

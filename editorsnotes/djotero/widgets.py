@@ -21,6 +21,21 @@ class ZoteroWidget(Widget):
             )
         )
 
+        CREATOR_TYPE_SELECT = """
+<select class="creator-select">
+    <option value="%s">%s</option>
+</select>
+        """
+
+        CREATOR_ADD_REMOVE = """
+<a href="#_" class="creator-add">
+    <img src="/django_admin_media/img/admin/icon_addlink.gif">
+</a>
+<a href="#_" class="creator-remove">
+    <img src="/django_admin_media/img/admin/icon_deletelink.gif">
+</a>
+        """
+
         html = u'<div id="zotero-information"><br/><br/>'
         
         if not value:
@@ -72,7 +87,10 @@ class ZoteroWidget(Widget):
                     creator_attrs = {'class' : 'zotero-creator',
                                      'creator-type' : creator['creatorType']}
                     creator_html = ''
-                    creator_html += '<label>%s</label>&nbsp;' % creator['creatorType']
+                    creator_selector = CREATOR_TYPE_SELECT % (
+                        creator['creatorType'], creator['creatorType']
+                    )
+                    creator_html += '%s&nbsp;' % creator_selector
                     if creator.get('name'):
                         creator_html += '<textarea%s>%s</textarea>' % (
                             ' class="creator-attr" creator-key="name"',
@@ -87,8 +105,8 @@ class ZoteroWidget(Widget):
                             ' class="creator-attr" creator-key="firstName"',
                             creator['firstName']
                         )
-                    item += '<span%s>%s</span><br/>' % (
-                        flatatt(creator_attrs),creator_html
+                    item += '<span%s>%s</span>%s<br/>' % (
+                        flatatt(creator_attrs),creator_html, CREATOR_ADD_REMOVE
                     )
 
             elif key == 'tags':

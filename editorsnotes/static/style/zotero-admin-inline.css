@@ -10,3 +10,10 @@
 .zotero-entry label {
     text-align: right;
 }
+select.creator-select {
+    width: 9.25em;
+    text-align: right;
+}
+select.creator-select option {
+    text-align: right;
+}
