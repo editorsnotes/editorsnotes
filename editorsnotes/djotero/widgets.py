@@ -80,7 +80,7 @@ class ZoteroWidget(Widget):
                     # with javascript.
                     itemAttrs['type'] = 'hidden'
                     itemAttrs['value'] = json.dumps(creator)
-                    item += '<input%s>' % flatatt(itemAttrs)
+                    creator_input = '<input%s>' % flatatt(itemAttrs)
 
                     # Along with that hidden input, create nameless textareas
                     # for either a full name, or first + last name.
@@ -90,7 +90,9 @@ class ZoteroWidget(Widget):
                     creator_selector = CREATOR_TYPE_SELECT % (
                         creator['creatorType'], creator['creatorType']
                     )
-                    creator_html += '%s&nbsp;' % creator_selector
+                    creator_html += '%s%s&nbsp;' % (
+                        creator_selector, creator_input
+                    )
                     if creator.get('name'):
                         creator_html += '<textarea%s>%s</textarea>' % (
                             ' class="creator-attr" creator-key="name"',
@@ -105,7 +107,7 @@ class ZoteroWidget(Widget):
                             ' class="creator-attr" creator-key="firstName"',
                             creator['firstName']
                         )
-                    item += '<span%s>%s</span>%s<br/>' % (
+                    item += '<span%s>%s%s</span><br/>' % (
                         flatatt(creator_attrs),creator_html, CREATOR_ADD_REMOVE
                     )
 

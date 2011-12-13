@@ -10,17 +10,12 @@ $(document).ready(function() {
         zoteroDataObject['itemType'] = $field.find('input[type="hidden"]').val();
       }
       else if (fieldKey == 'creators'){
+        update_creator_values();
         var creatorsArray = new Array;
         var $creators = $field.children('.zotero-creator');
-        $.each($creators, function(key, val){
-          var creatorObject = new Object;
-          var $creator = $(val);
-          var creatorNameParts = $creator.children('.creator-attr');
-          creatorObject.creatorType = $creator.attr('creator-type');
-          $.each(creatorNameParts, function(key, name){
-            var $namePart = $(name);
-            creatorObject[$namePart.attr('creator-key')] = $namePart.val();
-          });
+        $.each($field.children('.zotero-creator'), function(key, val){
+          var $creatorInput = $(val).children('input').val();
+          var creatorObject = JSON.parse($creatorInput);
           creatorsArray.push(creatorObject);
         });
         zoteroDataObject['creators'] = creatorsArray;
@@ -80,28 +75,62 @@ $(document).ready(function() {
   // For dealing with contributor types
   //
 
+  var update_creator_values = function() {
+    $.each($('.zotero-creator'), function(key, value) {
+      var $creator = $(this);
+      var $creatorInput = $creator.find('input[type="hidden"]');
+      var creatorObject = new Object;
+      $.each($creator.children('.creator-attr'), function(attrKey, attrVal) {
+        $attribute = $(this);
+        creatorObject[$attribute.attr('creator-key')] = $attribute.val();
+      });
+      creatorObject['creatorType'] = $creator.attr('creator-type');
+      $creatorInput.val(JSON.stringify(creatorObject));
+    });
+  }
+
+  // Initialize cache in global scope
+  zoteroCreatorsCache = new Object;
+
   $('select.creator-select').live('click', function() {
-    $creatorSelect = $(this);
+    var $creatorSelect = $(this);
     if (!$creatorSelect.hasClass('creators-select-queried')) {
       var itemType = $(this).closest('.zotero-entry').siblings('[zotero-key="itemType"]')
         .find('input[type="hidden"]').val();
       $creatorSelect.children().hide();
-      $.ajax({
-        url: '/api/document/creators/',
-        data: {'itemType' : itemType},
-        success: function(data) {
-          $creatorSelect.children().remove();
-          $.each(data, function(index, creatorType) {
-            var creatorOption = $('<option>' + creatorType.localized + '</option>')
-              .val(creatorType.creatorType);
-            $creatorSelect.append(creatorOption);
-            $creatorSelect.addClass('creators-select-queried');
-          });
-        }
-      });
+      $creatorSelect.append('<option id="creators-loading">Loading...</option>');
+      if (zoteroCreatorsCache[itemType] == undefined) {
+        $.ajax({
+          url: '/api/document/creators/',
+          data: {'itemType' : itemType},
+          success: function(data) {
+            $creatorSelect.children().remove();
+            $.each(data, function(index, creatorType) {
+              var creatorOption = $('<option>' + creatorType.localized + '</option>')
+                .val(creatorType.creatorType);
+              $creatorSelect.append(creatorOption);
+              $creatorSelect.addClass('creators-select-queried');
+            });
+            zoteroCreatorsCache[itemType] = $creatorSelect;
+          },
+          error: function() {
+            alert('Error connecting to Zotero server');
+          }
+        });
+      }
+      else {
+        var replacementList = zoteroCreatorsCache[itemType].clone();
+        $creatorSelect.html(replacementList.children());
+        $creatorSelect.addClass('creators-select-queried');
+      }
     }
   });
 
+  $('select.creator-select').live('change', function() {
+    var $creatorSelect = $(this);
+    var selectedCreatorType = $(this).children('option:selected').val();
+    $creatorSelect.parent().attr('creator-type', selectedCreatorType);
+  });
 
 
   // Cache values entered into the form if (for example) itemType is changed.
