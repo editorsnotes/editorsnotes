@@ -5,7 +5,7 @@ from django.forms import Widget
 from django.forms.util import flatatt
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode
-from utils import readable_map, type_map
+from utils import type_map, contrib_map, field_map
 
 class ZoteroWidget(Widget):
     """
@@ -63,7 +63,8 @@ class ZoteroWidget(Widget):
 </a>
 <div style="display: none" id="zotero-item-type-list">%s</div>
 <br/><br/>
-                """ % (key, flatatt(itemAttrs), val, ITEM_TYPE_SELECT)
+                """ % ('Item Type', flatatt(itemAttrs),
+                       type_map['readable'][val], ITEM_TYPE_SELECT)
 
             elif key == 'creators':
                 # Parse array of different creator objects which have the property
@@ -88,7 +89,8 @@ class ZoteroWidget(Widget):
                                      'creator-type' : creator['creatorType']}
                     creator_html = ''
                     creator_selector = CREATOR_TYPE_SELECT % (
-                        creator['creatorType'], creator['creatorType']
+                        creator['creatorType'],
+                        contrib_map['readable'][creator['creatorType']]
                     )
                     creator_html += '%s%s&nbsp;' % (
                         creator_selector, creator_input
@@ -124,7 +126,7 @@ class ZoteroWidget(Widget):
                     item += '<input%s>' % flatatt(itemAttrs) 
 
             elif isinstance(val, unicode) :
-                item += '<label>%s</label>&nbsp;' % (key)
+                item += '<label>%s</label>&nbsp;' % (field_map['readable'][key])
                 item += '<textarea%s>%s</textarea><br/>' % (flatatt(itemAttrs), val)
 
             if item:

@@ -1,6 +1,8 @@
+import re
+import simplejson as json
+from ordereddict import OrderedDict
 from urllib2 import urlopen, HTTPError
 from lxml import etree
-import re, json
 
 NS = {'xhtml': 'http://www.w3.org/1999/xhtml',
       'zot' : "http://zotero.org/ns/api",
@@ -109,17 +111,24 @@ def as_csl(zotero_json_string, citeproc_identifier):
 
 def as_readable(zotero_json_string):
     zotero_data_list = []
-    content = json.loads(zotero_json_string)
-    content.pop('tags')
-    content['itemType'] = type_map['readable'][content['itemType']]
-    if content['creators']:
-        names = resolve_names(content, 'readable')
-        for name in names:
-            zotero_data_list.append(name)
-        content.pop('creators')
-    for x in content.keys():
-        if content[x]:
-            zotero_data_list.append({'type' : x, 'label' : readable_map[x]['name'], 'value' : content[x], 'display_category' : readable_map[x]['category']})
+    zotero_data = json.loads(zotero_json_string, object_pairs_hook=OrderedDict)
+    for key, val in zotero_data.items():
+        if key == 'itemType':
+            readable_data = (key, type_map['readable'][val], 'Item Type')
+        elif key == 'creators' and val:
+            readable_data = resolve_names(zotero_data, 'readable')
+        elif key == 'tags':
+            pass
+        elif val:
+            readable_data = (key, val, field_map['readable'][key])
+        else:
+            readable_data = False
+        if readable_data:
+            if isinstance(readable_data, tuple):
+                keys = ('zotero_key', 'value', 'label')
+                zotero_data_list.append( dict(zip(keys, readable_data)) )
+            elif isinstance(readable_data, list):
+                zotero_data_list += readable_data
     return zotero_data_list
 
 def resolve_names(zotero_data, format):
@@ -159,7 +168,7 @@ def resolve_names(zotero_data, format):
                 name = creator['firstName'] + ' ' + creator['lastName']
             except:
                 name = creator['name']
-            contribs.append({'type' : creator['creatorType'], 'label' : contrib_map['readable'][creator['creatorType']], 'value' : name, 'display_category' : 3})
+            contribs.append({'zotero_key' : creator['creatorType'], 'label' : contrib_map['readable'][creator['creatorType']], 'value' : name})
     
     return contribs
 
@@ -178,201 +187,8 @@ def parse_xml(url):
 
 # Map to translate JSON from Zotero to something understandable by citeproc-js CSL engine.
 # See http://gsl-nagoya-u.net/http/pub/csl-fields/
-csl_map = {
-    "publicationTitle": "container-title", 
-    "letterType": "genre", 
-    "DOI": "DOI", 
-    "ISBN": "ISBN", 
-    "meetingName": "event", 
-    "bookTitle": "container-title", 
-    "extra": "note", 
-    "series": "collection-title", 
-    "caseName": "title", 
-    "blogTitle": "container-title", 
-    "codeVolume": "volume", 
-    "edition": "edition", 
-    "code": "container-title", 
-    "references": "references", 
-    "distributor": "publisher", 
-    "seriesNumber": "collection-number", 
-    "abstractNote": "abstract", 
-    "label": "publisher", 
-    "dateEnacted": "issued", 
-    "archive": "archive", 
-    "numberOfVolumes": "number-of-volumes", 
-    "subject": "title", 
-    "encyclopediaTitle": "container-title", 
-    "episodeNumber": "number", 
-    "programTitle": "container-title", 
-    "court": "authority", 
-    "network": "publisher", 
-    "title": "title", 
-    "proceedingsTitle": "container-title", 
-    "section": "section", 
-    "reporter": "container-title", 
-    "forumTitle": "container-title", 
-    "archiveLocation": "archive_location", 
-    "documentNumber": "number", 
-    "version": "version", 
-    "websiteType": "genre", 
-    "mapType": "genre", 
-    "postType": "genre", 
-    "presentationType": "genre", 
-    "dictionaryTitle": "container-title", 
-    "videoRecordingFormat": "medium", 
-    "issue": "issue", 
-    "company": "publisher", 
-    "nameOfAct": "title", 
-    "seriesTitle": "collection-title", 
-    "thesisType": "genre", 
-    "institution": "publisher", 
-    "patentNumber": "number", 
-    "accessDate": "accessed", 
-    "manuscriptType": "genre", 
-    "billNumber": "number", 
-    "firstPage": "page", 
-    "volume": "volume", 
-    "callNumber": "call-number", 
-    "reporterVolume": "volume", 
-    "studio": "publisher", 
-    "publicLawNumber": "number", 
-    "reportNumber": "number", 
-    "genre": "genre", 
-    "interviewMedium": "medium", 
-    "codePages": "page", 
-    "pages": "page", 
-    "numPages": "number-of-pages", 
-    "publisher": "publisher", 
-    "dateDecided": "issued", 
-    "language": "language", 
-    "audioRecordingFormat": "medium", 
-    "conferenceName": "event", 
-    "url": "URL", 
-    "issueDate": "issued", 
-    "university": "publisher", 
-    "rights": "rights", 
-    "artworkMedium": "medium", 
-    "artworkSize": "genre", 
-    "audioFileType": "medium", 
-    "place": "publisher-place", 
-    "docketNumber": "number", 
-    "reportType": "genre", 
-    "websiteTitle": "container-title", 
-    "history": "references"
-}
+field_map = {'csl': {'artworkSize': 'genre', 'letterType': 'genre', 'DOI': 'DOI', 'ISBN': 'ISBN', 'meetingName': 'event', 'extra': 'note', 'series': 'collection-title', 'history': 'references', 'codeVolume': 'volume', 'edition': 'edition', 'code': 'container-title', 'references': 'references', 'distributor': 'publisher', 'seriesNumber': 'collection-number', 'abstractNote': 'abstract', 'dateEnacted': 'issued', 'archive': 'archive', 'numberOfVolumes': 'number-of-volumes', 'caseName': 'title', 'episodeNumber': 'number', 'programTitle': 'container-title', 'rights': 'rights', 'court': 'authority', 'network': 'publisher', 'blogTitle': 'container-title', 'proceedingsTitle': 'container-title', 'section': 'section', 'label': 'publisher', 'accessDate': 'accessed', 'documentNumber': 'number', 'version': 'version', 'websiteType': 'genre', 'mapType': 'genre', 'postType': 'genre', 'presentationType': 'genre', 'dictionaryTitle': 'container-title', 'pages': 'page', 'subject': 'title', 'issue': 'issue', 'company': 'publisher', 'nameOfAct': 'title', 'seriesTitle': 'collection-title', 'thesisType': 'genre', 'conferenceName': 'event', 'institution': 'publisher', 'reporter': 'container-title', 'archiveLocation': 'archive_location', 'bookTitle': 'container-title', 'billNumber': 'number', 'firstPage': 'page', 'volume': 'volume', 'callNumber': 'call-number', 'reporterVolume': 'volume', 'studio': 'publisher', 'publicLawNumber': 'number', 'patentNumber': 'number', 'interviewMedium': 'medium', 'codePages': 'page', 'forumTitle': 'container-title', 'manuscriptType': 'genre', 'numPages': 'number-of-pages', 'publisher': 'publisher', 'videoRecordingFormat': 'medium', 'audioRecordingFormat': 'medium', 'language': 'language', 'reportNumber': 'number', 'url': 'URL', 'issueDate': 'issued', 'university': 'publisher', 'title': 'title', 'artworkMedium': 'medium', 'dateDecided': 'issued', 'audioFileType': 'medium', 'docketNumber': 'number', 'publicationTitle': 'container-title', 'place': 'publisher-place', 'reportType': 'genre', 'encyclopediaTitle': 'container-title', 'genre': 'genre', 'websiteTitle': 'container-title'}, 'readable': {'code': 'Code', 'seriesNumber': 'Series Number', 'caseName': 'Case Name', 'extra': 'Extra', 'seriesText': 'Series Text', 'number': 'Number', 'codeVolume': 'Code Volume', 'ISSN': 'ISSN', 'conferenceName': 'Conference Name', 'session': 'Session', 'references': 'References', 'committee': 'Committee', 'episodeNumber': 'Episode Number', 'itemType': 'Type', 'title': 'Title', 'system': 'System', 'dateEnacted': 'Date Enacted', 'source': 'Source', 'reportType': 'Report Type', 'dictionaryTitle': 'Dictionary Title', 'dateDecided': 'Date Decided', 'company': 'Company', 'nameOfAct': 'Name of Act', 'artworkSize': 'Artwork Size', 'medium': 'Medium', 'filingDate': 'Filing Date', 'archiveLocation': 'Loc. in Archive', 'bookTitle': 'Book Title', 'libraryCatalog': 'Library Catalog', 'codeNumber': 'Code Number', 'volume': 'Volume', 'reportNumber': 'Report Number', 'issuingAuthority': 'Issuing Authority', 'pages': 'Pages', 'date': 'Date', 'interviewMedium': 'Medium', 'institution': 'Institution', 'abstractNote': 'Abstract', 'audioRecordingFormat': 'Format', 'shortTitle': 'Short Title', 'assignee': 'Assignee', 'issueDate': 'Issue Date', 'notes': 'Notes', 'rights': 'Rights', 'dateModified': 'Modified', 'publicationTitle': 'Publication', 'encyclopediaTitle': 'Encyclopedia Title', 'university': 'University', 'websiteTitle': 'Website Title', 'letterType': 'Type', 'ISBN': 'ISBN', 'attachments': 'Attachments', 'series': 'Series', 'programmingLanguage': 'Language', 'DOI': 'DOI', 'related': 'Related', 'edition': 'Edition', 'websiteType': 'Website Type', 'archive': 'Archive', 'distributor': 'Distributor', 'legalStatus': 'Legal Status', 'numberOfVolumes': '# of Volumes', 'subject': 'Subject', 'patentNumber': 'Patent Number', 'billNumber': 'Bill Number', 'scale': 'Scale', 'court': 'Court', 'network': 'Network', 'blogTitle': 'Blog Title', 'applicationNumber': 'Application Number', 'proceedingsTitle': 'Proceedings Title', 'section': 'Section', 'tags': 'Tags', 'label': 'Label', 'documentNumber': 'Document Number', 'version': 'Version', 'legislativeBody': 'Legislative Body', 'mapType': 'Type', 'postType': 'Post Type', 'presentationType': 'Type', 'journalAbbreviation': 'Journal Abbr', 'videoRecordingFormat': 'Format', 'issue': 'Issue', 'manuscriptType': 'Type', 'docketNumber': 'Docket Number', 'seriesTitle': 'Series Title', 'thesisType': 'Type', 'dateAdded': 'Date Added', 'reporter': 'Reporter', 'accessDate': 'Accessed', 'programTitle': 'Program Title', 'firstPage': 'First Page', 'runningTime': 'Running Time', 'meetingName': 'Meeting Name', 'studio': 'Studio', 'publicLawNumber': 'Public Law Number', 'artworkMedium': 'Medium', 'codePages': 'Code Pages', 'forumTitle': 'Forum/Listserv Title', 'numPages': '# of Pages', 'publisher': 'Publisher', 'language': 'Language', 'callNumber': 'Call Number', 'url': 'URL', 'country': 'Country', 'audioFileType': 'File Type', 'reporterVolume': 'Reporter Volume', 'place': 'Place', 'priorityNumbers': 'Priority Numbers', 'history': 'History', 'genre': 'Genre'}}
 
-readable_map = {
-    'DOI': {'category': 7, 'name': 'DOI'},
-    'ISBN': {'category': 7, 'name': 'ISBN'},
-    'ISSN': {'category': 7, 'name': 'ISSN'},
-    'abstractNote': {'category': 7, 'name': 'Abstract'},
-    'accessDate': {'category': 4, 'name': 'Accessed'},
-    'applicationNumber': {'category': 7, 'name': 'Application Number'},
-    'archive': {'category': 5, 'name': 'Archive'},
-    'archiveLocation': {'category': 5, 'name': 'Loc. in Archive'},
-    'artworkMedium': {'category': 7, 'name': 'Medium'},
-    'artworkSize': {'category': 7, 'name': 'Artwork Size'},
-    'assignee': {'category': 7, 'name': 'Assignee'},
-    'audioFileType': {'category': 7, 'name': 'File Type'},
-    'audioRecordingFormat': {'category': 7, 'name': 'Format'},
-    'billNumber': {'category': 7, 'name': 'Bill Number'},
-    'blogTitle': {'category': 5, 'name': 'Blog Title'},
-    'bookTitle': {'category': 5, 'name': 'Book Title'},
-    'callNumber': {'category': 6, 'name': 'Call Number'},
-    'caseName': {'category': 7, 'name': 'Case Name'},
-    'code': {'category': 7, 'name': 'Code'},
-    'codeNumber': {'category': 7, 'name': 'Code Number'},
-    'codePages': {'category': 7, 'name': 'Code Pages'},
-    'codeVolume': {'category': 7, 'name': 'Code Volume'},
-    'committee': {'category': 7, 'name': 'Committee'},
-    'company': {'category': 7, 'name': 'Company'},
-    'conferenceName': {'category': 7, 'name': 'Conference Name'},
-    'country': {'category': 7, 'name': 'Country'},
-    'court': {'category': 7, 'name': 'Court'},
-    'date': {'category': 4, 'name': 'Date'},
-    'dateDecided': {'category': 4, 'name': 'Date Decided'},
-    'dateEnacted': {'category': 4, 'name': 'Date Enacted'},
-    'dictionaryTitle': {'category': 5, 'name': 'Dictionary Title'},
-    'distributor': {'category': 7, 'name': 'Distributor'},
-    'docketNumber': {'category': 7, 'name': 'Docket Number'},
-    'documentNumber': {'category': 7, 'name': 'Document Number'},
-    'edition': {'category': 5, 'name': 'Edition'},
-    'encyclopediaTitle': {'category': 5, 'name': 'Encyclopedia Title'},
-    'episodeNumber': {'category': 7, 'name': 'Episode Number'},
-    'extra': {'category': 7, 'name': 'Extra'},
-    'filingDate': {'category': 7, 'name': 'Filing Date'},
-    'firstPage': {'category': 7, 'name': 'First Page'},
-    'forumTitle': {'category': 5, 'name': 'Forum/Listserv Title'},
-    'genre': {'category': 7, 'name': 'Genre'},
-    'history': {'category': 7, 'name': 'History'},
-    'institution': {'category': 7, 'name': 'Institution'},
-    'interviewMedium': {'category': 7, 'name': 'Medium'},
-    'issue': {'category': 5, 'name': 'Issue'},
-    'issueDate': {'category': 4, 'name': 'Issue Date'},
-    'issuingAuthority': {'category': 5, 'name': 'Issuing Authority'},
-    'journalAbbreviation': {'category': 7, 'name': 'Journal Abbr'},
-    'label': {'category': 7, 'name': 'Label'},
-    'language': {'category': 7, 'name': 'Language'},
-    'legalStatus': {'category': 7, 'name': 'Legal Status'},
-    'legislativeBody': {'category': 7, 'name': 'Legislative Body'},
-    'letterType': {'category': 7, 'name': 'Type'},
-    'libraryCatalog': {'category': 6, 'name': 'Library Catalog'},
-    'manuscriptType': {'category': 7, 'name': 'Type'},
-    'mapType': {'category': 7, 'name': 'Type'},
-    'meetingName': {'category': 7, 'name': 'Meeting Name'},
-    'nameOfAct': {'category': 7, 'name': 'Name of Act'},
-    'network': {'category': 7, 'name': 'Network'},
-    'numPages': {'category': 7, 'name': '# of Pages'},
-    'numberOfVolumes': {'category': 7, 'name': '# of Volumes'},
-    'pages': {'category': 7, 'name': 'Pages'},
-    'patentNumber': {'category': 7, 'name': 'Patent Number'},
-    'place': {'category': 5, 'name': 'Place'},
-    'postType': {'category': 7, 'name': 'Post Type'},
-    'presentationType': {'category': 7, 'name': 'Type'},
-    'priorityNumbers': {'category': 7, 'name': 'Priority Numbers'},
-    'proceedingsTitle': {'category': 5, 'name': 'Proceedings Title'},
-    'programTitle': {'category': 7, 'name': 'Program Title'},
-    'programmingLanguage': {'category': 7, 'name': 'Language'},
-    'publicLawNumber': {'category': 7, 'name': 'Public Law Number'},
-    'publicationTitle': {'category': 5, 'name': 'Publication'},
-    'publisher': {'category': 5, 'name': 'Publisher'},
-    'references': {'category': 7, 'name': 'References'},
-    'reportNumber': {'category': 7, 'name': 'Report Number'},
-    'reportType': {'category': 1, 'name': 'Report Type'},
-    'reporter': {'category': 7, 'name': 'Reporter'},
-    'reporterVolume': {'category': 7, 'name': 'Reporter Volume'},
-    'rights': {'category': 7, 'name': 'Rights'},
-    'runningTime': {'category': 7, 'name': 'Running Time'},
-    'scale': {'category': 7, 'name': 'Scale'},
-    'section': {'category': 5, 'name': 'Section'},
-    'series': {'category': 5, 'name': 'Series'},
-    'seriesNumber': {'category': 5, 'name': 'Series Number'},
-    'seriesText': {'category': 5, 'name': 'Series Text'},
-    'seriesTitle': {'category': 5, 'name': 'Series Title'},
-    'session': {'category': 7, 'name': 'Session'},
-    'shortTitle': {'category': 2, 'name': 'Short Title'},
-    'studio': {'category': 7, 'name': 'Studio'},
-    'subject': {'category': 7, 'name': 'Subject'},
-    'system': {'category': 7, 'name': 'System'},
-    'thesisType': {'category': 7, 'name': 'Type'},
-    'title': {'category': 2, 'name': 'Title'},
-    'university': {'category': 7, 'name': 'University'},
-    'url': {'category': 7, 'name': 'URL'},
-    'version': {'category': 7, 'name': 'Version'},
-    'videoRecordingFormat': {'category': 7, 'name': 'Format'},
-    'volume': {'category': 5, 'name': 'Volume'},
-    'websiteTitle': {'category': 7, 'name': 'Website Title'},
-    'websiteType': {'category': 7, 'name': 'Website Type'},
-    'itemType': {'category' : 1, 'name' : 'Item Type'}
-}
-#category_order = {
-#    'Item Type' : 1,
-#    'Title' : 2,
-#    'Creator(s)' : 3,
-#    'Date' : 4,
-#    'Publication information' : 5,
-#    'Location information' : 6,
-#    'Misc.' : 7
-#}
-type_map = {'csl' : {'document': 'article', 'manuscript': 'manuscript', 'radioBroadcast': 'broadcast', 'dictionaryEntry': 'chapter', 'hearing': 'bill', 'thesis': 'thesis', 'film': 'motion_picture', 'conferencePaper': 'paper-conference', 'journalArticle': 'article-journal', 'patent': 'patent', 'webpage': 'webpage', 'book': 'book', 'instantMessage': 'personal_communication', 'interview': 'interview', 'presentation': 'speech', 'email': 'personal_communication', 'forumPost': 'webpage', 'map': 'map', 'videoRecording': 'motion_picture', 'blogPost': 'webpage', 'newspaperArticle': 'article-newspaper', 'letter': 'personal_communication', 'artwork': 'graphic', 'report': 'report', 'podcast': 'song', 'audioRecording': 'song', 'case': 'legal_case', 'statute': 'bill', 'computerProgram': 'book', 'bill': 'bill', 'bookSection': 'chapter', 'tvBroadcast': 'broadcast', 'magazineArticle': 'article-magazine', 'encyclopediaArticle': 'chapter'}, 'readable' : {'forumPost': 'Forum Post', 'map': 'Map', 'instantMessage': 'Instant Message', 'videoRecording': 'Video Recording', 'thesis': 'Thesis', 'manuscript': 'Manuscript', 'radioBroadcast': 'Radio Broadcast', 'blogPost': 'Blog Post', 'dictionaryEntry': 'Dictionary Entry', 'hearing': 'Hearing', 'newspaperArticle': 'Newspaper Article', 'letter': 'Letter', 'artwork': 'Artwork', 'report': 'Report', 'podcast': 'Podcast', 'audioRecording': 'Audio Recording', 'film': 'Film', 'conferencePaper': 'Conference Paper', 'case': 'Case', 'statute': 'Statute', 'computerProgram': 'Computer Program', 'journalArticle': 'Journal Article', 'patent': 'Patent', 'bill': 'Bill', 'bookSection': 'Book Section', 'magazineArticle': 'Magazine Article', 'webpage': 'Webpage', 'book': 'Book', 'encyclopediaArticle': 'Encyclopedia Article', 'interview': 'Interview', 'document': 'Document', 'presentation': 'Presentation', 'email': 'Email', 'tvBroadcast': 'TV Broadcast'} }
+type_map = {'csl' : {'document': 'article', 'manuscript': 'manuscript', 'radioBroadcast': 'broadcast', 'dictionaryEntry': 'chapter', 'hearing': 'bill', 'thesis': 'thesis', 'film': 'motion_picture', 'conferencePaper': 'paper-conference', 'journalArticle': 'article-journal', 'patent': 'patent', 'webpage': 'webpage', 'book': 'book', 'instantMessage': 'personal_communication', 'interview': 'interview', 'presentation': 'speech', 'email': 'personal_communication', 'forumPost': 'webpage', 'map': 'map', 'videoRecording': 'motion_picture', 'blogPost': 'webpage', 'newspaperArticle': 'article-newspaper', 'letter': 'personal_communication', 'artwork': 'graphic', 'report': 'report', 'podcast': 'song', 'audioRecording': 'song', 'case': 'legal_case', 'statute': 'bill', 'computerProgram': 'book', 'bill': 'bill', 'bookSection': 'chapter', 'tvBroadcast': 'broadcast', 'magazineArticle': 'article-magazine', 'encyclopediaArticle': 'chapter'}, 'readable' : {'forumPost': 'Forum Post', 'map': 'Map', 'instantMessage': 'Instant Message', 'videoRecording': 'Video Recording', 'thesis': 'Thesis', 'manuscript': 'Manuscript', 'radioBroadcast': 'Radio Broadcast', 'blogPost': 'Blog Post', 'dictionaryEntry': 'Dictionary Entry', 'hearing': 'Hearing', 'newspaperArticle': 'Newspaper Article', 'letter': 'Letter', 'artwork': 'Artwork', 'report': 'Report', 'podcast': 'Podcast', 'audioRecording': 'Audio Recording', 'film': 'Film', 'conferencePaper': 'Conference Paper', 'case': 'Case', 'statute': 'Statute', 'computerProgram': 'Computer Program', 'journalArticle': 'Journal Article', 'patent': 'Patent', 'bill': 'Bill', 'bookSection': 'Book Section', 'magazineArticle': 'Magazine Article', 'webpage': 'Webpage', 'book': 'Book', 'encyclopediaArticle': 'Encyclopedia Article', 'interview': 'Interview', 'document': 'Document', 'presentation': 'Presentation', 'email': 'Email', 'tvBroadcast': 'TV Broadcast'}}
+
 contrib_map = {'csl' : {'author': 'author', 'contributor' : 'author', 'bookAuthor': 'container-author', 'seriesEditor': 'collection-editor', 'translator': 'translator', 'editor': 'editor', 'interviewer': 'interviewer', 'recipient': 'recipient', 'interviewee' : 'contributor'}, 'readable' : {'translator': 'Translator', 'contributor': 'Contributor', 'seriesEditor': 'Series Editor', 'editor': 'Editor', 'author': 'Author', 'bookAuthor': 'Book Author', 'recipient': 'Recipient', 'interviewer': 'Interviewer', 'interviewee': 'Interviewee'}}
