@@ -98,7 +98,7 @@ def as_csl(zotero_json_string, citeproc_identifier):
     fields_for_translation = [key for key in zotero_data.keys() if key not in skip and zotero_data[key]]
     for field in fields_for_translation:
         try:
-            output[csl_map[field]] = zotero_data[field]
+            output[field_map['csl'][field]] = zotero_data[field]
         except KeyError:
             pass
     if 'creators' in zotero_fields:
