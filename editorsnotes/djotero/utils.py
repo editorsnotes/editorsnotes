@@ -164,6 +164,12 @@ def resolve_names(zotero_data, format):
     if format == 'readable':
         contribs = []
         for creator in zotero_data['creators']:
+            # This is needed because blank creators are kept inside the zotero
+            # json, for easier inline editing. If a creator doesn't have a name,
+            # that data isn't rendered.
+            name_parts = [creator[key] for key in creator.keys() if key != 'creatorType']
+            if not any(name_parts):
+                continue
             try:
                 name = creator['firstName'] + ' ' + creator['lastName']
             except:
