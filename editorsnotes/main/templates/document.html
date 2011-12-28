@@ -59,11 +59,16 @@
         <li><a href="#notes">Related Notes <span class="alt">&amp;</span> Queries</a></li>
       </ul>
       <section id="info" class="span-23 last">
-        {% if zotero_data %}
-          {% include "item-information.include" %}
-        {% else %}
-          This document has no connected Zotero data.
-        {% endif %}
+        <div class="span-23 last">
+          {% if zotero_data %}
+            {% include "item-information.include" %}
+          {% else %}
+            This document has no connected Zotero data.
+          {% endif %}
+        </div>
+        <div class="span-2 last">
+          <a class="button" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
+        </div>
       </section>
       {% if document.has_parts %}
       <section id="parts" class="span-23 last">
