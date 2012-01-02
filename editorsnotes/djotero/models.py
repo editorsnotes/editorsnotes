@@ -5,8 +5,8 @@ import json
 
 class ZoteroLink(models.Model):
     doc = models.OneToOneField(Document, related_name='_zotero_link')
-    zotero_url = models.URLField()
-    zotero_data = models.TextField(blank=True)
+    zotero_url = models.URLField(blank=True)
+    zotero_data = models.TextField()
     date_information = models.TextField(blank=True)
     def get_zotero_fields(self):
         z = json.loads(self.zotero_data)
