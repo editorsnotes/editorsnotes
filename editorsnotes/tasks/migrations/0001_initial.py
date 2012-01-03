@@ -18,7 +18,7 @@ class Migration(SchemaMigration):
             ('title', self.gf('django.db.models.fields.CharField')(unique=True, max_length='80')),
             ('project', self.gf('django.db.models.fields.related.ForeignKey')(related_name='tasks', to=orm['main.Project'])),
             ('status', self.gf('django.db.models.fields.CharField')(default='1', max_length='1')),
-            ('description', self.gf('django.db.models.fields.TextField')(blank=True)),
+            ('description', self.gf('editorsnotes.main.fields.XHTMLField')()),
         ))
         db.send_create_signal('tasks', ['Task'])
 
@@ -126,7 +126,7 @@ class Migration(SchemaMigration):
             'assigned_users': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['auth.User']", 'symmetrical': 'False', 'blank': 'True'}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_task_set'", 'to': "orm['auth.User']"}),
-            'description': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
+            'description': ('editorsnotes.main.fields.XHTMLField', [], {}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'last_updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'last_updater': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'last_to_update_task_set'", 'to': "orm['auth.User']"}),

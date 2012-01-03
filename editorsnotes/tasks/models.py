@@ -4,6 +4,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from editorsnotes.main.models import CreationMetadata, LastUpdateMetadata, Administered, URLAccessible
 from editorsnotes.main.models import Project
+from editorsnotes.main.fields import XHTMLField
 
 TASK_STATUS_CHOICES = (
     ('0', 'Closed'),
@@ -16,7 +17,7 @@ class Task(LastUpdateMetadata, Administered, URLAccessible):
     project = models.ForeignKey(Project, related_name='tasks')
     status = models.CharField(max_length='1', choices=TASK_STATUS_CHOICES, default='1')
     assigned_users = models.ManyToManyField(User, blank=True)
-    description = models.TextField(blank=True)
+    description = XHTMLField()
     def as_text(self):
         return "Task: %s (%s)" % (self.title, self.project)
 
