@@ -11,7 +11,7 @@
         <span class="quiet">Related topics:</span> 
         <ul class="topic-list">
           {% for topic in topics %}
-          <li>{{ topic|as_link }}{% if not forloop.last %}, {% endif %}</li>
+          <li>{{ topic|as_link }}{% if not forloop.last %} | {% endif %}</li>
           {% endfor %}
         </ul>
       </div>
