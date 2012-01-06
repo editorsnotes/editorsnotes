@@ -41,7 +41,7 @@
         <span class="quiet">Related topics:</span> 
         <ul class="topic-list">
           {% for topic in topics %}
-          <li><a href="{{ topic.get_absolute_url }}">{{ topic.preferred_name }}</a>{% if not forloop.last %}, {% endif %}</li>
+          <li><a href="{{ topic.get_absolute_url }}">{{ topic.preferred_name }}</a>{% if not forloop.last %} | {% endif %}</li>
           {% endfor %}
         </ul>
         {% endif %}

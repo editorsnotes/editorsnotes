@@ -24,7 +24,7 @@
         <span class="quiet">Related topics:</span> 
         <ul class="topic-list">
           {% for related_topic in related_topics %}
-          <li>{{ related_topic|as_link }}</a>{% if not forloop.last %}, {% endif %}</li>
+          <li>{{ related_topic|as_link }}</a>{% if not forloop.last %} | {% endif %}</li>
           {% endfor %}
         </ul>
         {% endif %}
