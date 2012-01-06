@@ -94,6 +94,7 @@ $(document).ready(function(){
         <div id="task-description" class="span-23">
           <h3>{{ task.title }}</h3>
           <p>{{ task.description|as_html }}</p>
+          <a class="button" href="{{ task.get_admin_url }}?return_to={{ task.get_absolute_url }}">Edit</a>
         </div>
         <div id="task-assigned">
           {% if assigned_users %}
