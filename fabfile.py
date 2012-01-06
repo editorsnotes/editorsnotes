@@ -184,7 +184,6 @@ def migrate():
         run('../../../bin/python manage.py syncdb --noinput')
         for app in [ 'main', 'djotero', 'refine', 'reversion' ]:
             run('../../../bin/python manage.py migrate --noinput %s' % app)
-        run('../../../bin/python manage.py rebuild_index --noinput')
     
 def restart_webserver():
     "Restart the web server."
