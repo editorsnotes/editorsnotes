@@ -4,6 +4,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.core import urlresolvers
 #from editorsnotes.main.models import CreationMetadata, LastUpdateMetadata, Administered, URLAccessible
+from django.utils.html import conditional_escape, escape
 from editorsnotes.main import utils
 from editorsnotes.main.models import Project
 from editorsnotes.main.fields import XHTMLField
