@@ -18,6 +18,7 @@ from utils import xhtml_to_text
 from fields import XHTMLField
 from editorsnotes.djotero.models import ZoteroLink
 from editorsnotes.djotero.widgets import ZoteroWidget
+from editorsnotes.tasks.models import Task, TaskComment, AttachmentAssignment
 
 class FootnoteAdminForm(forms.ModelForm):
     stamp = forms.CharField(required=False, widget=forms.HiddenInput)
@@ -117,6 +118,8 @@ opener.dismissAddAnotherPopup(window, '%(pk)s', '%(obj)s');
         if (request.POST.has_key('_continue') or 
             request.POST.has_key('_addanother')):
             return response
+        if request.POST.has_key('_return_to'):
+            return HttpResponseRedirect(request.POST['_return_to'])
         return HttpResponseRedirect(obj.get_absolute_url())
     def response_change(self, request, obj):
         response = super(VersionAdmin, self).response_change(request, obj)
@@ -184,6 +187,32 @@ class TopicAdmin(VersionAdmin):
 
 class NoteAdmin(VersionAdmin):
     inlines = (CitationInline, TopicAssignmentInline)
+    def save_model(self, request, obj, form, change):
+        user = request.user
+
+        note = obj
+        note.creator = request.user
+        note.last_updater = request.user
+        note.save()
+
+        task_id = request.GET.get('task', False)
+        if task_id:
+            parent_task = Task.objects.get(id=int(task_id))
+            task_comment = TaskComment.objects.create(
+                creator = user,
+                task = parent_task,
+                text = 'I MADE THIS NOTE'
+            )
+            assignment = AttachmentAssignment.objects.create(
+                creator = user,
+                content_object = note,
+                comment = task_comment,
+                task = parent_task
+            )
+            note.save()
+            task_comment.save()
+            assignment.save()
+
     class Media:
         css = { 'all': ('style/custom-theme/jquery-ui-1.8.10.custom.css',
                         'style/admin.css') }

@@ -154,6 +154,7 @@ $(document).ready(function(){
         {% endif %}
       </section>
       <section id="notes">
+        <a href="{% url admin:main_note_add %}?task={{ task.id }}&return_to={{ task.get_absolute_url }}">Add note</a>
         {% if notes %}
 	<ul id="collapse">
           {% for note, topics, cites in notes %}
