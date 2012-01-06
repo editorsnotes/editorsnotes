@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% load typogrify display %}
+
+{% block content %}
+{% if tasks %}
+  <ul>
+  {% for task in tasks %}
+    <li>{{ task|as_link }}</li>
+  {% endfor %}
+  </ul>
+{% else %}
+  <p>No tasks to display.</p>
+{% endif %}
+<div id="task-add">
+  <a class="button" href="/admin/tasks/task/add/?return_to={{ request.path }}">Add a task</a>
+</div>
+{% endblock %}

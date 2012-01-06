@@ -16,6 +16,9 @@ from urllib import urlencode
 from io import StringIO
 from utils import xhtml_to_text
 from fields import XHTMLField
+from editorsnotes.djotero.models import ZoteroLink
+from editorsnotes.djotero.widgets import ZoteroWidget
+from editorsnotes.tasks.models import Task, TaskComment, AttachmentAssignment
 
 class FootnoteAdminForm(forms.ModelForm):
     stamp = forms.CharField(required=False, widget=forms.HiddenInput)
@@ -70,6 +73,13 @@ class DocumentLinkInline(admin.StackedInline):
     verbose_name_plural = 'External document links'
     extra = 0
 
+class ZoteroLinkInline(admin.StackedInline):
+    model = ZoteroLink
+    fields = ('zotero_data',)
+    formfield_overrides = {
+        models.TextField : {'widget' : ZoteroWidget},
+    }
+
 class ScanInline(admin.StackedInline):
     model = Scan
 
@@ -88,10 +98,11 @@ class VersionAdmin(reversion_admin.VersionAdmin):
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
         for instance in instances:
-            try:
-                instance.creator
-            except ObjectDoesNotExist:
-                instance.creator = request.user
+            if 'creator' in instance._meta.get_all_field_names():
+                try:
+                    instance.creator
+                except ObjectDoesNotExist:
+                    instance.creator = request.user
             if 'last_updated' in instance._meta.get_all_field_names():
                 instance.last_updater = request.user
             instance.save()
@@ -107,6 +118,8 @@ opener.dismissAddAnotherPopup(window, '%(pk)s', '%(obj)s');
         if (request.POST.has_key('_continue') or 
             request.POST.has_key('_addanother')):
             return response
+        if request.POST.has_key('_return_to'):
+            return HttpResponseRedirect(request.POST['_return_to'])
         return HttpResponseRedirect(obj.get_absolute_url())
     def response_change(self, request, obj):
         response = super(VersionAdmin, self).response_change(request, obj)
@@ -174,6 +187,32 @@ class TopicAdmin(VersionAdmin):
 
 class NoteAdmin(VersionAdmin):
     inlines = (CitationInline, TopicAssignmentInline)
+    def save_model(self, request, obj, form, change):
+        user = request.user
+
+        note = obj
+        note.creator = request.user
+        note.last_updater = request.user
+        note.save()
+
+        task_id = request.GET.get('task', False)
+        if task_id:
+            parent_task = Task.objects.get(id=int(task_id))
+            task_comment = TaskComment.objects.create(
+                creator = user,
+                task = parent_task,
+                text = 'I MADE THIS NOTE'
+            )
+            assignment = AttachmentAssignment.objects.create(
+                creator = user,
+                content_object = note,
+                comment = task_comment,
+                task = parent_task
+            )
+            note.save()
+            task_comment.save()
+            assignment.save()
+
     class Media:
         css = { 'all': ('style/custom-theme/jquery-ui-1.8.10.custom.css',
                         'style/admin.css') }
@@ -185,19 +224,26 @@ class NoteAdmin(VersionAdmin):
 
 class DocumentAdmin(VersionAdmin):
     form = DocumentAdminForm
-    inlines = (TopicAssignmentInline, DocumentLinkInline, ScanInline)
+    inlines = (ZoteroLinkInline, TopicAssignmentInline, DocumentLinkInline, ScanInline)
     formfield_overrides = { 
         models.ForeignKey: { 
             'widget': forms.widgets.HiddenInput(
                 attrs={ 'class': 'autocomplete-documents' }) } }
     class Media:
         css = { 'all': ('style/custom-theme/jquery-ui-1.8.10.custom.css',
-                        'style/admin.css') }
+                        'style/admin.css',
+                        'style/zotero-admin-inline.css') }
         js = ('function/jquery-1.5.1.min.js',
               'function/jquery-ui-1.8.10.custom.min.js',
               'function/wymeditor/jquery.wymeditor.pack.js',
               'function/jquery.timeago.js',
-              'function/admin.js')
+              'function/admin.js',
+              'function/zotero-admin-inline.js',
+              'function/citeproc-js/xmle4x.js',
+              'function/citeproc-js/xmldom.js',
+              'function/citeproc-js/citeproc.js',
+              'function/citeproc-js/simple.js',
+             )
 
 class TranscriptAdmin(VersionAdmin):
     inlines = (FootnoteInline,)

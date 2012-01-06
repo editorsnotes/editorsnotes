@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% load typogrify display %}
+
+{% block js %}
+<script type="text/javascript" src="/media/function/json2.js"></script>
+<script type="text/javascript" src="/media/function/wymeditor/jquery.wymeditor.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+  $('#tabs').tabs();
+  $('#task a.model-link').attr('target', '_blank');
+  var attachmentCounter = 1;
+  $('#comment-attachments-add').click(function() {
+    var attachmentTitle = 'comment-attachment-' + attachmentCounter
+    var selector = $('#comment-attachment-categories').clone().show()
+      .attr({'id' : attachmentTitle + '-category', 'class' : 'attachment-categories'});
+    var attachment = $('<div>')
+        .attr({'id' : attachmentTitle, 'class' : 'attachment'})
+        .append(selector)
+        .append('<input class="attachment-item" type="text"><input class="attachment-id" type="hidden" name="attachment">');
+    $('.attachment-item', attachment)
+      .autocomplete(autocompleteOpts('notes', attachment))
+      .focus(function() {
+        if ( $(this).val() == '' ) {
+          $(this).autocomplete("search", "last_updated");
+        }
+      });
+    $('#comment-attachments').append(attachment);
+    attachmentCounter++;
+  });
+  
+  $('.attachment-categories').live('change', function() {
+    var container = $(this);
+    container.next('.attachment-item')
+      .autocomplete(autocompleteOpts(container.val(), container.parent()));
+  });
+  
+  var autocompleteOpts = function(src, $container){
+    var JSONreturn = {'topics' : 'preferred_name', 'notes' : 'description', 'documents' : 'description'}
+    return {
+      source: function(request, response) {
+        $.getJSON('/api/'+ src + '/', { q: request.term }, function(data) {
+          response($.map(data, function(item, index) {
+            return { label: item[JSONreturn[src]], id: item.id };
+          }));
+        });
+      },
+      position: {collision: 'flip'},
+      minLength: 2,
+      select: function(event, ui) {
+        if (ui.item) {
+          $container.find('input.attachment-id').val(src + ' ' + ui.item.id);
+        }
+      }
+    }
+  }
+
+});
+
+</script>
+{% endblock %}
+
+{% block css %}
+<style type="text/css">
+.comment {
+    border-top: 1px solid #BBB
+    padding: 0 .5em;
+}
+.attachment-item {
+    margin-left: 1em !important;
+    width: 400px;
+}
+.comment-attachments {
+    border: 1px dashed #EEE;
+    border-radius: 2px;
+    padding: 10px;
+}
+.comment-attachments .model-link{
+    font-size: 13px;
+}
+#task-description {margin-bottom: 2em;}
+</style>
+{% endblock %}
+
+{% block content %}
+    <div id="tabs" class="span-24 last">
+      <ul>
+        <li><a href="#description">Description</a></li>
+        <li><a href="#comments">Comments ({{ task.comments.all|length }})</a></li>
+        <li><a href="#notes">Related Notes <span class="alt">&amp;</span> Queries ({{ notes|length }})</a></li>
+        <li><a href="#documents">Related Documents ({{ doc_count }})</a></li>
+      </ul>
+      <section id="description" class="span-23 last">
+        <div id="task-description" class="span-23">
+          <h3>{{ task.title }}</h3>
+          <p>{{ task.description|as_html }}</p>
+          <a class="button" href="{{ task.get_admin_url }}?return_to={{ task.get_absolute_url }}">Edit</a>
+        </div>
+        <div id="task-assigned">
+          {% if assigned_users %}
+            <span class="large">{{ assigned_users|length }} users assigned</span>
+            <ul id="assigned">
+              {% for assignee in assigned_users %}
+              <li>{{ assignee.get_profile|as_link }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+          {% endif %}
+        </div>
+        {{ task|display_edit_history }}
+      </section>
+      <section id="comments" class="span-23 last">
+        {% if task.comments.all %}
+          {% for comment in task.comments.all %}
+            <div class="comment">
+              <p>{{ comment.text|escape }}</p>
+              {% with comment.attachments.all as attachments %}
+                {% if attachments %}
+                  <ul class="comment-attachments">
+                    <h6>Attachments</h6>
+                    <table class="bottom">
+                  {% for attachment in attachments %}
+                      <li><tr><td><em>{{ attachment.content_type|title }}</em></td><td>{{ attachment.content_object|as_link }}</td></tr></li>
+                  {% endfor %}
+                    </table>
+                  </ul>
+                {% endif %}
+              {% endwith %}
+              <div class="quiet">by {{ comment.creator.get_profile|as_link }} on {{ comment.created|date:"M d Y, g:iA T" }}</div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p>No comments for this task.</p>
+        {% endif %}
+        {% if user.is_authenticated %}
+        <form id="add-comment" action="comment/?return_to={{ task.get_absolute_url }}" method="POST">
+          {% csrf_token %}
+          <span class="large">Add comment:</span>
+          <div id="comment-text-container">
+            <textarea style="height:7em;" name="comment-text"></textarea>
+          </div>
+          <div id="comment-attachments">
+            <select id="comment-attachment-categories" style="display: none;">
+              <option value="notes">Note</option>
+              <option value="topics">Topic</option>
+              <option value="documents">Document</option>
+            </select>
+          </div>
+          <button type="button" id="comment-attachments-add">Add attachment</button>
+          <span style="margin-top: 1.5em">
+            <button type="submit" id="submit-comment">Submit</button>
+          </span>
+        </form>
+        {% endif %}
+      </section>
+      <section id="notes">
+        <a href="{% url admin:main_note_add %}?task={{ task.id }}&return_to={{ task.get_absolute_url }}">Add note</a>
+        {% if notes %}
+	<ul id="collapse">
+          {% for note, topics, cites in notes %}
+            {% include "note.include" %}
+            {% if forloop.last %}{% else %}
+        <hr/>{% endif %}
+          {% endfor %}
+	</ul>
+        {% else %}
+          There are no notes or queries related to <em>{{ topic.preferred_name }}</em>.
+        {% endif %}
+      
+      </section>
+      <section id="documents">
+      </section>
+    </div>
+
+{% endblock %}

@@ -34,6 +34,8 @@ urlpatterns += patterns('editorsnotes.main.views',
     url(r'^api/documents/(?P<document_id>\d+)/$', 'api_document', name='api_document_view'),
     url(r'^api/transcripts/$', 'api_transcripts', name='api_transcripts_view'),
     url(r'^api/transcripts/(?P<transcript_id>\d+)/$', 'api_transcript', name='api_transcript_view'),
+    url(r'^api/notes/$', 'api_notes', name='api_notes_view'),
+    url(r'^api/notes/(?P<topic_ids>\d+(,\d+)*)/$', 'api_note', name='api_note_view'),
 )
 index_patterns = patterns('editorsnotes.main.views',
     url(r'^$', 'index', name='index_view'),
@@ -53,7 +55,16 @@ urlpatterns += patterns('editorsnotes.djotero.views',
     url(r'^document/upload/continue/$', 'items_continue', name='items_continue_view'),
     url(r'^document/upload/import/$', 'import_items', name='import_items_view'),
     url(r'^user/zotero_info$', 'update_zotero_info', name='update_zotero_info_view'),
+    url(r'^api/document/blank/$', 'get_blank_item', name='get_blank_item_view'),
+    url(r'^api/document/csl/$', 'zotero_json_to_csl', name='zotero_json_to_csl_view'),
+    url(r'^api/document/creators/$', 'get_creator_types', name='get_creator_types_view'),
 )
 urlpatterns += patterns('editorsnotes.refine.views',
     url(r'^topics/clusters/$', 'show_clusters', name='show_clusters_view'),
 )
+urlpatterns += patterns('editorsnotes.tasks.views',
+    url(r'^tasks/all/$', 'all_tasks', name='all_tasks_view'),
+    url(r'^tasks/(?P<task_id>[-a-z0-9]+)/$', 'task', name='task_view'),
+    url(r'^tasks/(?P<task_id>[-a-z0-9]+)/comment/$', 'add_comment', name='add_comment_view'),
+)
+

@@ -1,0 +1,19 @@
+/* min-width is 760px! */
+.zotero-entry textarea {
+    width: 50em;
+    height: 1.25em;
+}
+.zotero-entry .zotero-creator textarea {
+    width: 24.25em;
+    height: 1.25em;
+}
+.zotero-entry label {
+    text-align: right;
+}
+select.creator-select {
+    width: 9.25em;
+    text-align: right;
+}
+select.creator-select option {
+    text-align: right;
+}
