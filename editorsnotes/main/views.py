@@ -16,6 +16,7 @@ from models import *
 from editorsnotes.djotero.utils import as_readable
 import utils
 import json
+import re
 
 def _sort_citations(instance):
     cites = { 'all': [] }
@@ -232,6 +233,9 @@ def user_logout(request):
     return render_to_response(
         'logout.html', context_instance=RequestContext(request))
 
+reel_numbers = re.compile(r'(\S+):(\S+)')
+ignored_punctuation = '!#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
+
 @login_required
 def search(request):
     query = ''
@@ -239,7 +243,16 @@ def search(request):
 
     if request.GET.get('q'):
         query = request.GET.get('q')
-        results = SearchQuerySet().auto_query(query).load_all()
+        match = reel_numbers.search(query)
+        if match:
+            # so we can match reel numbers exactly
+            query = reel_numbers.sub(r'"\1 \2"', query)
+        query = ''.join([c for c in query if c not in ignored_punctuation])
+        if len(query) > 0:
+            results = SearchQuerySet().auto_query(query).load_all()
+        if match:
+            # restore the original form of the query so highlighting works
+            query = query.replace('"%s %s"' % match.group(1,2), match.group(0))
 
     # paginator = Paginator(results, 20)
     
