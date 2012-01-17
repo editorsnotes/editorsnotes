@@ -89,6 +89,12 @@ $(document).ready(function() {
     });
   }
 
+  // Change hidden input whenver creator is changed
+  $('.zotero-creator textarea').live('keyup paste', function() {
+    update_creator_values();
+    console.log('update');
+  });
+
   // Initialize cache in global scope
   zoteroCreatorsCache = new Object;
 
