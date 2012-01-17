@@ -157,4 +157,12 @@ class ZoteroWidget(Widget):
             else:
                 zotero_data = item[2][0]
             zotero_dict[zotero_key] = zotero_data
-        return json.dumps(zotero_dict)
+
+        # Don't return a dict if there's not enough data (something more than
+        # just itemType)
+        validation = [val for val in zotero_dict.values()
+                      if isinstance(val, unicode) and val]
+        if len(validation) > 1:
+            return json.dumps(zotero_dict)
+        else:
+            return None
