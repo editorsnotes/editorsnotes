@@ -15,7 +15,15 @@ env.project_name = 'editorsnotes'
 
 # Environments
 
-
+def beta():
+    "Use the beta-testing webserver."
+    env.hosts = ['beta.editorsnotes.org']
+    env.user = 'ryanshaw'
+    env.path = '/db/projects/%(project_name)s-beta' % env
+    env.vhosts_path = '/etc/httpd/sites.d'
+    env.python = '/usr/bin/python2.6'
+    env.site_packages = ['/usr/lib64/python2.6/site-packages',
+                         '/usr/lib/python2.6/site-packages']
 
 def pro():
     "Use the production webserver."
@@ -174,9 +182,8 @@ def migrate():
     require('path')
     with cd('%(path)s/releases/current/%(project_name)s' % env):
         run('../../../bin/python manage.py syncdb --noinput')
-        for app in [ 'main', 'djotero', 'refine' ]:
+        for app in [ 'main', 'djotero', 'refine', 'reversion' ]:
             run('../../../bin/python manage.py migrate --noinput %s' % app)
-        run('../../../bin/python manage.py rebuild_index --noinput')
     
 def restart_webserver():
     "Restart the web server."

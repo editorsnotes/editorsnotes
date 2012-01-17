@@ -4,7 +4,7 @@
 <div class="quiet">Related topics:
   <ul class="topic-list">
     {% for topic_assignment in topic_assignments %}
-    <li>{{ topic_assignment.topic|as_link }}{% if not forloop.last %}, {% endif %}</li>
+    <li>{{ topic_assignment.topic|as_link }}{% if not forloop.last %} | {% endif %}</li>
     {% endfor %}
   </ul>
 </div>

@@ -57,7 +57,7 @@ class XHTMLField(models.Field):
     __metaclass__ = models.SubfieldBase
     def __init__(self, *args, **kwargs):
         super(XHTMLField, self).__init__(*args, **kwargs)
-    def db_type(self):
+    def db_type(self, connection):
         return 'xml'
     def to_python(self, value):
         if value is None:
@@ -76,14 +76,14 @@ class XHTMLField(models.Field):
         except etree.ParserError:
             fragment = html.fragment_fromstring(value, create_parent='div')
         return cleaner.clean_html(fragment)
-    def get_db_prep_value(self, value):
+    def get_prep_value(self, value):
         if value is None:
             return None
         else:
             return etree.tostring(value)
     def value_to_string(self, obj):
         value = self._get_val_from_obj(obj)
-        return self.get_db_prep_value(value)
+        return self.get_prep_value(value)
     def formfield(self, **kwargs):
         defaults = {'widget': XHTMLWidget}
         defaults.update(kwargs)

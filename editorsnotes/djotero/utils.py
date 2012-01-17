@@ -46,7 +46,7 @@ def get_items(zotero_key, loc, opts):
         title = x.xpath('./atom:title', namespaces=NS)[0].text
         library_url = x.xpath('./atom:id', namespaces=NS)[0].text
         item_id = x.xpath('./zot:key', namespaces=NS)[0].text
-        item_json = x.xpath('./atom:content[@type="application/json"]', namespaces=NS)[0].text
+        item_json = x.xpath('./atom:content[@zot:type="json"]', namespaces=NS)[0].text
         try:
             item_date = json.loads(item_json)['date']
         except:
