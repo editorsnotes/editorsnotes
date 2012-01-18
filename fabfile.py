@@ -149,7 +149,7 @@ def upload_deploy_info():
         f.write(datetime.now().strftime('%Y-%m-%d %H:%M'))
     for filename in ['version.txt', 'time-deployed.txt']:
         put(('%(project_name)s/templates/' % env) + filename,
-            ('%(path)s/releases/%(release)s/%(project_name)s/' % env) + filename)
+            ('%(path)s/releases/%(release)s/%(project_name)s/templates/' % env) + filename)
 
 def install_requirements():
     "Install the required packages from the requirements file using pip"
