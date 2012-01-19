@@ -37,38 +37,28 @@ $(document).ready(function() {
       data: {'zotero-json' : zoteroJSON},
       success: function(data){
         var formattedRef = runCite(JSON.stringify(data));
-
-        var wymconfig = {
-          skin: 'custom',
-          toolsItems: [
-            {'name': 'Bold', 'title': 'Strong', 'css': 'wym_tools_strong'}, 
-            {'name': 'Italic', 'title': 'Emphasis', 'css': 'wym_tools_emphasis'},
-            {'name': 'InsertOrderedList', 'title': 'Ordered_List', 'css': 'wym_tools_ordered_list'},
-            {'name': 'InsertUnorderedList', 'title': 'Unordered_List', 'css': 'wym_tools_unordered_list'},
-            {'name': 'Undo', 'title': 'Undo', 'css': 'wym_tools_undo'},
-            {'name': 'Redo', 'title': 'Redo', 'css': 'wym_tools_redo'},
-            {'name': 'CreateLink', 'title': 'Link', 'css': 'wym_tools_link'},
-            {'name': 'Unlink', 'title': 'Unlink', 'css': 'wym_tools_unlink'},
-            {'name': 'ToggleHtml', 'title': 'HTML', 'css': 'wym_tools_html'}
-          ],
-          updateSelector: 'input:submit',
-          updateEvent: 'click',
-          classesHtml: ''
-        };
-
-        var $textArea = $('#id_description');
-        $textArea.siblings('div.wym_box').remove();
-        $textArea.text(formattedRef);
-        $textArea.wymeditor(wymconfig);
+        var textArea = $.wymeditors(0);
+        if ( !$cachedInput.hasClass('cached') ) {
+          $cachedInput.val(textArea.html()).addClass('cached');
+          $restorePrompt.show();
+        }
+        textArea.html(formattedRef);
       }
     });
   }
 
-  var generateLink = '<a href="#_" id="generate-citation">Generate from Zotero information</a>'
-  $('#id_description').parent().append(generateLink);
+  var generateLink = '<a href="#_" id="generate-citation">Generate from Zotero information</a>';
+  var $restorePrompt = $('<a href="#_" id="restore-original-citation">(restore original)</a>')
+    .css({'color' : 'red', 'display' : 'none'});
+  var $cachedInput = $('<input id="cached-citation" type="hidden">');
+  $('#id_description').parent().append(generateLink, ' ', $restorePrompt, $cachedInput);
 
   $('#generate-citation').live('click', function() {
     json_to_reference();
+  });
+
+  $restorePrompt.click(function() {
+    $.wymeditors(0).html($cachedInput.val());
   });
 
   //
@@ -92,7 +82,6 @@ $(document).ready(function() {
   // Change hidden input whenver creator is changed
   $('.zotero-creator textarea').live('keyup paste', function() {
     update_creator_values();
-    console.log('update');
   });
 
   // Initialize cache in global scope
