@@ -234,7 +234,7 @@ def user_logout(request):
         'logout.html', context_instance=RequestContext(request))
 
 reel_numbers = re.compile(r'(\S+):(\S+)')
-ignored_punctuation = '!#$%&\'()*+,./:;<=>?@[\\]^_`{|}~'
+ignored_punctuation = '!#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
 
 @login_required
 def search(request):
@@ -247,7 +247,10 @@ def search(request):
         if match:
             # so we can match reel numbers exactly
             query = reel_numbers.sub(r'"\1 \2"', query)
-        query = ''.join([c for c in query if c not in ignored_punctuation])
+        def filter(c):
+            if c in ignored_punctuation: return ' '
+            return c
+        query = ''.join([filter(c) for c in query])
         if len(query) > 0:
             results = SearchQuerySet().auto_query(query).load_all()
         if match:
