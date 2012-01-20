@@ -234,7 +234,7 @@ def user_logout(request):
         'logout.html', context_instance=RequestContext(request))
 
 reel_numbers = re.compile(r'(\S+):(\S+)')
-ignored_punctuation = '!#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
+ignored_punctuation = '!#$%&\'()*+,./:;<=>?@[\\]^_`{|}~'
 
 @login_required
 def search(request):
