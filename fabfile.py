@@ -126,9 +126,9 @@ def clean():
 # Helpers. These are called by other functions rather than directly.
 
 def upload_tar_from_git():
-    "Create an archive from the current Git master branch and upload it."
+    "Create an archive from the current Git branch and upload it."
     require('release', provided_by=[deploy, setup])
-    local('git archive --format=tar master | gzip > %(release)s.tar.gz' % env)
+    local('git archive --format=tar HEAD | gzip > %(release)s.tar.gz' % env)
     run('mkdir -p %(path)s/releases/%(release)s' % env)
     put('%(release)s.tar.gz' % env, '%(path)s/packages/' % env)
     run('cd %(path)s/releases/%(release)s && tar zxf ../../packages/%(release)s.tar.gz' % env)
