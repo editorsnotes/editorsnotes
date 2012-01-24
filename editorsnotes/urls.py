@@ -56,6 +56,7 @@ urlpatterns += patterns('editorsnotes.djotero.views',
     url(r'^api/document/blank/$', 'get_blank_item', name='get_blank_item_view'),
     url(r'^api/document/csl/$', 'zotero_json_to_csl', name='zotero_json_to_csl_view'),
     url(r'^api/document/creators/$', 'get_creator_types', name='get_creator_types_view'),
+    url(r'^api/document/archives/$', 'api_archives', name='api_archives_view'),
 )
 urlpatterns += patterns('editorsnotes.refine.views',
     url(r'^topics/clusters/$', 'show_clusters', name='show_clusters_view'),

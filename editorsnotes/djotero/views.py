@@ -2,10 +2,10 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
-from haystack.query import SearchQuerySet
+from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from editorsnotes.main.models import Document, Topic, TopicAssignment, Note, Citation
 from editorsnotes.main.templatetags.display import as_link
-from models import ZoteroLink
+from models import ZoteroLink, CachedArchive
 from widgets import ZoteroWidget
 import utils
 import datetime
@@ -181,3 +181,17 @@ def zotero_json_to_csl(request):
     zotero_json = request.GET.get('zotero-json')
     csl = utils.as_csl(zotero_json, 'ITEM-1')
     return HttpResponse(csl, mimetype='application/json')
+
+def archive_to_dict(archive):
+    archive_dict = {}
+    archive_dict['name'] = archive.name
+    archive_dict['id'] = archive.id
+    return archive_dict
+
+def api_archives(request):
+    q = request.GET.get('q', '')
+    queryset = CachedArchive.objects.filter(
+        name__icontains=q
+    )
+    archives = [ archive_to_dict(a) for a in queryset ]
+    return HttpResponse(json.dumps(archives), mimetype='text/plain')
