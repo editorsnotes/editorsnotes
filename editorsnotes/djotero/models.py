@@ -11,6 +11,21 @@ class ZoteroLink(models.Model):
     date_information = models.TextField(blank=True)
     cached_archive = models.ForeignKey('CachedArchive', blank=True, null=True)
     cached_creator = models.ManyToManyField('CachedCreator', blank=True, null=True)
+    def save(self):
+        super(ZoteroLink, self).save()
+        item_data = json.loads(self.zotero_data)
+        prev_archive = self.cached_archive
+        if item_data.has_key('archive'):
+            # Cache name of archive if present
+            archive_query = CachedArchive.objects.get_or_create(name=item_data['archive'])
+            archive = archive_query[0]
+            if self not in archive.zoterolink_set.all():
+                archive.zoterolink_set.add(self)
+        if prev_archive and prev_archive is not archive:
+            # Delete old archive if no other documents refer to it
+            if len(prev_archive.zoterolink_set.all()) < 1:
+                prev_archive.delete()
+        archive.save()
     def get_zotero_fields(self):
         z = json.loads(self.zotero_data)
         z['itemType'] = utils.type_map['readable'][z['itemType']]
@@ -34,14 +49,3 @@ class CachedArchive(models.Model):
 
 class CachedCreator(models.Model):
     name = models.TextField()
-
-@receiver(models.signals.post_save, sender=ZoteroLink)
-def cache_archive(sender, **kwargs):
-    zotero_item = kwargs['instance']
-    item_data = json.loads(zotero_item.zotero_data)
-    if item_data.has_key('archive'):
-        archive_query = CachedArchive.objects.get_or_create(name=item_data['archive'])
-        archive = archive_query[0]
-        if zotero_item not in archive.zoterolink_set.all():
-            archive.zoterolink_set.add(zotero_item)
-            archive.save()
