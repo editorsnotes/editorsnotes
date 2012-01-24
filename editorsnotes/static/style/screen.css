@@ -259,6 +259,36 @@ hr.space {background:#fff;color:#fff;visibility:hidden;}
 .clearfix, .container {display:block;}
 .clear {clear:both;}
 
+/* sticky footer */
+html, body, #wrap { height: 100% }
+body > #wrap { height: auto; min-height: 100%; }
+#main { padding-bottom: 20px; }  /* must be same height as the footer */
+footer {
+    z-index: 50;
+    width: 100%;
+    color: #666;
+    background-color: #e5ecf9;
+    border-top: 1px solid #AEB4BE;
+    position: relative;
+    margin-top: -20px; /* negative value of footer height */
+    height: 20px;
+    clear:both;
+    font-size: 13px;
+    text-align: right; }
+footer .version { margin-right: 20px; }
+footer a { color: #666; text-decoration: none; }
+.clearfix:after {
+    content: ".";
+    display: block;
+    height: 0;
+    clear: both;
+    visibility: hidden; }
+.clearfix { display: inline-block; }
+/* Hides from IE-mac \*/
+* html .clearfix { height: 1%; }
+.clearfix { display: block; }
+/* End hide from IE-mac */
+
 /* fancy-type */
 .alt {color:#666;font-family:"Warnock Pro", "Goudy Old Style","Palatino","Book Antiqua", Georgia, serif;font-style:italic;font-weight:normal;font-size:0.89em;}
 .dquo {margin-left:-.5em;}
@@ -298,6 +328,7 @@ ul {list-style-type:none;padding:0;}
 hr {margin-bottom:1.5em;}
 #stripe-1 {position:absolute;z-index:-1;height:64px;width:100%;background:#e5ecf9;}
 #stripe-2 {position:absolute;z-index:-1;top:64px;height:44px;width:100%;background:#aeb4be;}
+
 #logo a {text-decoration:none;}
 #searchinput input {width:338px;}
 #topics li, #documents li, .activity-log li {text-indent:-1em;padding-left:1em;}
