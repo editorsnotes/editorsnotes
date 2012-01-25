@@ -21,11 +21,11 @@ class ZoteroLink(models.Model):
             archive = archive_query[0]
             if self not in archive.zoterolink_set.all():
                 archive.zoterolink_set.add(self)
-        if prev_archive and prev_archive is not archive:
-            # Delete old archive if no other documents refer to it
-            if len(prev_archive.zoterolink_set.all()) < 1:
-                prev_archive.delete()
-        archive.save()
+            if prev_archive and prev_archive is not archive:
+                # Delete old archive if no other documents refer to it
+                if len(prev_archive.zoterolink_set.all()) < 1:
+                    prev_archive.delete()
+            archive.save()
     def get_zotero_fields(self):
         z = json.loads(self.zotero_data)
         z['itemType'] = utils.type_map['readable'][z['itemType']]
