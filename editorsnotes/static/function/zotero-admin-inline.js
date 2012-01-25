@@ -134,7 +134,9 @@ $(document).ready(function() {
   });
 
   $('.creator-remove').live('click', function() {
-    $(this).parent().remove();
+    if ($('.zotero-creator').length > 1) {
+      $(this).parent().remove();
+    }
   });
 
   // Auto-complete archive field

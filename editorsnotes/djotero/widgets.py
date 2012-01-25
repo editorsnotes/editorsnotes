@@ -7,6 +7,18 @@ from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode
 from utils import type_map, contrib_map, field_map
 
+field_help = {
+
+    'archive' : '''In general, specify both an institution and specific 
+collection. Start typing to see suggestions''',
+
+    'archiveLocation' : '''Location within the archive described above. 
+Examples: "Reel 7, frame 12", "Box 3", or "Scrapbook 7"''',
+
+    'extra' : '''Any information that does not fit well in any other field'''
+
+}
+
 class ZoteroWidget(Widget):
     """
     Render a zotero data string into a form.
@@ -125,7 +137,9 @@ class ZoteroWidget(Widget):
                     itemAttrs['value'] = json.dumps(tag)
                     item += '<input%s>' % flatatt(itemAttrs) 
 
-            elif isinstance(val, unicode) :
+            elif isinstance(val, unicode):
+                if field_help.has_key(key):
+                    itemAttrs['placeholder'] = field_help[key]
                 item += '<label>%s</label>&nbsp;' % (field_map['readable'][key])
                 item += '<textarea%s>%s</textarea><br/>' % (flatatt(itemAttrs), val)
 
