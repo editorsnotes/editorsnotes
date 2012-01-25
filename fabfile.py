@@ -8,6 +8,8 @@ from fabric.contrib.console import confirm
 from fabric.contrib.files import exists
 from fabric.utils import abort
 from fabfile_local import *
+from subprocess import call
+from datetime import datetime
 
 # Globals
 
@@ -73,6 +75,7 @@ def deploy():
     env.release = time.strftime('%Y%m%d%H%M%S')
     upload_tar_from_git()
     upload_local_settings()
+    upload_deploy_info()
     symlink_system_packages()
     install_requirements()
     install_site()
@@ -123,9 +126,9 @@ def clean():
 # Helpers. These are called by other functions rather than directly.
 
 def upload_tar_from_git():
-    "Create an archive from the current Git master branch and upload it."
+    "Create an archive from the current Git branch and upload it."
     require('release', provided_by=[deploy, setup])
-    local('git archive --format=tar master | gzip > %(release)s.tar.gz' % env)
+    local('git archive --format=tar HEAD | gzip > %(release)s.tar.gz' % env)
     run('mkdir -p %(path)s/releases/%(release)s' % env)
     put('%(release)s.tar.gz' % env, '%(path)s/packages/' % env)
     run('cd %(path)s/releases/%(release)s && tar zxf ../../packages/%(release)s.tar.gz' % env)
@@ -136,6 +139,17 @@ def upload_local_settings():
     require('release', provided_by=[deploy, setup])
     put('%(project_name)s/settings-%(host)s.py' % env, 
         '%(path)s/releases/%(release)s/%(project_name)s/settings_local.py' % env)
+
+def upload_deploy_info():
+    "Upload information about the version and time of deployment."
+    require('release', provided_by=[deploy, setup])
+    with open('%(project_name)s/templates/version.txt' % env, 'wb') as f:
+        call(['git', 'rev-parse', 'HEAD'], stdout=f)
+    with open('%(project_name)s/templates/time-deployed.txt' % env, 'wb') as f:
+        f.write(datetime.now().strftime('%Y-%m-%d %H:%M'))
+    for filename in ['version.txt', 'time-deployed.txt']:
+        put(('%(project_name)s/templates/' % env) + filename,
+            ('%(path)s/releases/%(release)s/%(project_name)s/templates/' % env) + filename)
 
 def install_requirements():
     "Install the required packages from the requirements file using pip"
