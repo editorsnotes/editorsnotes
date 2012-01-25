@@ -137,6 +137,24 @@ $(document).ready(function() {
     $(this).parent().remove();
   });
 
+  // Auto-complete archive field
+  var initArchiveComplete = function() {
+    var archiveField = $('[zotero-key="archive"]');
+    if (archiveField.length) {
+      archiveField.children('textarea').autocomplete({
+        source: function(request, response) {
+          $.getJSON('/api/document/archives/', { q: request.term}, function(data) {
+            response($.map(data, function(item, index) {
+              return { label: item.name, id: item.id };
+            }));
+          });
+        },
+        minLength: 2
+      });
+    }
+  }
+
+  initArchiveComplete();
 
   // Cache values entered into the form if (for example) itemType is changed.
   var zoteroDataCache = new Object;
@@ -172,6 +190,7 @@ $(document).ready(function() {
         data: {'itemType' : itemType},
         success: function(data){
           $container.replaceWith(data);
+          initArchiveComplete();
           //TODO: pop data cache into new form
         },
         error: function(){
