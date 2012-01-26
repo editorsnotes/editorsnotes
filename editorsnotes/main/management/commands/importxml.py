@@ -54,6 +54,7 @@ class Command(LabelCommand):
 
         # Verify that we have the fields we expect.
         f = expected_fields = [ 'CardID',
+                                'Export',
                                 'CardHeading',
                                 'Transcription',
                                 'CardType',
@@ -109,7 +110,7 @@ class Command(LabelCommand):
             return d
 
         # Statistics.
-        created_count = collections_created_count = topics_created_count = changed_count = unchanged_count = skipped_count = 0
+        created_count = collections_created_count = topics_created_count = changed_count = unchanged_count = skipped_count = deleted_count = 0
 
         for row in root.xpath('./fmp:RESULTSET/fmp:ROW', namespaces=NS):
             try:
@@ -122,6 +123,17 @@ class Command(LabelCommand):
                 self.stderr.write(self.style.ERROR('Warning: %s\n' % e))
                 skipped_count += 1
                 continue
+
+            if md['Export'] == 'No':
+                exists = Document.objects.filter(
+                    import_id__exact='%s%s' % (ID_PREFIX, md['CardID']))
+                if exists:
+                    exists[0].delete()
+                    deleted_count += 1
+                    continue
+                else:
+                    skipped_count += 1
+                    continue
 
             collection_id = ID_PREFIX + (':%s' % md['CardHeading'])
             collection_description = P('%s (Agnes Inglis cards)' % md['CardHeading'])
@@ -200,15 +212,9 @@ class Command(LabelCommand):
                 unchanged_count += 1
         
         self.stderr.write('%s records skipped.\n' % skipped_count)
+        self.stderr.write('%s records deleted.\n' % deleted_count)
         self.stderr.write('%s new documents created.\n' % created_count)
         self.stderr.write('%s new collections created.\n' % collections_created_count)
         self.stderr.write('%s new topics created.\n' % topics_created_count)
         self.stderr.write('%s documents updated.\n' % changed_count)
         self.stderr.write('%s documents unchanged.\n' % unchanged_count)
-
-
-
-
-
-
-
