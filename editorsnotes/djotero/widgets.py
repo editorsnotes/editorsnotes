@@ -9,13 +9,13 @@ from utils import type_map, contrib_map, field_map
 
 field_help = {
 
-    'archive' : '''In general, specify both an institution and specific 
-collection. Start typing to see suggestions''',
+    'archive' : '''In general, specify both an institution and a collection. 
+Start typing to see suggestions''',
 
     'archiveLocation' : '''Location within the archive described above. 
 Examples: "Reel 7, frame 12", "Box 3", or "Scrapbook 7"''',
 
-    'extra' : '''Any information that does not fit well in any other field'''
+    'extra' : '''Any information that does not fit well in another field'''
 
 }
 

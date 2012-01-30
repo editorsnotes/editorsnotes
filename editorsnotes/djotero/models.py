@@ -11,6 +11,8 @@ class ZoteroLink(models.Model):
     date_information = models.TextField(blank=True)
     cached_archive = models.ForeignKey('CachedArchive', blank=True, null=True)
     cached_creator = models.ManyToManyField('CachedCreator', blank=True, null=True)
+    modified = models.DateTimeField(auto_now=True)
+    last_synced = models.DateTimeField(blank=True, null=True)
     def save(self):
         super(ZoteroLink, self).save()
         item_data = json.loads(self.zotero_data)
