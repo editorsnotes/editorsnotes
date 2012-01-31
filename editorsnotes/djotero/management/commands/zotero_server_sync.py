@@ -3,9 +3,14 @@ from optparse import make_option
 import datetime
 import urllib2
 import json
+from django.conf import settings
 from editorsnotes.djotero.models import ZoteroLink
 
-url = 'https://api.zotero.org/groups/46844/items?key=r0KBtuDLU0Jh2s1jAPVLZymn'
+try:
+    url = 'https://api.zotero.org/groups/46844/items?key=%s' % (
+        settings.ZOTERO_API_KEY)
+except:
+    raise CommandError, 'Missing ZOTERO_API_KEY in settings'
 
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
