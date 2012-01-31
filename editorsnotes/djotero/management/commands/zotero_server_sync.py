@@ -7,10 +7,10 @@ from django.conf import settings
 from editorsnotes.djotero.models import ZoteroLink
 
 try:
-    url = 'https://api.zotero.org/groups/46844/items?key=%s' % (
-        settings.ZOTERO_API_KEY)
+    url = 'https://api.zotero.org/%s/items?key=%s' % (
+        settings.ZOTERO_LIBRARY, settings.ZOTERO_API_KEY)
 except:
-    raise CommandError, 'Missing ZOTERO_API_KEY in settings'
+    raise CommandError, 'Set ZOTERO_LIBRARY and ZOTERO_API_KEY in settings.'
 
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
