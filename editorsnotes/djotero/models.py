@@ -3,6 +3,7 @@ from django.dispatch import receiver
 from editorsnotes.main.models import Document
 import utils
 import json
+import datetime
 
 class ZoteroLink(models.Model):
     doc = models.OneToOneField(Document, related_name='_zotero_link')
@@ -11,10 +12,12 @@ class ZoteroLink(models.Model):
     date_information = models.TextField(blank=True)
     cached_archive = models.ForeignKey('CachedArchive', blank=True, null=True)
     cached_creator = models.ManyToManyField('CachedCreator', blank=True, null=True)
-    modified = models.DateTimeField(auto_now=True)
+    modified = models.DateTimeField(editable=False)
     last_synced = models.DateTimeField(blank=True, null=True)
-    def save(self):
-        super(ZoteroLink, self).save()
+    def save(self, update_modified=True, *args, **kwargs):
+        if update_modified:
+            self.modified = datetime.datetime.now()
+        super(ZoteroLink, self).save(*args, **kwargs)
         item_data = json.loads(self.zotero_data)
         prev_archive = self.cached_archive
         if item_data.has_key('archive'):
