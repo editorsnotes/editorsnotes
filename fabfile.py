@@ -56,6 +56,7 @@ def setup():
     """
     require('hosts', provided_by=[dev])
     require('path')
+    run('newgrp editorsnotes')
     run('mkdir -p %(path)s' % env)
     with cd(env.path):
         run('virtualenv -p %(python)s --no-site-packages .' % env)
