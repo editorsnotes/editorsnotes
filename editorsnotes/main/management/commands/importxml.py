@@ -115,7 +115,7 @@ class Command(LabelCommand):
         for row in root.xpath('./fmp:RESULTSET/fmp:ROW', namespaces=NS):
             try:
                 md = row_to_dict(row)
-                for field in [ 'CardID', 'CardHeading', 'CardType' ]:
+                for field in [ 'CardID', 'CardHeading', 'CardType', 'Transcription']:
                     if md[field] is None:
                         raise CommandError('missing %s value in record %s'
                                            % (field, row.get('RECORDID')))
