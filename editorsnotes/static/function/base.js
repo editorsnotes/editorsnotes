@@ -2,6 +2,11 @@ $(document).ready(function () {
   // Initialize timeago.
   $('time.timeago').timeago();
 
+  $('#toggle-second-nav').click( function() {
+    $(this).toggleClass('btn-primary');
+    $('#bottom-nav').toggle();
+  }); 
+
   // Initialize autocomplete for search input box.
   $('#searchinput input')
   .keydown(function(event) {
