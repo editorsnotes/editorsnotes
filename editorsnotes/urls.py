@@ -41,7 +41,12 @@ index_patterns = patterns('editorsnotes.main.views',
     url(r'^topics/$', 'all_topics', name='all_topics_view'),
     url(r'^notes/$', 'all_notes', name='all_notes_view'),
 )
+static_patterns = patterns('django.views.generic.simple',
+    url(r'^about/$', 'direct_to_template', {'template' : 'about.html'}),
+    url(r'^help/$', 'direct_to_template', {'template' : 'help.html'}),
+)
 urlpatterns += index_patterns
+urlpatterns += static_patterns
 urlpatterns += patterns('',
     (r'^(?P<project_slug>[-_a-z0-9]+)/', include(index_patterns)),
 )
