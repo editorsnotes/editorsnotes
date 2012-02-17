@@ -18,11 +18,9 @@
   </head>
   {% load typogrify display %}
   <body>
-    <div id="main" class="container">
-
-      <div class="navbar">
-        <div class="navbar-inner">
-          <div class="container" style="width: auto;">
+    <div class="navbar">
+      <div class="navbar-inner">
+          <div class="container">
             <ul class="nav">
               <li><a class="brand" href="/">Editors' Notes</a></li>
               <li class="divider-vertical"></li>
@@ -30,7 +28,7 @@
                 <input type="text" class="search-query" placeholder="Search">
               </form> 
               <li><a href="#">Browse</a></li>
-              <li><a href="#">About</a></li>
+              <li><a href="/about/">About</a></li>
               <li><a href="#">Help</a></li>
             </ul>
             <ul class="nav pull-right">
@@ -79,10 +77,10 @@
               </li>
             </ul>
           </div>
-        </div>
       </div>
-
-    {% block content %}{% endblock %}
+    </div>
+    <div id="main" class="container">
+      {% block content %}{% endblock %}
     </div>
     <!--
     <footer>
