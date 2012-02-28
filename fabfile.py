@@ -21,6 +21,7 @@ def beta():
     "Use the beta-testing webserver."
     env.hosts = ['beta.editorsnotes.org']
     env.user = 'ryanshaw'
+    env.group = 'editorsnotes'
     env.path = '/db/projects/%(project_name)s-beta' % env
     env.vhosts_path = '/etc/httpd/sites.d'
     env.python = '/usr/bin/python2.6'
@@ -31,6 +32,7 @@ def pro():
     "Use the production webserver."
     env.hosts = ['editorsnotes.org']
     env.user = 'ryanshaw'
+    env.group = 'editorsnotes'
     env.path = '/db/projects/%(project_name)s' % env
     env.vhosts_path = '/etc/httpd/sites.d'
     env.python = '/usr/bin/python2.6'
@@ -81,6 +83,7 @@ def deploy():
     install_site()
     symlink_current_release()
     migrate()
+    chgrp_project_files()
     restart_webserver()
     sleep(2)
     try:
@@ -198,6 +201,11 @@ def migrate():
         run('../../../bin/python manage.py syncdb --noinput')
         for app in [ 'main', 'djotero', 'refine', 'reversion' ]:
             run('../../../bin/python manage.py migrate --noinput %s' % app)
+
+def chgrp_project_files():
+    "Change group of project files"
+    with cd(env.path):
+        run('find . -not -group %(group)s -writable -exec chgrp -h %(group)s {} \;' % env)
     
 def restart_webserver():
     "Restart the web server."
