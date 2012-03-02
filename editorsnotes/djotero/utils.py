@@ -1,6 +1,6 @@
 import re
-import simplejson as json
-from ordereddict import OrderedDict
+import json
+from collections import OrderedDict
 from urllib2 import urlopen, HTTPError
 from lxml import etree
 
