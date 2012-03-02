@@ -8,6 +8,7 @@ admin.autodiscover()
 urlpatterns = patterns('',
     (r'^accounts/login/$', 'django.contrib.auth.views.login'),
     (r'^accounts/profile/$', 'editorsnotes.main.views.user'),
+    (r'^admin/main/project/(?P<project_id>\d+)/roster/$', 'editorsnotes.main.admin_views.project_roster'),
     (r'^admin/', include(admin.site.urls)),
     (r'^comments/', include('django.contrib.comments.urls')),
 

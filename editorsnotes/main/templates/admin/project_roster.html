@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<form>{% csrf_token %}
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>E-mail</th>
+        <th>Role</th>
+        <th>Last seen</th>
+        <th>Active</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for member in roster %}
+      {% with member_profile=member.get_profile %}
+      <tr>
+        <td><a href="{{ member_profile.get_absolute_url }}" target="_blank">{{ member_profile.display_name }}</a></td>
+        <td>{{ member.email }}</td>
+        <td>
+          {% with groups=member.groups.all %}
+          <select>
+            <option>---</option>
+            <option{% if editor_group in groups %} selected="selected"{% endif %}>Editor</option>
+            <option{% if researcher_group in groups and editor_group not in groups %} selected="selected"{% endif %}>Researcher</option>
+            <option{% if watcher_group in groups %} selected="selected"{%endif %}>Watcher</option>
+          </select>
+          {% endwith %}
+        </td>
+        <td>{{ member.last_login }}</td>
+        <td><input type="checkbox"{% if member.is_active %} checked="true"{% endif %}></td>
+      </tr>
+      {% endwith %}
+      {% endfor %}
+    </tbody>
+  </table>
+  <button class="btn" type="submit">Save changes</button>
+</form>
+{% endblock %}
