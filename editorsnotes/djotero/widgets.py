@@ -1,6 +1,6 @@
-import simplejson as json
+import json
 import re
-from ordereddict import OrderedDict
+from collections import OrderedDict
 from django.forms import Widget
 from django.forms.util import flatatt
 from django.utils.safestring import mark_safe

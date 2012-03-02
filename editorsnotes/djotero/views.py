@@ -9,8 +9,8 @@ from models import ZoteroLink, CachedArchive
 from widgets import ZoteroWidget
 import utils
 import datetime
-import simplejson as json
-from ordereddict import OrderedDict
+import json
+from collections import OrderedDict
 
 @login_required
 def import_zotero(request, username=False):
