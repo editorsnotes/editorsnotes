@@ -23,9 +23,9 @@ def beta():
     env.user = 'ryanshaw'
     env.path = '/db/projects/%(project_name)s-beta' % env
     env.vhosts_path = '/etc/httpd/sites.d'
-    env.python = '/usr/bin/python2.6'
-    env.site_packages = ['/usr/lib64/python2.6/site-packages',
-                         '/usr/lib/python2.6/site-packages']
+    env.python = '/usr/bin/python2.7'
+    env.site_packages = ['/usr/lib64/python2.7/site-packages',
+                         '/usr/lib/python2.7/site-packages']
 
 def pro():
     "Use the production webserver."
@@ -33,9 +33,9 @@ def pro():
     env.user = 'ryanshaw'
     env.path = '/db/projects/%(project_name)s' % env
     env.vhosts_path = '/etc/httpd/sites.d'
-    env.python = '/usr/bin/python2.6'
-    env.site_packages = ['/usr/lib64/python2.6/site-packages',
-                         '/usr/lib/python2.6/site-packages']
+    env.python = '/usr/bin/python2.7'
+    env.site_packages = ['/usr/lib64/python2.7/site-packages',
+                         '/usr/lib/python2.7/site-packages']
 
 # Tasks
 
@@ -162,7 +162,7 @@ def symlink_system_packages():
     "Create symlinks to system site-packages."
     require('site_packages', provided_by=[dev])
     require('path')
-    site_packages = env.path + '/lib/python2.6/site-packages'
+    site_packages = env.path + '/lib/python2.7/site-packages'
     with cd(site_packages):
         with open('requirements.txt') as reqs:
             for line in reqs:
