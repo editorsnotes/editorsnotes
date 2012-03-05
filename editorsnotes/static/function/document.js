@@ -197,6 +197,7 @@ $(document).ready(function() {
   });
 
   // Initialize tabs.
+  /*
   var tabs = $('#tabs');
   var tab_selector = 'ul.ui-tabs-nav a';
 
@@ -247,4 +248,5 @@ $(document).ready(function() {
     });
   })
   .trigger('hashchange');
+  */
 });
