@@ -1,0 +1,10 @@
+.topic-list, .topic-list li {
+    display: inline;
+}
+.related-topics {
+    margin-bottom: 1em;
+}
+
+span.quiet {
+    color: #AAA;
+}

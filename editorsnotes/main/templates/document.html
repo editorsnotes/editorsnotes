@@ -43,11 +43,10 @@
 
     <header>
       <h3>{{ document.description|as_html|typogrify }}</h3>
-      {% if document.collection %}<p>Part of {{ document.collection|as_link }}</p>{% endif %}
       <div class="related-topics">
         {% if topics %}
         <span class="quiet">Related topics:</span> 
-        <ul class="topic-list">
+        <ul class="topic-list unstyled">
           {% for topic in topics %}
           <li><a href="{{ topic.get_absolute_url }}">{{ topic.preferred_name }}</a>{% if not forloop.last %} | {% endif %}</li>
           {% endfor %}
@@ -77,6 +76,7 @@
           </div>
           <a class="btn" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
         </section>
+
         {% if document.has_parts %}
         <section id="parts" class="tab-pane">
           <div id="scanlist-container">
@@ -94,6 +94,8 @@
 
         <section id="scans" class="tab-pane">
           {% if scans %}
+          {% comment %}
+          TODO: enable scans
           <div id="scanlist-container">
           <ul id="scan-list">
             {% for scan in scans %}
@@ -107,8 +109,9 @@
             <span id="progress-message">Loading scanned document...</span>
             <div id="progressbar"></div>
           </div>
+          {% endcomment %}
           {% else %}
-          <div class="span-23 last">
+          <div>
             {% if document.has_links %}
             This document has not been scanned, but it (or information about how to find it) is available online elsewhere:
               <ul>
@@ -121,9 +124,7 @@
             {% endif %}
           </div>
           {% endif %}
-          <div class="span-2 last">
-            <a class="btn" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
-          </div>
+          <a class="btn" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
         </section>
 
         <section id="transcript" class="tab-pane">
