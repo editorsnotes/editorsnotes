@@ -238,6 +238,5 @@ $(document).ready(function() {
         tabSearch.tab('show');
       }
     });
-  })
-  .trigger('hashchange');
+  }).trigger('hashchange');
 });

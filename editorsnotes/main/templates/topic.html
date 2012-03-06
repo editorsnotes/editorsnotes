@@ -31,15 +31,15 @@
       </div>
     </header>
 
-    <div id="tabs" class="span-24 last tabs">
-      <ul>
-        <li><a href="#article">Article</a></li>
-        <li><a href="#discuss">Discussion</a></li>
-        <li><a href="#notes">Related Notes <span class="alt">&amp;</span> Queries ({{ note_count }})</a></li>
-        <li><a href="#documents">Related Documents ({{ doc_count }})</a></li>
-      </ul>
+    <ul id="tabs" class="nav nav-tabs">
+      <li class="active"><a data-toggle="tab" href="#article">Article</a></li>
+      <li><a data-toggle="tab" href="#discuss">Discussion</a></li>
+      <li><a data-toggle="tab" href="#notes">Related Notes <span class="alt">&amp;</span> Queries ({{ note_count }})</a></li>
+      <li><a data-toggle="tab" href="#documents">Related Documents ({{ doc_count }})</a></li>
+    </ul>
 
-      <section id="article" class="span-23 last">
+    <div class="tab-content">
+      <section id="article" class="tab-pane active">
         <article id="{{ topic.slug }}-summary" class="note">
           {% if topic.has_summary %}
           <div class="note-content">
@@ -58,20 +58,18 @@
             {% endfor %}
           </div>
           {% endif %}
-          <div class="span-2">
-            <a class="button" href="{{ topic.get_admin_url }}?return_to={{ topic.get_absolute_url }}">Edit</a>
-          </div>
+          <a class="button" href="{{ topic.get_admin_url }}?return_to={{ topic.get_absolute_url }}">Edit</a>
           <div class="edit-history">
             {{ topic|display_edit_history }}
           </div>
         </article>
       </section>
 
-      <section id="discuss" class="span-23 last">
+      <section id="discuss" class="tab-pane">
         {% include "disqus.include" %}
       </section>
 
-      <section id="notes" class="span-23 last">
+      <section id="notes" class="tab-pane">
         {% if notes %}
 	<ul id="collapse">
           {% for note, topics, cites in notes %}
@@ -85,7 +83,7 @@
         {% endif %}
       </section>
 
-      <section id="documents" class="span-23 last">
+      <section id="documents" class="tab-pane">
         {% if documents %}
         <div class="use-sidebar sidebar-at-left" id="main">
         <div id="content">

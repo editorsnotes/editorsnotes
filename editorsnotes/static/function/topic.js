@@ -111,20 +111,7 @@ $(document).ready(function() {
     } 
   }
 
-  // get before sidebar is hidden by tabs
-  var initial_facet_height = $('#content').innerHeight() + 'px';
-
-  var tabs = $('#tabs');
-  var tab_selector = 'ul.ui-tabs-nav a';
-
-  tabs.tabs({
-    show: function(event, ui) {
-      if (ui.panel.id == 'documents') {
-        init_isotope();
-      }
-    },
-    event: 'change'
-  });
+  var tabs = $('#tabs a[data-toggle="tab"]');
 
   // If no hash is present in URL, load default tab into history
   var url = $.param.fragment();
@@ -133,48 +120,27 @@ $(document).ready(function() {
     url = $.param.fragment();
   }
 
-  // Enable jquery-bbq
-  tabs.find(tab_selector).click(function() {
-      index = $(this).attr('href').substr(1);
-      $.bbq.pushState(index, 2);
+  // Initialize tabs & jquery-bbq
+  tabs.click(function() {
+    $(this).tab('show');
+    index = $(this).attr('href').substr(1);
+    $.bbq.pushState(index, 2);
+  }).on('show', function(e) {
+    var targetPanel = e.target.hash.substr(1);
+    if (targetPanel == 'documents') {
+      init_isotope();
+    }
   });
-
-  var tabOptions = tabs.find(tab_selector);
 
   $(window).bind('hashchange', function(e) {
     var index = $.bbq.getState();
     $.each(index, function(key, value) {
-      var tabSearch = tabOptions.filter('a[href$="' + key + '"]')
+      var tabSearch = tabs.filter('a[href$="' + key + '"]')
       if ( tabSearch.length > 0 ) {
-        tabSearch.triggerHandler('change');
+        tabSearch.tab('show');
       }
     });
-  })
-  .trigger('hashchange');
-
-  var objMain = $('#main');
-  function showSidebar(){
-    objMain.addClass('use-sidebar');
-  }
-
-  function hideSidebar(){
-    objMain.removeClass('use-sidebar');
-  }
-
-  var objSeparator = $('#separator');
-
-  objSeparator.click(function(e){
-    e.preventDefault();
-    if ( objMain.hasClass('use-sidebar') ){
-	    hideSidebar();
-    }
-    else {
-	    showSidebar();
-    }
-    // Update isotope line spacing
-    update_filter();
-    objSeparator.css('height', $('#content').innerHeight() + 'px');
-  }).css('height', initial_facet_height);
+  }).trigger('hashchange');
 
 });
 
