@@ -24,16 +24,6 @@
     <script type="text/javascript" src="/media/function/document.js"></script>
     <script type="text/javascript" src="/media/function/jquery.collapse.js"></script>
 
-    <script type="text/javascript">
-      $(function() {
-        $('#collapse').jqcollapse({ slide: true, speed: 300, easing: '' });
-
-        $('#tabs a').click(function () {
-          $(this).tab('show');
-        });
-
-      });
-    </script>
 
 {% endblock %}
 
@@ -74,7 +64,7 @@
               This document has no connected Zotero data.
             {% endif %}
           </div>
-          <a class="btn" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
+          <a class="btn edit-button" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
         </section>
 
         {% if document.has_parts %}
@@ -86,9 +76,7 @@
               {% endfor %}
             </ul>
           </div>
-          <div class="span-2 last">
-            <a class="btn" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
-          </div>
+          <a class="btn" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
         </section>
         {% endif %}
 
@@ -124,16 +112,16 @@
             {% endif %}
           </div>
           {% endif %}
-          <a class="btn" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
+          <a class="btn edit-button" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
         </section>
 
         <section id="transcript" class="tab-pane">
           {% if document.transcript %}
           <article id="transcript-{{ document.transcript.id }}" class="transcript">
-            <div id="transcript-content" class="span-23 last">
+            <div id="transcript-content">
               {{ document.transcript.content|as_html|typogrify }}
             </div>
-            <div id="transcript-notes" class="span-23 last">
+            <div id="transcript-notes">
               {% for note in document.transcript.footnotes.all %}
               <div id="note-{{ note.id }}" class="transcript-note">
                 {{ note.content|as_html|typogrify }}
@@ -141,7 +129,7 @@
               </div>
               {% endfor %}
             </div>
-            <div class="span-23 last">
+            <div>
               <a class="btn" href="{{ document.transcript.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
               <div class="edit-history">
                 {{ document.transcript|display_edit_history }}
@@ -149,18 +137,16 @@
             </div>
           </article>
           {% else %}
-          <div class="span-23 last">
+          <div>
             This document has not been transcribed.
           </div>
-          <div class="span-2 last">
-            <a class="btn" href="{% url admin:main_transcript_add %}?document={{ document.id }}&amp;return_to={{ document.get_absolute_url }}">Edit</a>
-          </div>
+          <a class="btn edit-button" href="{% url admin:main_transcript_add %}?document={{ document.id }}&amp;return_to={{ document.get_absolute_url }}">Edit</a>
           {% endif %}
         </section>
 
         <section id="notes" class="tab-pane">
           {% if notes %}
-        <ul id="collapse">
+          <ul id="collapse">
             {% for note, topics, cites in notes %}
               {% include "note.include" %}
               {% if forloop.last %}{% else %}<hr/>{% endif %}

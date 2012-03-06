@@ -1,7 +1,7 @@
 {% load djotero_display %}
 
 <div id="zotero-information">
-    <table class="table table-striped">
+    <table class="table table-striped table-condensed table-bordered">
         {% for item in zotero_data %}
           <tr class="{% cycle 'odd' 'even' %}">
               <td style="width: 100px;"><h6>{{ item.label }}<h6></td>

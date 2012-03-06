@@ -4,7 +4,9 @@
 .related-topics {
     margin-bottom: 1em;
 }
-
 span.quiet {
     color: #AAA;
+}
+.edit-button {
+    margin-top: 1em;
 }
