@@ -38,7 +38,7 @@
         <span class="quiet">Related topics:</span> 
         <ul class="topic-list unstyled">
           {% for topic in topics %}
-          <li><a href="{{ topic.get_absolute_url }}">{{ topic.preferred_name }}</a>{% if not forloop.last %} | {% endif %}</li>
+          <li><a data-toggle="tab" href="{{ topic.get_absolute_url }}">{{ topic.preferred_name }}</a>{% if not forloop.last %} | {% endif %}</li>
           {% endfor %}
         </ul>
         {% endif %}
@@ -46,13 +46,13 @@
     </header>
 
       <ul id="tabs" class="nav nav-tabs">
-        <li class="active"><a href="#info">Info</a></li>
+        <li class="active"><a data-toggle="tab" href="#info">Info</a></li>
         {% if document.has_parts %}
-        <li><a href="#parts">Parts</a></li>
+        <li><a data-toggle="tab" href="#parts">Parts</a></li>
         {% endif %}
-        <li><a href="#scans">Scans</a></li>
-        <li><a href="#transcript">Transcript</a></li>
-        <li><a href="#notes">Related Notes <span class="alt">&amp;</span> Queries</a></li>
+        <li><a data-toggle="tab" href="#scans">Scans</a></li>
+        <li><a data-toggle="tab" href="#transcript">Transcript</a></li>
+        <li><a data-toggle="tab" href="#notes">Related Notes <span class="alt">&amp;</span> Queries</a></li>
       </ul>
 
       <div class="tab-content">
