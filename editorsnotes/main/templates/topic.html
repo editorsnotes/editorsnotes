@@ -58,9 +58,13 @@
             {% endfor %}
           </div>
           {% endif %}
-          <a class="button" href="{{ topic.get_admin_url }}?return_to={{ topic.get_absolute_url }}">Edit</a>
-          <div class="edit-history">
-            {{ topic|display_edit_history }}
+          <div class="row edit-row">
+            <div class="span6 edit-button">
+              <a class="btn" href="{{ topic.get_admin_url }}?return_to={{ topic.get_absolute_url }}">Edit</a>
+            </div>
+            <div class="span6 edit-history">
+              {{ topic|display_edit_history }}
+            </div>
           </div>
         </article>
       </section>

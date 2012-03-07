@@ -7,6 +7,15 @@
 span.quiet {
     color: #AAA;
 }
-.edit-button {
-    margin-top: 1em;
+.citation div, .citation p {
+    display: inline;
+}
+.citation {
+    margin-bottom: 1em;
+}
+.edit-history {
+    text-align: right;
+}
+.edit-row .edit-button {
+    margin-top: .3em;
 }

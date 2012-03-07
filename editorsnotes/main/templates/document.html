@@ -61,7 +61,7 @@
             {% if zotero_data %}
               {% include "item-information.include" %}
             {% else %}
-              This document has no connected Zotero data.
+            <p>This document has no connected Zotero data.</p>
             {% endif %}
           </div>
           <a class="btn edit-button" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
@@ -108,7 +108,7 @@
               {% endfor %}
               </ul>
             {% else %}
-            This document has not been scanned.
+            <p>This document has not been scanned.</p>
             {% endif %}
           </div>
           {% endif %}
@@ -137,9 +137,7 @@
             </div>
           </article>
           {% else %}
-          <div>
-            This document has not been transcribed.
-          </div>
+          <p>This document has not been transcribed.</p>
           <a class="btn edit-button" href="{% url admin:main_transcript_add %}?document={{ document.id }}&amp;return_to={{ document.get_absolute_url }}">Edit</a>
           {% endif %}
         </section>
@@ -153,7 +151,7 @@
             {% endfor %}
           </ul>
           {% else %}
-            There are no notes or queries citing this document.
+          <p>There are no notes or queries citing this document.</p>
           {% endif %}
         </section>
       </div>
