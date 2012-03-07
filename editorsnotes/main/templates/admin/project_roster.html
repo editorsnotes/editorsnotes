@@ -1,8 +1,15 @@
 {% extends "base.html" %}
 
+{% block css %}
+<style type="text/css">
+  td { vertical-align: middle !important; }
+  select { margin-bottom: 0px !important; }
+</style>
+{% endblock %}
+
 {% block content %}
 <form>{% csrf_token %}
-  <table class="table table-striped">
+  <table class="table table-condensed table-bordered table-striped">
     <thead>
       <tr>
         <th>Name</th>
@@ -16,7 +23,11 @@
       {% for member in roster %}
       {% with member_profile=member.get_profile %}
       <tr>
-        <td><a href="{{ member_profile.get_absolute_url }}" target="_blank">{{ member_profile.display_name }}</a></td>
+        <td>
+          <div class="table-data">
+            <a href="{{ member_profile.get_absolute_url }}" target="_blank">{{ member_profile.display_name }}</a>
+          </div>
+        </td>
         <td>{{ member.email }}</td>
         <td>
           {% with groups=member.groups.all %}
@@ -29,7 +40,7 @@
           {% endwith %}
         </td>
         <td>{{ member.last_login }}</td>
-        <td><input type="checkbox"{% if member.is_active %} checked="true"{% endif %}></td>
+        <td style="padding-left: 1.5em;"><input type="checkbox"{% if member.is_active %} checked="true"{% endif %}></td>
       </tr>
       {% endwith %}
       {% endfor %}
