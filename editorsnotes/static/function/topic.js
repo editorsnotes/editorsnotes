@@ -53,7 +53,7 @@ $(document).ready(function() {
       keys.push('None');
     }
     $.each(keys, function(index, value) {
-      $('<li><label><input type="checkbox" checked/>' 
+      $('<li><label class="checkbox"><input type="checkbox" checked/>' 
         + value + ' (' + counts[value] + ')</label></li>')
         .appendTo('#document-' + name + '-facet')
         .find(':checkbox')
@@ -125,7 +125,7 @@ $(document).ready(function() {
     $(this).tab('show');
     index = $(this).attr('href').substr(1);
     $.bbq.pushState(index, 2);
-  }).on('show', function(e) {
+  }).on('shown', function(e) {
     var targetPanel = e.target.hash.substr(1);
     if (targetPanel == 'documents') {
       init_isotope();

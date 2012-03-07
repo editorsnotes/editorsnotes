@@ -85,23 +85,10 @@
 
       <section id="documents" class="tab-pane">
         {% if documents %}
-        <div class="use-sidebar sidebar-at-left" id="main">
-        <div id="content">
-          <div id="document-list">
-            {% for document in documents %}
-            <div class="document-item">
-            {{ document|as_link|typogrify }}
-            {% if document.related_via %}
-            [via {{ document.related_via|as_link|typogrify }}]
-            {% endif %}
-            </div>
-            {% endfor %}
-          </div>        
-        </div>
-        <div id="sidebar">
+        <div id="main">
           <div id="document-facets">
             <div class="facet-header">
-              <label>
+              <label class="checkbox">
                 <input id="year-select-all" type="checkbox" checked/>
                 <span class="facet-name">Year</span>
               </label>
@@ -111,10 +98,10 @@
                 <span class="ui-icon ui-icon-triangle-1-s"></span>
               </span>
             </div>
-            <ul id="document-year-facet">
+            <ul class="unstyled" id="document-year-facet">
             </ul>
             <div class="facet-header">
-              <label>
+              <label class="checkbox">
                 <input id="itemtype-select-all" type="checkbox" checked/>
                 <span class="facet-name">Item Type</span>
               </label>
@@ -123,14 +110,23 @@
                 <span class="ui-icon ui-icon-triangle-1-s"></span>
               </span>
             </div>
-            <ul id="document-itemtype-facet">
+            <ul class="unstyled" id="document-itemtype-facet">
             </ul>
-            <div id="import-documents">
-              <a class="button" href="/document/upload/?reltopic={{ topic.id }}&return_to={{ topic.get_absolute_url }}">Import documents</a>
-            </div>
           </div>
-        </div>
-        <a href="#" id="separator"></a>
+
+          <div id="content">
+            <div id="document-list">
+              {% for document in documents %}
+              <div class="document-item">
+              {{ document|as_link|typogrify }}
+              {% if document.related_via %}
+              [via {{ document.related_via|as_link|typogrify }}]
+              {% endif %}
+              </div>
+              {% endfor %}
+            </div>        
+          </div>
+
         </div>
         {% else %}
           There are no documents related to <em>{{ topic.preferred_name }}</em>.
