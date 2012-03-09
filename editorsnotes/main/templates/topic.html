@@ -32,7 +32,7 @@
     </header>
 
     <ul id="tabs" class="nav nav-tabs">
-      <li class="active"><a data-toggle="tab" href="#article">Article</a></li>
+      <li><a data-toggle="tab" href="#article">Article</a></li>
       <li><a data-toggle="tab" href="#discuss">Discussion</a></li>
       <li><a data-toggle="tab" href="#notes">Related Notes <span class="alt">&amp;</span> Queries ({{ note_count }})</a></li>
       <li><a data-toggle="tab" href="#documents">Related Documents ({{ doc_count }})</a></li>
@@ -75,13 +75,19 @@
 
       <section id="notes" class="tab-pane">
         {% if notes %}
-	<ul id="collapse">
           {% for note, topics, cites in notes %}
-            {% include "note.include" %}
-            {% if forloop.last %}{% else %}
-        <hr/>{% endif %}
+          <div class="collapse-group">
+            <div class="collapse-header">
+              <a class="accordian-toggle"
+                href="#note-{{ note.id }}"
+                data-parent="#notes"
+                data-toggle="collapse"><h4>{{ note.title }}</h4></a>
+            </div>
+            <div id="note-{{ note.id }}" class="accordian-body collapse">
+              {% include "note.include" %}
+            </div>
+          </div>
           {% endfor %}
-	</ul>
         {% else %}
           There are no notes or queries related to <em>{{ topic.preferred_name }}</em>.
         {% endif %}
@@ -140,5 +146,4 @@
         {% endif %}
       </section>
     </div>
-
 {% endblock %}

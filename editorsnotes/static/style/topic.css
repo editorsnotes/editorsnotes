@@ -7,6 +7,13 @@
 }
 #document-facets {
   float: left;
+  margin-right: 1em;
+}
+#document-facets ul {
+    border-bottom: 1px solid #ccc;
+}
+#document-facets ul:last-child {
+    border: none;
 }
 .document-item {
   margin: 0 0.5em 0.5em 0.5em;
@@ -19,6 +26,7 @@
 }
 .sort-button {
   display: inline-block;
+  float: right;
   padding: 2px 0;
   margin-left: 4px;
   vertical-align: -25%;

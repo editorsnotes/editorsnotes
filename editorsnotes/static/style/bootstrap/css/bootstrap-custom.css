@@ -19,3 +19,16 @@ span.quiet {
 .edit-row .edit-button {
     margin-top: .3em;
 }
+ul .document-link p {
+    margin: 0;
+}
+.collapse-group .accordian-toggle,
+.collapse-group .accordian-toggle h4 {
+    padding: 4px 6px;
+}
+.collapse-group {
+    margin-bottom: 3px;
+}
+.collapse-header a:focus {
+    outline: none;
+}
