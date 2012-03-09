@@ -196,8 +196,6 @@ $(document).ready(function() {
     });
   });
 
-  var tabs = $('#tabs a[data-toggle="tab"]');
-  
   // If no hash is present in URL, load default tab into history
   var url = $.param.fragment();
   if ( url == '' ) {
@@ -205,11 +203,15 @@ $(document).ready(function() {
     url = $.param.fragment();
   }
 
+  var tabs = $('#tabs a[data-toggle="tab"]');
+  
   // Initialize tabs & jquery-bbq
   tabs.click(function() {
-    $(this).tab('show');
-    index = $(this).attr('href').substr(1);
-    $.bbq.pushState(index, 2);
+    var $thisTab = $(this);
+    if (! $thisTab.parent().hasClass('active') ) {
+      index = $(this).attr('href').substr(1);
+      $.bbq.pushState(index, 2);
+    }
   }).on('show', function(e) {
     var targetPanel = e.target.hash.substr(1);
     if (targetPanel == 'scans') {
