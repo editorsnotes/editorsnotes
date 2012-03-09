@@ -17,6 +17,7 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.urlresolvers import NoReverseMatch
 from django.utils.html import conditional_escape, escape
 from django.utils.safestring import mark_safe
+from reversion import get_for_object
 from io import StringIO
 
 # -------------------------------------------------------------------------------
@@ -53,6 +54,19 @@ class URLAccessible():
         return '<span class="%s">%s</span>' % (
             self._meta.module_name, conditional_escape(self.as_text()))
 
+class ProjectSpecific():
+    def get_all_updaters(self):
+        all_updaters = set()
+        for version in get_for_object(self):
+            uid = json.loads(
+                version.serialized_data)[0]['fields'].get('last_updater')
+            if uid: all_updaters.add(uid)
+        return [UserProfile.objects.get(user__id=u) for u in all_updaters]
+    def get_project_affiliation(self):
+        projects = {u.affiliation for u in self.get_all_updaters() if u.affiliation}
+        return list(projects)
+
+
 # -------------------------------------------------------------------------------
 # Primary models. These have their own URLs and administration interfaces.
 # -------------------------------------------------------------------------------
@@ -71,7 +85,7 @@ FROM main_document AS part WHERE part.collection_id = main_document.id''',
                               '_has_transcript': '''EXISTS ( SELECT 1 
 FROM main_transcript WHERE main_transcript.document_id = main_document.id )''' })
 
-class Document(LastUpdateMetadata, Administered, URLAccessible):
+class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
     u"""
     Anything that can be taken as evidence for (documentation of) something.
 
@@ -304,7 +318,7 @@ class Footnote(LastUpdateMetadata, Administered, URLAccessible):
         self.transcript.save()
         super(Footnote, self).delete(*args, **kwargs)
 
-class Topic(LastUpdateMetadata, Administered, URLAccessible):
+class Topic(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
     """ 
     A controlled topic such as a person name, an organization name, a
     place name, an event name, a publication name, or the name of a
@@ -372,7 +386,7 @@ class Topic(LastUpdateMetadata, Administered, URLAccessible):
     class Meta:
         ordering = ['slug']
 
-class Note(LastUpdateMetadata, Administered, URLAccessible):
+class Note(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
     u""" 
     Text written by an editor or curator. The text is stored as XHTML,
     so it may have hyperlinks and all the other features that XHTML
