@@ -106,46 +106,39 @@ def all_documents(request, project_slug=None):
 @login_required
 def all_notes(request, project_slug=None):
     o = {}
-    if project_slug:
-        o['project'] = get_object_or_404(Project, slug=project_slug)
-    if project_slug:
-        query_set = Note.objects.filter(
-            last_updater__userprofile__affiliation=o['project'])
-    else:
-        query_set = Note.objects.all()
-    # TODO: Make this a custom manager method for Note, maybe
-    notes = dict((n.id, n) for n in query_set)
-    o['notes_by_topic_1'] = []
-    o['notes_by_topic_2'] = []
-    topic_assignments = [ ta for ta in 
-                          TopicAssignment.objects.assigned_to_model(Note) 
-                          if ta.object_id in notes ]
-    ta_index = 1
-    list_index = 1
-    topic = None
-    categorized_note_ids = set()
-    for ta in topic_assignments:
-        if topic and not ta.topic.slug == topic['slug']:
-            o['notes_by_topic_%s' % list_index].append(topic)
-            topic = None
-            if list_index < 2 and ta_index > (len(topic_assignments) / 2.2):
-                ta_index = 1
-                list_index += 1        
-        if not topic:
-            topic = { 'slug': ta.topic.slug, 
-                      'name': ta.topic.preferred_name, 
-                      'notes': [] }
-        topic['notes'].append(notes[ta.object_id])
-        categorized_note_ids.add(ta.object_id)
-        ta_index += 1
-    uncategorized_notes = []
-    for note_id in (set(notes.keys()) - categorized_note_ids):
-        uncategorized_notes.append(notes[note_id])
-    o['notes_by_topic_1'].insert(0, { 'slug': 'uncategorized',
-                                      'name': 'uncategorized', 
-                                      'notes': uncategorized_notes })
+    template = 'all-notes.html'
+    if request.GET.get('filter'):
+        template = 'filtered-notes.html'
+
+    qs = SearchQuerySet().models(Note)
+    query = []
+    if request.GET.get('topic'):
+        query += [ ' AND '.join([ 'related_topic_id:%s' % topic for topic
+                                in request.GET.get('topic').split(',') ]) ]
+    if request.GET.get('project'):
+        query += [ ' AND '.join([ 'project_id:%s' % project for project
+                                in request.GET.get('project').split(',') ]) ]
+    if query:
+        qs = qs.narrow(' AND '.join(query))
+
+    qs = qs.facet('related_topic_id').facet('project_id')
+    facet_fields = qs.facet_counts()['fields']
+    topic_facets = sorted(facet_fields['related_topic_id'],
+                          key=lambda t: t[1], reverse=True)
+    project_facets = sorted(facet_fields['project_id'],
+                            key=lambda p: p[1], reverse=True)
+
+    topic_facets = [ (Topic.objects.get(id=t_id), t_count)
+                         for t_id, t_count in topic_facets[:16] ]
+    o['topic_facets_1'] = topic_facets[:8]
+    o['topic_facets_2'] = (len(topic_facets) > 5 or []) and topic_facets[8:]
+
+    o['project_facets'] = [ (Project.objects.get(id=p_id), p_count)
+                           for p_id, p_count in project_facets ]
+    o['notes'] = qs
+
     return render_to_response(
-        'all-notes.html', o, context_instance=RequestContext(request))
+        template, o, context_instance=RequestContext(request)) 
 
 @login_required
 def topic(request, topic_slug):

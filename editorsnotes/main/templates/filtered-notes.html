@@ -1,0 +1,51 @@
+{% load display %}
+
+<div class="row" id="note-facets">
+  <div class="span12">
+    <h3>Filters</h3>
+  </div>
+  <div class="span12" id="note-facets-project">
+    <h6>Projects</h6>
+    <ul class="unstyled">
+    {% for p, count in project_facets %}
+    <li>
+      <input type="checkbox" name="project" value="{{ p.id }}">&nbsp;
+      {{ p|as_link }} ({{ count}})
+    </li>
+    {% endfor %}
+    </ul>
+  </div>
+  <div class="span12" id="note-facets-topic">
+    <h6>Topics</h6>
+    <ul class="span6 unstyled">
+    {% for t, count in topic_facets_1 %} 
+      <li>
+        <input type="checkbox" name="topic" value="{{ t.id }}">&nbsp;
+        {{ t|as_link }}: {{ count }}
+      </li>
+    {% endfor %}
+    </ul>
+    <ul class="span6 unstyled">
+    {% for t, count in topic_facets_2 %} 
+      <li>
+        <input type="checkbox" name="topic" value="{{ t.id }}">&nbsp;
+        {{ t|as_link }}: {{ count }}
+      </li>
+    {% endfor %}
+    </ul>
+  </div>
+</div>
+<hr />
+<div class="row">
+  <div class="span6">
+    <ul class="unstyled">
+    {% for note in notes %}
+      <li>
+      <a href="{% url note_view note_id=note.pk %}">
+        {{ note.title }}
+      </a>
+      </li>
+    {% endfor %}
+    </ul>
+  </div>
+</div>

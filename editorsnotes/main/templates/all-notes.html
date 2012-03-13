@@ -3,39 +3,43 @@
 
 {% block title %}: All Notes{% endblock %}
 
+{% block js %}
+<script type="text/javascript">
+  $(function() {
+    $('#note-facets input').live('click', function() {
+      var $checked = $('#note-facets input:checked');
+      var queryString = '?filter=1'
+      var filter = {
+        'project' : [],
+        'topic': []
+      }
+      $.each($checked, function(key, val) {
+        filter[val.name].push(val.value);
+      });
+      $.each(filter, function(key, val) {
+        if (val.length > 0) {
+          queryString += ('&' + key + '=' + val.join(','))
+        }
+      });
+      $.get(queryString, function(data) {
+        $('#all-notes').html(data);
+        $.each($checked, function(key, val) {
+          $('#note-facets input[name="' + val.name + '"][value="' + val.value + '"]')
+            .prop('checked', true);
+        });
+      });
+    });
+    
+  });
+</script>
+{% endblock %}
+
 {% block content %}
 <header>
   <h2>All Notes</h2>
 </header>
 
-<section id="all-notes" class="span-24 last">
-<div class="span-12">
-<ul class="all-topic-list">
-  {% for topic in notes_by_topic_1 %}
-  <li id="{{ topic.slug }}">
-    <span class="topic-index">{{ topic.name }}</span>
-    <ul class="topic-items">
-      {% for note in topic.notes %}
-      <li>{{ note|as_link|typogrify }}</li>
-      {% endfor %}
-    </ul>
-  </li>
-  {% endfor %}
-</ul>
-</div>
-<div class="span-12 last">
-<ul class="all-topic-list">
-  {% for topic in notes_by_topic_2 %}
-  <li id="{{ topic.slug }}">
-    <span class="topic-index">{{ topic.name }}</span>
-    <ul class="topic-items">
-      {% for note in topic.notes %}
-      <li>{{ note|as_link|typogrify }}</li>
-      {% endfor %}
-    </ul>
-  </li>
-  {% endfor %}
-</ul>
-</div>
+<section id="all-notes">
+  {% include "filtered-notes.html" %}
 </section>
 {% endblock %}
