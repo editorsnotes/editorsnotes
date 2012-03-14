@@ -20,7 +20,6 @@ env.project_name = 'editorsnotes'
 def beta():
     "Use the beta-testing webserver."
     env.hosts = ['beta.editorsnotes.org']
-    env.user = 'ryanshaw'
     env.path = '/db/projects/%(project_name)s-beta' % env
     env.vhosts_path = '/etc/httpd/sites.d'
     env.python = '/usr/bin/python2.7'
@@ -30,7 +29,6 @@ def beta():
 def pro():
     "Use the production webserver."
     env.hosts = ['editorsnotes.org']
-    env.user = 'ryanshaw'
     env.path = '/db/projects/%(project_name)s' % env
     env.vhosts_path = '/etc/httpd/sites.d'
     env.python = '/usr/bin/python2.7'
