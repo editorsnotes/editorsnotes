@@ -107,8 +107,11 @@ def all_documents(request, project_slug=None):
 def all_notes(request, project_slug=None):
     o = {}
     template = 'all-notes.html'
+    o['filtered'] = False
+
     if request.GET.get('filter'):
         template = 'filtered-notes.html'
+        o['filtered'] = True
 
     qs = SearchQuerySet().models(Note)
     query = []
@@ -118,8 +121,7 @@ def all_notes(request, project_slug=None):
     if request.GET.get('project'):
         query += [ ' AND '.join([ 'project_id:%s' % project for project
                                 in request.GET.get('project').split(',') ]) ]
-    if query:
-        qs = qs.narrow(' AND '.join(query))
+    qs = qs.narrow(' AND '.join(query)) if query else qs
 
     qs = qs.facet('related_topic_id').facet('project_id')
     facet_fields = qs.facet_counts()['fields']
@@ -131,7 +133,7 @@ def all_notes(request, project_slug=None):
     topic_facets = [ (Topic.objects.get(id=t_id), t_count)
                          for t_id, t_count in topic_facets[:16] ]
     o['topic_facets_1'] = topic_facets[:8]
-    o['topic_facets_2'] = (len(topic_facets) > 5 or []) and topic_facets[8:]
+    o['topic_facets_2'] = topic_facets[8:] if (len(topic_facets) > 8) else []
 
     o['project_facets'] = [ (Project.objects.get(id=p_id), p_count)
                            for p_id, p_count in project_facets ]

@@ -6,13 +6,13 @@
 {% block js %}
 <script type="text/javascript">
   $(function() {
-    $('#note-facets input').live('click', function() {
+    var $facets = $('#note-facets input');
+    $facets.prop('checked', false);
+    $facets.live('click', function() {
       var $checked = $('#note-facets input:checked');
       var queryString = '?filter=1'
-      var filter = {
-        'project' : [],
-        'topic': []
-      }
+      var filter = {project : [], topic: []}
+
       $.each($checked, function(key, val) {
         filter[val.name].push(val.value);
       });
@@ -21,6 +21,7 @@
           queryString += ('&' + key + '=' + val.join(','))
         }
       });
+
       $.get(queryString, function(data) {
         $('#all-notes').html(data);
         $.each($checked, function(key, val) {
@@ -28,7 +29,13 @@
             .prop('checked', true);
         });
       });
+
     });
+
+    $('.facet-title').live('click', function() {
+      $(this).find('i').toggleClass('icon-plus').toggleClass('icon-minus');
+      $('.facets').slideToggle('fast');
+    })
     
   });
 </script>
