@@ -1,7 +1,5 @@
 $(document).ready(function() {
 
-  $('#collapse').jqcollapse({ slide: true, speed: 250, easing: '' });
-
   var facets = [ 'year', 'itemtype' ];
 
   function select_document_filters(facet_name) {
@@ -137,7 +135,7 @@ $(document).ready(function() {
   $(window).bind('hashchange', function(e) {
     var index = $.bbq.getState();
     $.each(index, function(key, value) {
-      var tabSearch = tabs.filter('a[href$="' + key + '"]')
+      var tabSearch = tabs.filter('a[href$="' + key + '"]');
       if ( tabSearch.length > 0 ) {
         tabSearch.tab('show');
       }
