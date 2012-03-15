@@ -20,16 +20,11 @@
 
 {% block js %}
     <script type="text/javascript" src="http://seadragon.com/ajax/0.8/seadragon-min.js"></script>
-    <script type="text/javascript" src="/media/function/jquery.ellipsis.js"></script>
-    <script type="text/javascript" src="/media/function/document.js"></script>
-    <script type="text/javascript" src="/media/function/jquery.collapse.js"></script>
-
-
+    <script type="text/javascript" src="/media/function/jquery/jquery.ellipsis.js"></script>
+    <script type="text/javascript" src="/media/function/models/document.js"></script>
 {% endblock %}
 
 {% block content %}
-<script>
-</script>
 
     <header>
       <h3>{{ document.description|as_html|typogrify }}</h3>
