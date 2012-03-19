@@ -8,7 +8,7 @@ $(document).ready(function () {
   }); 
 
   // Initialize autocomplete for search input box.
-  $('#searchinput input')
+  $('input.search-autocomplete')
   .keydown(function(event) {
     // If no autocomplete menu item is active, submit on ENTER.
     if (event.keyCode == $.ui.keyCode.ENTER) {
@@ -19,11 +19,16 @@ $(document).ready(function () {
   })
   .autocomplete({
     source: function(request, response) {
-      $.getJSON('/api/topics/', { q: request.term }, function(data) {
-        response($.map(data, function(item, index) {
-          return { label: item.preferred_name, uri: item.uri };
-        }));
-      });
+      var targetModel = this.element.attr('search-target');
+      if (targetModel == 'topics') {
+        $.getJSON('/api/topics/', { q: request.term }, function(data) {
+          response($.map(data, function(item, index) {
+            return { label: item.preferred_name, uri: item.uri };
+          }));
+        });
+      } else {
+        // TODO: other models search complete
+      }
     },
     minLength: 2,
     select: function(event, ui) {
