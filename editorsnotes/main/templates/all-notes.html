@@ -3,6 +3,34 @@
 
 {% block title %}: All Notes{% endblock %}
 
+{% block css %}
+<style type="text/css">
+#sort-options {
+  font-size: 120%;
+  font-weight: bold;
+  margin-bottom: 1em;
+}
+#sort-options .sort-option.sort-option-selected {
+  padding-left: 18px;
+}
+#sort-options .sort-option:first-child {
+  padding-left: 10px;
+}
+.sort-option {
+  cursor: pointer;
+  cursor: hand;
+  margin-left: .75em;
+}
+.sort-option i {
+  display: none;
+}
+.sort-option.sort-option-selected i {
+  display: inline-block;
+  vertical-align: baseline;
+}
+</style>
+{% endblock %}
+
 {% block js %}
 <script type="text/javascript">
   $(function() {
@@ -28,6 +56,7 @@
           $('#note-facets input[name="' + val.name + '"][value="' + val.value + '"]')
             .prop('checked', true);
         });
+        splitColumns( $('.note') );
       });
 
     });
@@ -36,6 +65,52 @@
       $(this).find('i').toggleClass('icon-plus').toggleClass('icon-minus');
       $('.facets').slideToggle('fast');
     })
+
+    var sortNotes = function(noteArray) {
+      var $sortedNotes;
+      var $sortOption = $('.sort-option-selected');
+
+      if ($sortOption.attr('sort-by') == 'title') {
+        $sortedNotes = _.sortBy(noteArray, function(note) { return note.textContent });
+      } else if ($sortOption.attr('sort-by') == 'date') {
+        $sortedNotes = _.sortBy(noteArray, function(note) { return note.getAttribute('date-modified') });
+      }
+
+      if ($sortOption.attr('sort-order') == 'desc') {
+        $sortedNotes = $.makeArray($sortedNotes).reverse();
+      }
+
+      return $sortedNotes
+    }
+    var splitColumns = function(noteArray) {
+      $sortedNotes = sortNotes(noteArray);
+      $('#note-list-1').append($sortedNotes);
+      if ($sortedNotes.length > 20) {
+        $('#note-list-2').append($sortedNotes.slice($sortedNotes.length/2));
+      }
+    }
+
+    splitColumns($('.note'));
+
+    $('.sort-option').live('click', function() {
+      $thisOption = $(this);
+      $otherOptions = $thisOption.siblings('.sort-option');
+
+      $otherOptions.removeClass('sort-option-selected');
+      $thisOption.addClass('sort-option-selected');
+      $thisOption.find('i').toggleClass('icon-chevron-up icon-chevron-down');
+
+      if ($thisOption.attr('sort-order') == 'asc') {
+        $thisOption.attr('sort-order', 'desc');
+      } else {
+        $thisOption.attr('sort-order', 'asc');
+      }
+
+      var $notes = $('.note');
+
+      splitColumns(sortNotes($notes));
+      
+    });
     
   });
 </script>

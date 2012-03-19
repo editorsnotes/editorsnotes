@@ -33,6 +33,7 @@ class NoteIndex(RealTimeSearchIndex):
     text = CharField(document=True, use_template=True)
     project_id = MultiValueField()
     related_topic_id = MultiValueField()
+    last_updated = DateTimeField(model_attr='last_updated')
     def prepare_project_id(self, obj):
         return [p.id for p in obj.get_project_affiliation()]
     def prepare_related_topic_id(self, obj):
