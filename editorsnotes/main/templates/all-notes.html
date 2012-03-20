@@ -28,12 +28,131 @@
   display: inline-block;
   vertical-align: baseline;
 }
+.timeago-label {
+  margin-top: .75em;
+}
+.timeago-label:first-child {
+  margin-top: 0;
+}
+.timeago-label:last-child {
+  display: none
+}
 </style>
 {% endblock %}
 
 {% block js %}
 <script type="text/javascript">
   $(function() {
+
+    var groupDates = function(noteArray, order) {
+      if (order == 'asc') {
+        noteArray = $.makeArray(noteArray).reverse();
+      }
+
+      var compareDate = function(d) {
+        var month = '' + (d.getMonth() + 1);
+        while (month.length < 2) month = '0' + month;
+        var testDate = d.getFullYear() + month + d.getDate();
+
+        var dateMatch = {}
+        dateMatch.match = _.find(noteArray, function(note) {
+          return $(note).attr('date-modified') > testDate;
+        });
+        dateMatch.more = _.find(noteArray, function(note) {
+          return $(note).attr('date-modified') < testDate;
+        });
+        return dateMatch;
+      }
+
+      var insertlabel = function(n, d, order, last) {
+        if (order == 'desc') {
+          var labelText = '<h4>Edited more than ' + $.timeago(d).replace('about ', '') + '</h4>';
+          var $label = $('<li class="timeago-label">').html(labelText);
+          $label.insertBefore($(n));
+          if ($label.prev().hasClass('timeago-label')) {
+            $label.prev().remove();
+          }
+        } else if (order == 'asc') {
+          var labelText = '<h4>Edited less than ' + $.timeago(d).replace('about ', '') + '</h4>';
+          var $label = $('<li class="timeago-label">').html(labelText);
+          if (last) {
+            $label.insertBefore($(n));
+          }else {
+            $label.insertAfter($(n));
+          }
+          if ($label.next().hasClass('timeago-label')) {
+            $label.next().remove();
+          }
+        }
+
+      }
+
+      var today = new Date;
+
+      var ty = today.getFullYear();
+      var tm = today.getMonth();
+      var td = today.getDate();
+
+      var oneDayAgo = new Date(ty, tm, td-1);
+      var oneWeekAgo = new Date(ty, tm, td-7);
+      var oneMonthAgo = new Date(ty, tm, td-32);
+      var sixMonthsAgo = new Date(ty, tm-6, td);
+      var datesToCompare = [oneDayAgo, oneWeekAgo, oneMonthAgo, sixMonthsAgo];
+      if (order == 'asc') { datesToCompare.reverse() }
+
+      if (order == 'desc') {
+        $('<li class="timeago-label"><h4>Edited Today</h4></li>')
+          .insertBefore(_.first(noteArray));
+      }
+      
+      $.each(datesToCompare, function(counter, dateAgo) {
+          var m = compareDate(dateAgo);
+          insertlabel(m.more, dateAgo, order);
+      });
+
+      var xYearsAgo = 1;
+      while (xYearsAgo > 0) {
+        var yearsAgo = new Date(ty-xYearsAgo, tm, td);
+        var a = compareDate(yearsAgo);
+        if (a.match && a.more) {
+          insertlabel(a.more, yearsAgo, order);
+          xYearsAgo++;
+        } else {
+          if (order == 'asc') {
+            insertlabel(_.last(noteArray), yearsAgo, order, true);
+          }
+          xYearsAgo = 0;
+        }
+      }
+
+    }
+
+
+    var sortNotes = function(noteArray) {
+      var $sortedNotes;
+      var $sortOption = $('.sort-option-selected');
+
+      if ($sortOption.attr('sort-by') == 'title') {
+        $sortedNotes = _.sortBy(noteArray, function(note) { return note.textContent });
+      } else if ($sortOption.attr('sort-by') == 'date') {
+        $sortedNotes = _.sortBy(noteArray, function(note) { return note.getAttribute('date-modified') });
+      }
+
+      if ($sortOption.attr('sort-order') == 'desc') {
+        $sortedNotes = $.makeArray($sortedNotes).reverse();
+      }
+
+      return $sortedNotes
+    }
+
+    var splitColumns = function(noteArray) {
+      $sortedNotes = sortNotes(noteArray);
+      $('#note-list-1').append($sortedNotes);
+      if ($sortedNotes.length > 20) {
+        $('#note-list-2').append($sortedNotes.slice($sortedNotes.length/2));
+      }
+    }
+
     var $facets = $('#note-facets input');
     $facets.prop('checked', false);
     $facets.live('click', function() {
@@ -53,6 +172,7 @@
       $.get(queryString, function(data) {
         $('#all-notes').html(data);
         $.each($checked, function(key, val) {
+          // Restore previously checked filters
           $('#note-facets input[name="' + val.name + '"][value="' + val.value + '"]')
             .prop('checked', true);
         });
@@ -61,57 +181,38 @@
 
     });
 
+    // Toggle faceting options
     $('.facet-title').live('click', function() {
-      $(this).find('i').toggleClass('icon-plus').toggleClass('icon-minus');
+      $(this).find('i').toggleClass('icon-plus icon-minus');
       $('.facets').slideToggle('fast');
     })
 
-    var sortNotes = function(noteArray) {
-      var $sortedNotes;
-      var $sortOption = $('.sort-option-selected');
-
-      if ($sortOption.attr('sort-by') == 'title') {
-        $sortedNotes = _.sortBy(noteArray, function(note) { return note.textContent });
-      } else if ($sortOption.attr('sort-by') == 'date') {
-        $sortedNotes = _.sortBy(noteArray, function(note) { return note.getAttribute('date-modified') });
-      }
-
-      if ($sortOption.attr('sort-order') == 'desc') {
-        $sortedNotes = $.makeArray($sortedNotes).reverse();
-      }
-
-      return $sortedNotes
-    }
-    var splitColumns = function(noteArray) {
-      $sortedNotes = sortNotes(noteArray);
-      $('#note-list-1').append($sortedNotes);
-      if ($sortedNotes.length > 20) {
-        $('#note-list-2').append($sortedNotes.slice($sortedNotes.length/2));
-      }
-    }
-
-    splitColumns($('.note'));
-
+    // Resort list of notes on click of sort options
     $('.sort-option').live('click', function() {
       $thisOption = $(this);
       $otherOptions = $thisOption.siblings('.sort-option');
 
-      $otherOptions.removeClass('sort-option-selected');
-      $thisOption.addClass('sort-option-selected');
-      $thisOption.find('i').toggleClass('icon-chevron-up icon-chevron-down');
-
-      if ($thisOption.attr('sort-order') == 'asc') {
-        $thisOption.attr('sort-order', 'desc');
-      } else {
-        $thisOption.attr('sort-order', 'asc');
+      if ($thisOption.hasClass('sort-option-selected')) {
+        $thisOption.find('i').toggleClass('icon-chevron-up icon-chevron-down');
+        if ($thisOption.attr('sort-order') == 'asc') {
+          $thisOption.attr('sort-order', 'desc');
+        } else {
+          $thisOption.attr('sort-order', 'asc');
+        }
       }
 
-      var $notes = $('.note');
+      $otherOptions.removeClass('sort-option-selected');
+      $thisOption.addClass('sort-option-selected');
+      $('.timeago-label').remove();
 
-      splitColumns(sortNotes($notes));
-      
+      splitColumns(sortNotes($('.note')));
+      if ($thisOption.attr('sort-by') == 'date') {
+        groupDates($('.note'), $thisOption.attr('sort-order'));
+      }
     });
     
+    // Split columns on load
+    splitColumns($('.note'));
   });
 </script>
 {% endblock %}

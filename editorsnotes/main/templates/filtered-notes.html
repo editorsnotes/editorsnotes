@@ -48,16 +48,16 @@
       <span class="sort-option-title">Title</span>
       <i class="icon-chevron-up"></i>
     </span>
-    <span class="sort-option" sort-by="date" sort-order="asc">
+    <span class="sort-option" sort-by="date" sort-order="desc">
       <span class="sort-option-title">Date modified</span>
-      <i class="icon-chevron-up"></i>
+      <i class="icon-chevron-down"></i>
     </span>
   </div>
 
   <div class="span12 row">
     <ul class="unstyled span6" id="note-list-1">
     {% for note in notes %}
-    <li class="note" date-modified="{{ note.last_updated|date:"YmdHi" }}">
+    <li class="note" date-modified="{{ note.last_updated|date:"Ymd" }}">
         <a href="{% url note_view note_id=note.pk %}">
           {{ note.title }}
         </a>
