@@ -176,22 +176,22 @@ class TopicAdmin(VersionAdmin):
     class Media:
         css = { 'all': ('style/custom-theme/jquery-ui-1.8.10.custom.css',
                         'style/admin.css') }
-        js = ('function/jquery-1.5.1.min.js',
-              'function/jquery-ui-1.8.10.custom.min.js',
+        js = ('function/jquery/jquery-1.7.1.min.js',
+              'function/jquery/jquery-ui-1.8.18.custom.min.js',
               'function/wymeditor/jquery.wymeditor.pack.js',
-              'function/jquery.timeago.js',
-              'function/admin.js')
+              'function/jquery/jquery.timeago.js',
+              'function/models/admin.js')
 
 class NoteAdmin(VersionAdmin):
     inlines = (CitationInline, TopicAssignmentInline)
     class Media:
         css = { 'all': ('style/custom-theme/jquery-ui-1.8.10.custom.css',
                         'style/admin.css') }
-        js = ('function/jquery-1.5.1.min.js',
-              'function/jquery-ui-1.8.10.custom.min.js',
+        js = ('function/jquery/jquery-1.7.1.min.js',
+              'function/jquery/jquery-ui-1.8.18.custom.min.js',
               'function/wymeditor/jquery.wymeditor.pack.js',
-              'function/jquery.timeago.js',
-              'function/admin.js')
+              'function/jquery/jquery.timeago.js',
+              'function/models/admin.js')
 
 class DocumentAdmin(VersionAdmin):
     form = DocumentAdminForm
@@ -204,12 +204,12 @@ class DocumentAdmin(VersionAdmin):
         css = { 'all': ('style/custom-theme/jquery-ui-1.8.10.custom.css',
                         'style/admin.css',
                         'style/zotero-admin-inline.css') }
-        js = ('function/jquery-1.5.1.min.js',
-              'function/jquery-ui-1.8.10.custom.min.js',
+        js = ('function/jquery/jquery-1.7.1.min.js',
+              'function/jquery/jquery-ui-1.8.18.custom.min.js',
               'function/wymeditor/jquery.wymeditor.pack.js',
-              'function/jquery.timeago.js',
-              'function/admin.js',
-              'function/zotero-admin-inline.js',
+              'function/jquery/jquery.timeago.js',
+              'function/models/admin.js',
+              'function/models/zotero-admin-inline.js',
               'function/citeproc-js/xmle4x.js',
               'function/citeproc-js/xmldom.js',
               'function/citeproc-js/citeproc.js',
@@ -244,12 +244,12 @@ class TranscriptAdmin(VersionAdmin):
         css = { 'all': ('style/custom-theme/jquery-ui-1.8.10.custom.css',
                         'style/admin.css',
                         'style/admin-transcript.css') }
-        js = ('function/jquery-1.5.1.min.js',
-              'function/jquery-ui-1.8.10.custom.min.js',
+        js = ('function/jquery/jquery-1.7.1.min.js',
+              'function/jquery/jquery-ui-1.8.18.custom.min.js',
               'function/wymeditor/jquery.wymeditor.pack.js',
-              'function/jquery.timeago.js',
-              'function/jquery.ellipsis.js',
-              'function/admin-transcript.js')
+              'function/jquery/jquery.timeago.js',
+              'function/jquery/jquery.ellipsis.js',
+              'function/models/admin-transcript.js')
 
 class FootnoteAdmin(VersionAdmin):
     formfield_overrides = { 
@@ -259,11 +259,11 @@ class FootnoteAdmin(VersionAdmin):
     class Media:
         css = { 'all': ('style/custom-theme/jquery-ui-1.8.10.custom.css',
                         'style/admin.css') }
-        js = ('function/jquery-1.5.1.min.js',
-              'function/jquery-ui-1.8.10.custom.min.js',
+        js = ('function/jquery/jquery-1.7.1.min.js',
+              'function/jquery/jquery-ui-1.8.18.custom.min.js',
               'function/wymeditor/jquery.wymeditor.pack.js',
-              'function/jquery.timeago.js',
-              'function/admin.js')
+              'function/jquery/jquery.timeago.js',
+              'function/models/admin.js')
 
 class UserProfileAdmin(UserAdmin):
     inlines = (UserProfileInline,)

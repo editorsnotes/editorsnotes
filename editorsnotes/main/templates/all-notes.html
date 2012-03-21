@@ -3,41 +3,46 @@
 
 {% block title %}: All Notes{% endblock %}
 
+{% block css %}
+<style type="text/css">
+#sort-options {
+  font-size: 120%;
+  font-weight: bold;
+  margin-bottom: 1em;
+}
+#sort-options .sort-option.sort-option-selected {
+  padding-left: 18px;
+}
+#sort-options .sort-option:first-child {
+  padding-left: 10px;
+}
+.sort-option {
+  cursor: pointer;
+  cursor: hand;
+  margin-left: .75em;
+}
+.sort-option i {
+  display: none;
+}
+.sort-option.sort-option-selected i {
+  display: inline-block;
+  vertical-align: baseline;
+}
+.timeago-label {
+  margin-top: .75em;
+}
+.timeago-label:first-child {
+  margin-top: 0;
+}
+.timeago-label:last-child {
+  display: none
+}
+</style>
+{% endblock %}
+
 {% block js %}
-<script type="text/javascript">
-  $(function() {
-    var $facets = $('#note-facets input');
-    $facets.prop('checked', false);
-    $facets.live('click', function() {
-      var $checked = $('#note-facets input:checked');
-      var queryString = '?filter=1'
-      var filter = {project : [], topic: []}
+<script type="text/javascript" src="/media/function/models/all-notes.js">
 
-      $.each($checked, function(key, val) {
-        filter[val.name].push(val.value);
-      });
-      $.each(filter, function(key, val) {
-        if (val.length > 0) {
-          queryString += ('&' + key + '=' + val.join(','))
-        }
-      });
-
-      $.get(queryString, function(data) {
-        $('#all-notes').html(data);
-        $.each($checked, function(key, val) {
-          $('#note-facets input[name="' + val.name + '"][value="' + val.value + '"]')
-            .prop('checked', true);
-        });
-      });
-
-    });
-
-    $('.facet-title').live('click', function() {
-      $(this).find('i').toggleClass('icon-plus').toggleClass('icon-minus');
-      $('.facets').slideToggle('fast');
-    })
-    
-  });
 </script>
 {% endblock %}
 

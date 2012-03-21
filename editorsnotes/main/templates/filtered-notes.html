@@ -42,15 +42,30 @@
 </div>
 <hr />
 <div class="row">
-  <div class="span6">
-    <ul class="unstyled">
+  <div class="span12" id="sort-options">
+    Sort by:
+    <span class="sort-option sort-option-selected" sort-by="title" sort-order="asc">
+      <span class="sort-option-title">Title</span>
+      <i class="icon-chevron-down"></i>
+    </span>
+    <span class="sort-option" sort-by="date" sort-order="desc">
+      <span class="sort-option-title">Date modified</span>
+      <i class="icon-chevron-down"></i>
+    </span>
+  </div>
+
+  <div class="span12 row">
+    <ul class="unstyled span6" id="note-list-1">
     {% for note in notes %}
-      <li>
-      <a href="{% url note_view note_id=note.pk %}">
-        {{ note.title }}
-      </a>
+    <li class="note" date-modified="{{ note.last_updated|date:"Ymd" }}">
+        <a href="{% url note_view note_id=note.pk %}">
+          {{ note.title }}
+        </a>
       </li>
     {% endfor %}
     </ul>
+    <ul class="unstyled span6" id="note-list-2">
+    </ul>
   </div>
+
 </div>
