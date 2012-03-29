@@ -8,7 +8,8 @@
 {% endblock %}
 
 {% block content %}
-<form>{% csrf_token %}
+<form method="post">{% csrf_token %}
+  {{ formset.management_form }}
   <table class="table table-condensed table-bordered table-striped">
     <thead>
       <tr>
@@ -20,32 +21,27 @@
       </tr>
     </thead>
     <tbody>
-      {% for member in roster %}
-      {% with member_profile=member.get_profile %}
+      {% for form in formset %}
       <tr>
+        {{ form.id }}
         <td>
-          <div class="table-data">
-            <a href="{{ member_profile.get_absolute_url }}" target="_blank">{{ member_profile.display_name }}</a>
-          </div>
+          {{ form.user_display_name }}
         </td>
-        <td>{{ member.email }}</td>
         <td>
-          {% with groups=member.groups.all %}
-          <select>
-            <option>---</option>
-            <option{% if editor_group in groups %} selected="selected"{% endif %}>Editor</option>
-            <option{% if researcher_group in groups and editor_group not in groups %} selected="selected"{% endif %}>Researcher</option>
-            <option{% if watcher_group in groups %} selected="selected"{%endif %}>Watcher</option>
-          </select>
-          {% endwith %}
+          {{ form.user_email }}
         </td>
-        <td>{{ member.last_login }}</td>
-        <td style="padding-left: 1.5em;"><input type="checkbox"{% if member.is_active %} checked="true"{% endif %}></td>
+        <td>
+          {{ form.project_role }}
+        </td>
+        <td>
+          {{ form.last_active }}
+        </td>
+        <td>
+          {{ form.is_active }}
+        </td>
       </tr>
-      {% endwith %}
-      {% endfor %}
+    {% endfor %}
     </tbody>
-  </table>
-  <button class="btn" type="submit">Save changes</button>
 </form>
+
 {% endblock %}
