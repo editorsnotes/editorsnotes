@@ -8,6 +8,7 @@
 {% endblock %}
 
 {% block content %}
+
 <form method="post">{% csrf_token %}
   {{ formset.management_form }}
   <table class="table table-condensed table-bordered table-striped">
@@ -42,6 +43,8 @@
       </tr>
     {% endfor %}
     </tbody>
+  </table>
+  <input type="submit" value="Save" />
 </form>
 
 {% endblock %}

@@ -1,12 +1,11 @@
 from django import forms
 from django.forms.models import modelformset_factory, ModelForm
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from models import ALL_PROJECT_ROLES
 
 class ProjectUserForm(ModelForm):
-    project_role = forms.MultipleChoiceField(
-        choices = tuple([(r, r.title()) for r in ALL_PROJECT_ROLES]),
-        widget = forms.Select)
+    project_role = forms.ChoiceField(
+        choices=tuple([(r, r.title()) for r in ALL_PROJECT_ROLES]))
     class Meta:
         model = User
     def __init__(self, *args, **kwargs):
@@ -27,7 +26,7 @@ class ProjectUserForm(ModelForm):
                 name__startswith=profile.affiliation.slug)
             new_role = Group.objects.get(name="%s_%s" % (
                 profile.affiliation.slug, self.cleaned_data['project_role']))
-            user_roles = model.groups.all()
+            user_roles = model.groups
             user_roles.remove(old_role)
             user_roles.add(new_role)
         if commit:
