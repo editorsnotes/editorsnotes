@@ -9,7 +9,7 @@ from lxml import etree
 from unaccent import unaccent
 from django.db import models
 from django.contrib.admin.models import LogEntry
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.core import urlresolvers
@@ -403,14 +403,29 @@ class Note(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
     class Meta:
         ordering = ['-last_updated']  
 
+ALL_PROJECT_ROLES = ['editor', 'researcher']
+
 class Project(models.Model, URLAccessible):
     name = models.CharField(max_length='80')
-    slug = models.SlugField(help_text='Used for project-specific URLs')
+    slug = models.SlugField(help_text='Used for project-specific URLs and groups')
     @models.permalink
     def get_absolute_url(self):
         return ('index_view', [self.slug])
     def as_text(self):
         return self.name
+    def get_or_create_project_roles(self):
+        project_roles = {}
+        for g in ALL_PROJECT_ROLES:
+            project_group, created = Group.objects.get_or_create(
+                name = '%s_%s' % (self.slug, g))
+            project_roles[g] = project_group
+            if created:
+                #TODO: create group perms
+                pass
+        return project_roles
+    def save(self):
+        super(Project, self).save()
+        self.get_or_create_project_roles()
         
 class UserProfile(models.Model, URLAccessible):
     user = models.ForeignKey(User, unique=True)
@@ -465,7 +480,31 @@ class UserProfile(models.Model, URLAccessible):
             if len(activity) == max_count:
                 break
         return activity, checked_object_ids
-        
+    def get_project_role(self):
+        if self.affiliation:
+            try:
+                role = Group.objects.get(
+                    user=self.user,
+                    name__startswith=self.affiliation.slug)
+                return role.name[role.name.index('_') + 1:]
+            except Group.DoesNotExist:
+                return None
+    def save(self):
+        if self.affiliation:
+            project_groups = self.user.groups.filter(
+                user = self.user,
+                name__startswith=self.affiliation.slug)
+            if len(project_groups) > 1:
+                raise Exception("Only one project role allowed")
+        super(UserProfile, self).save()
+        if self.affiliation and not self.get_project_role():
+            user_groups = self.user.groups
+            project_groups = self.affiliation.get_or_create_project_roles()
+            if user_groups.filter(name='Editors'):
+                user_groups.add(project_groups['editor'])
+            else:
+                # Default project role is researcher
+                user_groups.add(project_groups['researcher'])
 
 # -------------------------------------------------------------------------------
 # Support models.
