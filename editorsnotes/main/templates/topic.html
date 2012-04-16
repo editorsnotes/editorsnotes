@@ -29,14 +29,14 @@
     </header>
 
     <ul id="tabs" class="nav nav-tabs">
-      <li><a data-toggle="tab" href="#article">Article</a></li>
-      <li><a data-toggle="tab" href="#discuss">Discussion</a></li>
-      <li><a data-toggle="tab" href="#notes">Related Notes <span class="alt">&amp;</span> Queries ({{ note_count }})</a></li>
-      <li><a data-toggle="tab" href="#documents">Related Documents ({{ doc_count }})</a></li>
+      <li class="active"><a href="#article-tab">Article</a></li>
+      <li><a href="#discuss-tab">Discussion</a></li>
+      <li><a href="#notes-tab">Related Notes <span class="alt">&amp;</span> Queries ({{ note_count }})</a></li>
+      <li><a href="#documents-tab">Related Documents ({{ doc_count }})</a></li>
     </ul>
 
     <div class="tab-content">
-      <section id="article" class="tab-pane active">
+      <section id="article-tab" class="tab-pane active">
         <article id="{{ topic.slug }}-summary" class="note">
           {% if topic.has_summary %}
           <div class="note-content">
@@ -66,11 +66,11 @@
         </article>
       </section>
 
-      <section id="discuss" class="tab-pane">
+      <section id="discuss-tab" class="tab-pane">
         {% include "disqus.include" %}
       </section>
 
-      <section id="notes" class="tab-pane">
+      <section id="notes-tab" class="tab-pane">
         {% if notes %}
           {% for note, topics, cites in notes %}
           <div class="collapse-group">
@@ -90,7 +90,7 @@
         {% endif %}
       </section>
 
-      <section id="documents" class="tab-pane">
+      <section id="documents-tab" class="tab-pane">
         {% if documents %}
         <div id="main">
           <div id="document-facets">

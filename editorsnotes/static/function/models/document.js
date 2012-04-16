@@ -203,22 +203,20 @@ $(document).ready(function() {
     url = $.param.fragment();
   }
 
-  var tabs = $('#tabs a[data-toggle="tab"]');
+  var tabs = $('#tabs a');
   
   // Initialize tabs & jquery-bbq
-  tabs.click(function() {
-    var $thisTab = $(this);
-    if (! $thisTab.parent().hasClass('active') ) {
-      index = $(this).attr('href').substr(1);
-      $.bbq.pushState(index, 2);
-    }
+  tabs.click(function(e) {
+    e.preventDefault();
+    var index = $(this).attr('href').match(/#(.+)-tab/)[1];
+    $.bbq.pushState(index, 2);
   }).on('show', function(e) {
-    var targetPanel = e.target.hash.substr(1);
-    if (targetPanel == 'scans') {
+    var targetPanel = e.target.hash;
+    if (targetPanel.match(/scans/)) {
       if ($('a.pushed').click().length == 0) {
         $('a.scan:first').click();
       }
-    } else if (targetPanel == 'transcript') {
+    } else if (targetPanel.match(/transcript/)) {
       var firstshow = (! footnote.done);
       footnote.setup();
       if (firstshow && 'fn' in url_params) {
@@ -235,9 +233,9 @@ $(document).ready(function() {
   $(window).bind('hashchange', function(e) {
     var index = $.bbq.getState();
     $.each(index, function(key, value) {
-      var tabSearch = tabs.filter('a[href$="' + key + '"]')
-      if ( tabSearch.length > 0 ) {
-        tabSearch.tab('show');
+      var tabToOpen = tabs.filter('a[href*="' + key + '"]')
+      if ( tabToOpen.length > 0 ) {
+        tabToOpen.tab('show');
       }
     });
   }).trigger('hashchange');
