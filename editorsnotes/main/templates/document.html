@@ -41,17 +41,17 @@
     </header>
 
       <ul id="tabs" class="nav nav-tabs">
-        <li class="active"><a data-toggle="tab" href="#info">Info</a></li>
+        <li class="active"><a href="#info-tab">Info</a></li>
         {% if document.has_parts %}
-        <li><a data-toggle="tab" href="#parts">Parts</a></li>
+        <li><a href="#parts-tab">Parts</a></li>
         {% endif %}
-        <li><a data-toggle="tab" href="#scans">Scans</a></li>
-        <li><a data-toggle="tab" href="#transcript">Transcript</a></li>
-        <li><a data-toggle="tab" href="#notes">Related Notes <span class="alt">&amp;</span> Queries</a></li>
+        <li><a href="#scans-tab">Scans</a></li>
+        <li><a href="#transcript-tab">Transcript</a></li>
+        <li><a href="#notes-tab">Related Notes <span class="alt">&amp;</span> Queries</a></li>
       </ul>
 
       <div class="tab-content">
-        <section id="info" class="tab-pane active">
+        <section id="info-tab" class="tab-pane active">
           <div id="zotero">
             {% if zotero_data %}
               {% include "item-information.include" %}
@@ -63,7 +63,7 @@
         </section>
 
         {% if document.has_parts %}
-        <section id="parts" class="tab-pane">
+        <section id="parts-tab" class="tab-pane">
           <div id="scanlist-container">
             <ul id="parts-list">
               {% for part in document.parts.all %}
@@ -75,7 +75,7 @@
         </section>
         {% endif %}
 
-        <section id="scans" class="tab-pane">
+        <section id="scans-tab" class="tab-pane">
           {% if scans %}
           {% comment %}
           TODO: enable scans
@@ -110,7 +110,7 @@
           <a class="btn edit-button" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
         </section>
 
-        <section id="transcript" class="tab-pane">
+        <section id="transcript-tab" class="tab-pane">
           {% if document.transcript %}
           <article id="transcript-{{ document.transcript.id }}" class="transcript">
             <div id="transcript-content">
@@ -137,7 +137,7 @@
           {% endif %}
         </section>
 
-        <section id="notes" class="tab-pane">
+        <section id="notes-tab" class="tab-pane">
           {% if notes %}
           <ul id="collapse">
             {% for note, topics, cites in notes %}
