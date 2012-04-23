@@ -4,6 +4,18 @@
 <style type="text/css">
   td { vertical-align: middle !important; }
   select { margin-bottom: 0px !important; }
+
+  .user-details-edit:hover {
+    text-decoration: none;
+  }
+  .user-details-edit i {
+    display: none;
+  }
+  tr:hover .user-details-edit i {
+    display: inline-block;
+    position: absolute;
+    margin: 2px 0px 0px 4px;
+  }
 </style>
 {% endblock %}
 
@@ -17,34 +29,46 @@
         <th>Name</th>
         <th>E-mail</th>
         <th>Role</th>
-        <th>Last seen</th>
+        <th>Joined</th>
+        <th>Last login</th>
         <th>Active</th>
       </tr>
     </thead>
     <tbody>
       {% for form in formset %}
+      {% with u=form.user_object %}
       <tr>
         {{ form.id }}
         <td>
-          {{ form.user_display_name }}
+          <a title="Edit user details"
+             class="user-details-edit"
+             target="_blank"
+             href="{% url admin:auth_user_change u.id %}">
+            {{ form.user_display_name }}
+            <i class="icon-edit"></i>
+          </a>
         </td>
         <td>
-          {{ form.user_email }}
+          {{ u.email }}
         </td>
         <td>
           {{ form.project_role }}
         </td>
         <td>
-          {{ form.last_active }}
+          {{ u.date_joined|date:"M j, Y" }}
+        </td>
+        <td>
+          {{ u.last_login|date:"M j, Y" }}
         </td>
         <td>
           {{ form.is_active }}
         </td>
       </tr>
-    {% endfor %}
+      {% endwith %}
+      {% endfor %}
     </tbody>
   </table>
-  <input type="submit" value="Save" />
+  <input class="btn pull-right" type="submit" value="Save" />
 </form>
 
 {% endblock %}
