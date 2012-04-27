@@ -87,8 +87,15 @@ def all_topics(request, project_slug=None):
 @login_required
 def all_documents(request, project_slug=None):
     o = {}
-    if project_slug:
-        o['project'] = get_object_or_404(Project, slug=project_slug)
+    template = 'all-documents.html'
+    o['filtered'] = False
+
+    if request.GET.get('filter'):
+        template = 'filtered-documents.html'
+        o['filtered'] = True
+
+    qs = SearchQuerySet().models(Document)
+
     o['documents'] = []
     if project_slug:
         query_set = Document.objects.filter(
