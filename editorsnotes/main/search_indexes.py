@@ -4,31 +4,39 @@ from haystack import site
 from haystack.indexes import *
 from django.db.models.fields import FieldDoesNotExist
 from models import Document, Transcript, Footnote, Topic, Note
+from editorsnotes.djotero.utils import get_creator_name
 import json
 
 class DocumentIndex(RealTimeSearchIndex):
     title = CharField(model_attr='as_text')
     text = CharField(document=True, use_template=True)
     project_id = MultiValueField()
+    related_topic_id = MultiValueField()
+    creators = MultiValueField()
+    archive = CharField()
+    itemType = CharField()
     def prepare_project_id(self, obj):
         return [p.id for p in obj.get_project_affiliation()]
+    def prepare_related_topic_id(self, obj):
+        return [t.id for t in obj.get_all_related_topics()]
     def prepare(self, obj):
         self.prepared_data = super(DocumentIndex, self).prepare(obj)
 
         z = obj.zotero_link()
         zotero_data = json.loads(z.zotero_data) if z else {}
+        fields_to_index = ['archive', 'publication', 'itemType']
 
-        if 'archive' in zotero_data and len(zotero_data['archive']):
-            self.prepared_data['archive'] = zotero_data['archive']
+        for field in fields_to_index:
+            if zotero_data.get(field):
+                self.prepared_data[field] = zotero_data[field]
 
         names = []
-        if 'creators' in zotero_data and len(zotero_data['creators']):
-            creators = zotero_data['creators']
-            for c in creators:
-                name = c.get('name') or (c.get('firstName') + ' ' +
-                                         c.get('lastName')).strip().rstrip()
-                names.append(name)
-        self.prepared_data['creators'] = names
+        if zotero_data.get('creators'):
+            for c in zotero_data['creators']:
+                creator = get_creator_name(c)
+                names.append(creator)
+        self.prepared_data['creators'] = [n for n in names if n]
+
         return self.prepared_data
     def get_model(self):
         return Document

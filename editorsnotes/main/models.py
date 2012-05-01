@@ -135,6 +135,12 @@ class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific)
             return self._zotero_link
         except:
             return None
+    def get_all_related_topics(self):
+        topics = []
+        topics += [ta.topic for ta in self.topics.all()]
+        topics += [c.content_object for c in self.citations.filter(
+            content_type=ContentType.objects.get_for_model(Topic))]
+        return topics
     def get_metadata(self):
         metadata = {}
         for md in self.metadata.all():

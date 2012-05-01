@@ -1,11 +1,45 @@
 {% load display %}
 
 <div class="row" id="document-facets">
+
+  {{ query }}
+
   <div class="span12">
     <h3 style="cursor: pointer; cursor: hand" class="facet-title">
       Filters
-      <i style="vertical-align: baseline;" class="icon-{% if filtered %}minus{% else %}plus{% endif %}"</i>
+      <i style="vertical-align: baseline;"
+         class="icon-{% if filtered %}minus{% else %}plus{% endif %}"></i>
     </h3>
   </div>
 
+  <div id="facets">
+    {% for facet_key, facet_vals in facets.items %}
+    <div class="span12">
+      <h6>{{ facet_key }}</h6>
+      <ul class="unstyled">
+        {% for item, label, count in facet_vals %}
+        <li>
+          <input type="checkbox"
+                 name="{{ facet_key }}"
+                 value="{{ item }}">&nbsp;
+          {{ label }} ({{ count }})
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+<hr />
+<div class="row">
+  <ul>
+  {% for document in documents %}
+  <li>
+    <a href="{% url document_view document_id=document.pk %}">
+      {{ document.title }}
+    </a>
+  </li>
+  {% endfor %}
+  </ul>
 </div>

@@ -14,7 +14,7 @@ from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from reversion import get_unique_for_object
 from urllib import urlopen
 from models import *
-from editorsnotes.djotero.utils import as_readable
+from editorsnotes.djotero.utils import as_readable, type_map
 import utils
 import json
 import re
@@ -94,22 +94,67 @@ def all_documents(request, project_slug=None):
         template = 'filtered-documents.html'
         o['filtered'] = True
 
-    qs = SearchQuerySet().models(Document)
+    valid_facets = [
+        'project_id',
+        'related_topic_id',
+        'archive',
+        'publication',
+        'itemType',
+        'creators'
+    ]
 
-    o['documents'] = []
-    if project_slug:
-        query_set = Document.objects.filter(
-            last_updater__userprofile__affiliation=o['project'])
-    else:
-        query_set = Document.objects.all()
-    # only get top-level documents
-    query_set = query_set.filter(collection__isnull=True)
-    for document in query_set:
-        first_letter = document.ordering[0].upper()
-        o['documents'].append(
-            { 'document': document, 'first_letter': first_letter })
+
+    # Narrow search query according to GET parameters
+    qs = SearchQuerySet().models(Document)
+    params = set.intersection(set(valid_facets), set(request.GET))
+    query = []
+    for param in params:
+        query_filter = [ '%s:"%s"' % (param, val) for val
+                        in request.GET.get(param).split('|') ]
+        query += [ ' AND '.join(query_filter)]
+    qs = qs.narrow(' AND '.join(query)) if query else qs
+
+    # Facet results
+    for f in valid_facets:
+        qs = qs.facet(f)
+
+    # Pass facets to template
+    o['facets'] = {}
+    facet_counts = qs.facet_counts()['fields'] 
+    for facet in facet_counts:
+
+        # Leave out facets with no more than one choice that are not selected
+        if len(facet_counts[facet]) == 1 and \
+           facet_counts[facet][0][0] == None and \
+           facet not in params:
+            continue
+        
+        # Sort results & limit to 50
+        sorted_facets = sorted(facet_counts[facet],
+                               key=lambda x: x[1],
+                               reverse=True)
+        sorted_facets = sorted_facets[:50]
+
+        # Specific actions for individual facets.
+        # Tuple represents one input: value, label, count
+        if facet == 'project_id':
+            o['facets']['project_id'] = [ (p_id, Project.objects.get(id=p_id), count)
+                                      for p_id, count in sorted_facets ]
+        elif facet == 'related_topic_id':
+            o['facets']['related_topic_id'] = \
+                    [ (t_id, Topic.objects.get(id=t_id), count)
+                     for t_id, count in sorted_facets ]
+        elif facet =='itemType':
+            o['facets']['itemType'] = [ (item, type_map['readable'].get(item), count)
+                                       for item, count in sorted_facets ]
+        else:
+            o['facets'][facet] = [ (f, f, count)
+                                  for f, count in sorted_facets if f ]
+
+    o['documents'] = qs 
+    o['query'] = query
     return render_to_response(
-        'all-documents.html', o, context_instance=RequestContext(request))
+        template, o, context_instance=RequestContext(request))
 
 @login_required
 def all_notes(request, project_slug=None):

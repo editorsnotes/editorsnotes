@@ -3,26 +3,20 @@
 
 {% block title %}: All Documents{% endblock %}
 
+{% block js %}
+<script type="text/javascript" src="/media/function/models/all-documents.js">
+</script>
+{% endblock %}
+
 {% block content %}
 <header>
   <h2>All Documents</h2>
 </header>
 
-{% regroup documents by first_letter as alpha_list %}
 
-<section id="all-documents" class="span-24 last">
-<p>Documents in bold have scans or annotated transcripts.</p>
-<ul class="alpha-list">
-  {% for letter in alpha_list %}
-  <li id="{{ letter.grouper }}">
-    <span class="alpha-index">{{ letter.grouper }}</span>
-    <ul class="alpha-items">
-      {% for item in letter.list %}
-      <li>{{ item.document|as_link|typogrify }}</li>
-      {% endfor %}
-    </ul>
-  </li>
-  {% endfor %}
-</ul>
+<section id="all-documents">
+  {% include "filtered-documents.html" %}
 </section>
 {% endblock %}
+
+
