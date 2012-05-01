@@ -131,6 +131,13 @@ def as_readable(zotero_json_string):
                 zotero_data_list += readable_data
     return zotero_data_list
 
+def get_creator_name(contributor):
+    name_parts = [contributor[key] for key in contributor.keys()
+                  if key != 'creatorType']
+    name = contributor.get('lastName') or contributor.get('name')
+    name += ', %s' % contributor.get('firstName') if contributor.get('firstName') else ''
+    return name or None
+
 def resolve_names(zotero_data, format):
     if format == 'csl':
         # CSl output requires a dictionary whose keys are each creator type.
@@ -155,10 +162,7 @@ def resolve_names(zotero_data, format):
         # Data to be used in facets only needs a sortable name, either 'lastName' or 'name'
         contribs = []
         for creator in zotero_data['creators']:
-            try:
-                name = creator['lastName']
-            except:
-                name = creator['name']
+            name = creator.get('lastName') or creator.get('name')
             contribs.append({creator['creatorType'] : name})
         
     if format == 'readable':
@@ -170,11 +174,11 @@ def resolve_names(zotero_data, format):
             name_parts = [creator[key] for key in creator.keys() if key != 'creatorType']
             if not any(name_parts):
                 continue
-            try:
-                name = creator['firstName'] + ' ' + creator['lastName']
-            except:
-                name = creator['name']
-            contribs.append({'zotero_key' : creator['creatorType'], 'label' : contrib_map['readable'][creator['creatorType']], 'value' : name})
+            name = (creator.get('firstName') + ' ' + creator.get('lastName')) \
+                    or creator.get('name')
+            contribs.append({'zotero_key' : creator['creatorType'],
+                             'label' : contrib_map['readable'][creator['creatorType']],
+                             'value' : name})
     
     return contribs
 
