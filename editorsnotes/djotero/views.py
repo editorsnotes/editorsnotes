@@ -10,7 +10,7 @@ from widgets import ZoteroWidget
 import utils
 import datetime
 import simplejson as json
-from ordereddict import OrderedDict
+from collections import OrderedDict
 
 @login_required
 def import_zotero(request, username=False):
