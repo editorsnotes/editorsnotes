@@ -2,12 +2,15 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
-from haystack.query import SearchQuerySet
+from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from editorsnotes.main.models import Document, Topic, TopicAssignment, Note, Citation
 from editorsnotes.main.templatetags.display import as_link
-from models import ZoteroLink
+from models import ZoteroLink, CachedArchive
+from widgets import ZoteroWidget
 import utils
-import json, datetime
+import datetime
+import simplejson as json
+from collections import OrderedDict
 
 @login_required
 def import_zotero(request, username=False):
@@ -106,7 +109,7 @@ def import_items(request):
         action = request.POST.get('import-action-%s' % item_counter)
         if action not in ['create', 'update']:
             continue
-        item_data = json.loads(item_data_string)
+        item_data = json.loads(item_data_string, object_pairs_hook=OrderedDict)
         if updated_citation:
             citation = updated_citation
         else:
@@ -155,3 +158,40 @@ def update_zotero_info(request, username=None):
     profile.save()
     redirect_url = request.GET.get('return_to', '/')
     return HttpResponseRedirect(redirect_url)
+
+def get_blank_item(request):
+    if not request.is_ajax() or not request.GET.get('itemType', False):
+        return HttpResponseBadRequest()
+    item_type = request.GET.get('itemType')
+    blank_item = utils.get_item_template(item_type)
+    form = ZoteroWidget()
+    new_form = form.render('', blank_item)
+    return HttpResponse(new_form, mimetype='text/plain')
+
+def get_creator_types(request):
+    if not request.is_ajax() or not request.GET.get('itemType', False):
+        return HttpResponseBadRequest()
+    item_type = request.GET.get('itemType')
+    creators_json = utils.get_creator_types(item_type)
+    return HttpResponse(creators_json, mimetype='application/json')
+
+def zotero_json_to_csl(request):
+    if not request.is_ajax() or not request.GET.get('zotero-json', False):
+        return HttpResponseBadRequest()
+    zotero_json = request.GET.get('zotero-json')
+    csl = utils.as_csl(zotero_json, 'ITEM-1')
+    return HttpResponse(csl, mimetype='application/json')
+
+def archive_to_dict(archive):
+    archive_dict = {}
+    archive_dict['name'] = archive.name
+    archive_dict['id'] = archive.id
+    return archive_dict
+
+def api_archives(request):
+    q = request.GET.get('q', '')
+    queryset = CachedArchive.objects.filter(
+        name__icontains=q
+    )
+    archives = [ archive_to_dict(a) for a in queryset ]
+    return HttpResponse(json.dumps(archives), mimetype='text/plain')
