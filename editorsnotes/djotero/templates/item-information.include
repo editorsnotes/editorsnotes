@@ -1,15 +1,12 @@
-{% regroup zotero_data|dictsort:"display_category" by display_category as sorted_zotero_list %}
 {% load djotero_display %}
 
 <div id="zotero-information" class="span-20">
     <table>
-        {% for cat in sorted_zotero_list %}
-          {% for item in cat.list %}
+        {% for item in zotero_data %}
           <tr class="{% cycle 'odd' 'even' %}">
               <td style="width: 100px;"><h6>{{ item.label }}<h6></td>
               <td>{{ item.value|safe|escape }}</td>
           </tr>
-          {% endfor %}
         {% endfor %}
     </table>
     <div style="display: none;">
