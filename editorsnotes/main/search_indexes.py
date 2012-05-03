@@ -24,7 +24,7 @@ class DocumentIndex(RealTimeSearchIndex):
 
         z = obj.zotero_link()
         zotero_data = json.loads(z.zotero_data) if z else {}
-        fields_to_index = ['archive', 'publication', 'itemType']
+        fields_to_index = ['archive', 'publicationTitle', 'itemType']
 
         for field in fields_to_index:
             if zotero_data.get(field):

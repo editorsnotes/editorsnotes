@@ -98,7 +98,7 @@ def all_documents(request, project_slug=None):
         'project_id',
         'related_topic_id',
         'archive',
-        'publication',
+        'publicationTitle',
         'itemType',
         'creators'
     ]
@@ -129,11 +129,11 @@ def all_documents(request, project_slug=None):
            facet not in params:
             continue
         
-        # Sort results & limit to 50
+        # Sort results & limit to 30
         sorted_facets = sorted(facet_counts[facet],
                                key=lambda x: x[1],
                                reverse=True)
-        sorted_facets = sorted_facets[:50]
+        sorted_facets = sorted_facets[:30]
 
         # Specific actions for individual facets.
         # Tuple represents one input: value, label, count

@@ -1,10 +1,24 @@
-
 $(function() {
 
-  var $facets = $('#facets input');
+  var splitColumns = function(documentArray) {
+    var $sortedNotes;
+    var $sortOption = $('.sort-option-selected');
+    var sortBy = $sortOption.attr('data-sort-by');
+
+    if (sortBy == 'title') {
+      $sortedNotes = _.sortBy(documentArray, function(doc) {
+        return doc.textContent.replace(/[^\w ]/g, '')
+      });
+    }
+    if ($sortOption.attr('data-sort-order') == 'desc') {
+      $sortedNotes = $.makeArray($sortedNotes).reverse();
+    }
+    $('#document-list').append($sortedNotes);
+  }
+  var $facets = $('#document-facets input');
   $facets.prop('checked', false);
   $facets.live('click', function() {
-    var $checked = $('#facets input:checked');
+    var $checked = $('#document-facets input:checked');
     var $sortingOptions = $('.sort-option');
     var queryString = '?filter=1'
     var filter = {};
@@ -26,7 +40,7 @@ $(function() {
 
       // Restore previously checked filters
       $.each($checked, function(key, val) {
-        $('#facets input[name="' + val.name + '"][value="' + val.value + '"]')
+        $('#document-facets input[name="' + val.name + '"][value="' + val.value + '"]')
           .prop('checked', true);
       });
 
@@ -53,10 +67,10 @@ $(function() {
 
     if ($thisOption.hasClass('sort-option-selected')) {
       $thisOption.find('i').toggleClass('icon-chevron-up icon-chevron-down');
-      if ($thisOption.attr('sort-order') == 'asc') {
-        $thisOption.attr('sort-order', 'desc');
+      if ($thisOption.attr('data-sort-order') == 'asc') {
+        $thisOption.attr('data-sort-order', 'desc');
       } else {
-        $thisOption.attr('sort-order', 'asc');
+        $thisOption.attr('data-sort-order', 'asc');
       }
     } else {
       $otherOptions.removeClass('sort-option-selected');
@@ -64,7 +78,7 @@ $(function() {
     }
 
     $('.timeago-label').remove();
-    splitColumns($('.note'));
+    splitColumns($('.document'));
   });
 
 });
