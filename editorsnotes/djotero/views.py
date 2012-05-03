@@ -9,7 +9,7 @@ from models import ZoteroLink, CachedArchive
 from widgets import ZoteroWidget
 import utils
 import datetime
-import simplejson as json
+import json
 from collections import OrderedDict
 
 @login_required
