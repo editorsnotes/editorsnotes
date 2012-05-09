@@ -1,4 +1,4 @@
-import simplejson as json
+import json
 import re
 from collections import OrderedDict
 from django.forms import Widget
