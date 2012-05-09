@@ -118,7 +118,7 @@ def as_readable(zotero_json_string):
         elif key == 'creators' and val:
             readable_data = resolve_names(zotero_data, 'readable')
         elif key == 'tags':
-            pass
+            continue
         elif val:
             readable_data = (key, val, field_map['readable'][key])
         else:
