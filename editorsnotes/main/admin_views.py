@@ -9,6 +9,25 @@ from forms import ProjectUserFormSet
 def project_roster(request, project_id):
     o = {}
     project = get_object_or_404(Project, id=project_id)
+
+    user = request.user
+    user_affiliation = user.get_profile().affiliation
+    editor = Group.objects.get(name='Editors')
+    admin = Group.objects.get(name='Admins')
+
+    is_project_editor = (editor in user.groups.all() and
+                         user_affiliation == project)
+    is_admin = admin in user.groups.all()
+
+    if not (is_project_editor or is_admin):
+        messages.add_message(
+            request,
+            messages.ERROR,
+            'You do not have permission to edit the roster of %s' % (
+                project.name)
+        )
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+    
     if request.method == 'POST':
         formset = ProjectUserFormSet(request.POST)
         if formset.is_valid():
