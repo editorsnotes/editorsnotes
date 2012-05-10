@@ -5,13 +5,13 @@
   td { vertical-align: middle !important; }
   select { margin-bottom: 0px !important; }
 
-  .user-details-edit:hover {
+  .user-remove:hover {
     text-decoration: none;
   }
-  .user-details-edit i {
+  .user-remove i {
     display: none;
   }
-  tr:hover .user-details-edit i {
+  tr:hover .user-remove i {
     display: inline-block;
     position: absolute;
     margin: 2px 0px 0px 4px;
@@ -23,52 +23,67 @@
 
 <form method="post">{% csrf_token %}
   {{ formset.management_form }}
-  <table class="table table-condensed table-bordered table-striped">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>E-mail</th>
-        <th>Role</th>
-        <th>Joined</th>
-        <th>Last login</th>
-        <th>Active</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for form in formset %}
-      {% with u=form.user_object %}
-      <tr>
-        {{ form.id }}
-        <td>
-          <a title="Edit user details"
-             class="user-details-edit"
-             target="_blank"
-             href="{% url admin:auth_user_change u.id %}">
-            {{ form.user_display_name }}
-            <i class="icon-edit"></i>
-          </a>
-        </td>
-        <td>
-          {{ u.email }}
-        </td>
-        <td>
-          {{ form.project_role }}
-        </td>
-        <td>
-          {{ u.date_joined|date:"M j, Y" }}
-        </td>
-        <td>
-          {{ u.last_login|date:"M j, Y" }}
-        </td>
-        <td>
-          {{ form.is_active }}
-        </td>
-      </tr>
-      {% endwith %}
-      {% endfor %}
-    </tbody>
-  </table>
-  <input class="btn pull-right" type="submit" value="Save" />
+  <div class="row">
+    <table class="table table-condensed table-bordered table-striped">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>E-mail</th>
+          <th>Role</th>
+          <th>Joined</th>
+          <th>Last login</th>
+          <th>Active</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for form in formset %}
+        {% with u=form.user_object editor=request.user %}
+        <tr>
+          {{ form.id }}
+          <td>
+            <a title="Remove user from roster"
+               class="user-remove"
+               target="_blank"
+               href="{% url admin:auth_user_change u.id %}">
+              {{ form.user_display_name }}
+              <i class="icon-remove"></i>
+            </a>
+          </td>
+          <td>
+            {{ u.email }}
+          </td>
+          <td>
+            {% if u == editor %}
+              Editor
+            {% else %}
+              {{ form.project_role }}
+            {% endif %}
+          </td>
+          <td>
+            {{ u.date_joined|date:"M j, Y" }}
+          </td>
+          <td>
+            {{ u.last_login|date:"M j, Y" }}
+          </td>
+          <td>
+            {% if u == editor %}
+              <input type="checkbox"
+                     checked="checked"
+                     disabled="true">
+            {% else %}
+              {{ form.is_active }}
+            {% endif %}
+          </td>
+        </tr>
+        {% endwith %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="row">
+    <a class="btn">Add user</a>
+    <input class="btn pull-right" type="submit" value="Save" />
+  </div>
 </form>
 
 {% endblock %}
