@@ -54,18 +54,68 @@ class URLAccessible():
         return '<span class="%s">%s</span>' % (
             self._meta.module_name, conditional_escape(self.as_text()))
 
-class ProjectSpecific():
+class PermissionError(StandardError):
+    pass
+
+# Adapted from http://djangosnippets.org/snippets/1502/
+class PermissionsMixin(object):
+    def attempt(self, action, user, msg=None):
+        return PermissionsMixin._attempt(self, action, user, msg)
+
+    @staticmethod
+    def _attempt(obj, action, user, msg):
+        if not (isinstance(action, basestring) and isinstance(user, User)):
+            raise TypeError
+        if getattr(obj, 'allow_%s_for' % action)(user):
+            return True
+        else:
+            if msg is None:
+                msg = u'%s doesn\'t have permission to %s %s' % (
+                    user.username, action.lower(), repr(obj) )
+            raise PermissionError(msg)
+
+class ProjectSpecific(PermissionsMixin):
     def get_all_updaters(self):
         all_updaters = set()
         for version in get_for_object(self):
             uid = json.loads(
                 version.serialized_data)[0]['fields'].get('last_updater')
-            if uid: all_updaters.add(uid)
+            if uid:
+                all_updaters.add(uid)
         return [UserProfile.objects.get(user__id=u) for u in all_updaters]
     def get_project_affiliation(self):
         projects = {u.affiliation for u in self.get_all_updaters() if u.affiliation}
         return list(projects)
 
+    # Custom Project permissions
+    def allow_delete_for(self, user):
+        object_affiliation = self.get_project_affiliation()
+        can_delete = False
+        while not can_delete:
+            for p in object_affiliation:
+                can_delete = user.has_perm('%s.delete_%s_%s' % (
+                    self._meta.app_label, p.slug, self._meta.module_name))
+        if not can_delete:
+            return False
+
+        # After checking if the user is authorized to delete an object, make
+        # sure no other projects are also using it
+        other_contributing_projects = set.difference(
+            set(object_affiliation), set([user.get_profile().affiliation]))
+        if len(other_contributing_projects) and not user.is_superuser:
+            msg = 'Cannot delete %s because it is in use by %s' % (
+                self, ', '.join([p.name for p in other_contributing_projects]))
+            raise PermissionError(msg)
+        else:
+            return True
+    def allow_change_for(self, user):
+        object_affiliation = self.get_project_affiliation()
+        can_change = False
+        while not can_change:
+            for p in object_affiliation:
+                can_change = user.has_perm('%s.change_%s_%s' % (
+                    self._meta.app_label, p.slug, self._meta.module_name))
+        return can_change
 
 # -------------------------------------------------------------------------------
 # Primary models. These have their own URLs and administration interfaces.
