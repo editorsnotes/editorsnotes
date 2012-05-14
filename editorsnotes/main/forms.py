@@ -1,11 +1,11 @@
 from django import forms
 from django.forms.models import modelformset_factory, ModelForm
 from django.contrib.auth.models import User, Group
-from models import ALL_PROJECT_ROLES
 
 class ProjectUserForm(ModelForm):
+    project_roles = ['editor', 'researcher']
     project_role = forms.ChoiceField(
-        choices=tuple([(r, r.title()) for r in ALL_PROJECT_ROLES]))
+        choices=tuple([(r, r.title()) for r in project_roles]))
     class Meta:
         model = User
     def __init__(self, *args, **kwargs):

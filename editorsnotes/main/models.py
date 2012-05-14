@@ -9,7 +9,7 @@ from lxml import etree
 from unaccent import unaccent
 from django.db import models
 from django.contrib.admin.models import LogEntry
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.core import urlresolvers
@@ -93,8 +93,8 @@ class ProjectSpecific(PermissionsMixin):
         can_delete = False
         while not can_delete:
             for p in object_affiliation:
-                can_delete = user.has_perm('%s.delete_%s_%s' % (
-                    self._meta.app_label, p.slug, self._meta.module_name))
+                can_delete = user.has_perm('%s.delete_%s' % (
+                    p.slug, self._meta.module_name))
         if not can_delete:
             return False
 
@@ -113,8 +113,8 @@ class ProjectSpecific(PermissionsMixin):
         can_change = False
         while not can_change:
             for p in object_affiliation:
-                can_change = user.has_perm('%s.change_%s_%s' % (
-                    self._meta.app_label, p.slug, self._meta.module_name))
+                can_change = user.has_perm('%s.change_%s' % (
+                    p.slug, self._meta.module_name))
         return can_change
 
 # -------------------------------------------------------------------------------
@@ -453,8 +453,6 @@ class Note(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
     class Meta:
         ordering = ['-last_updated']  
 
-ALL_PROJECT_ROLES = ['editor', 'researcher']
-
 class Project(models.Model, URLAccessible):
     name = models.CharField(max_length='80')
     slug = models.SlugField(help_text='Used for project-specific URLs and groups')
@@ -464,15 +462,30 @@ class Project(models.Model, URLAccessible):
     def as_text(self):
         return self.name
     def get_or_create_project_roles(self):
-        project_roles = {}
-        for g in ALL_PROJECT_ROLES:
-            project_group, created = Group.objects.get_or_create(
-                name = '%s_%s' % (self.slug, g))
-            project_roles[g] = project_group
-            if created:
-                #TODO: create group perms
-                pass
-        return project_roles
+        base_project_permissions = (
+            (Note, ('edit', 'delete')),
+            (Document, ('edit', 'delete')),
+            (Topic, ('edit', 'delete')),
+        )
+
+        slug = self.slug
+        editors, created = Group.objects.get_or_create(
+            name='%s_editors' % slug)
+        researchers, created = Group.objects.get_or_create(
+            name='%s_researchers' % slug)
+
+        for model, actions in base_project_permissions:
+            ct = ContentType.objects.get_for_model(model)
+            for action in actions:
+                perm, created = Permission.objects.get_or_create(
+                    content_type=ct,
+                    codename='%s.%s_%s' % (
+                        slug, action, model._meta.module_name),
+                    name='Can %s %s %s' % (
+                        action, slug, model._meta.verbose_name_plural.lower())
+                )
+                editors.permissions.add(perm)
+                researchers.permissions.add(perm)
     def save(self):
         super(Project, self).save()
         self.get_or_create_project_roles()
