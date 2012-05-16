@@ -53,11 +53,7 @@
             {{ u.email }}
           </td>
           <td>
-            {% if u == editor %}
-              Editor
-            {% else %}
-              {{ form.project_role }}
-            {% endif %}
+            {{ form.project_role }}
           </td>
           <td>
             {{ u.date_joined|date:"M j, Y" }}
@@ -66,13 +62,7 @@
             {{ u.last_login|date:"M j, Y" }}
           </td>
           <td>
-            {% if u == editor %}
-              <input type="checkbox"
-                     checked="checked"
-                     disabled="true">
-            {% else %}
-              {{ form.is_active }}
-            {% endif %}
+            {{ form.is_active }}
           </td>
         </tr>
         {% endwith %}

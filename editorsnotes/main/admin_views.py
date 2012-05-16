@@ -29,6 +29,8 @@ def project_roster(request, project_id):
         if can_change:
             formset = ProjectUserFormSet(request.POST)
             if formset.is_valid():
+                for form in formset:
+                    form.project = project
                 formset.save()
                 messages.add_message(
                     request,
@@ -42,7 +44,11 @@ def project_roster(request, project_id):
         userprofile__affiliation=project).order_by('-is_active', '-last_login')
     o['formset'] = ProjectUserFormSet(queryset=project_roster)
     for form in o['formset']:
-        u = form.instance.get_profile()
-        form.initial['project_role'] = u.get_project_role(project)
+        u = form.instance
+        if u == request.user:
+            for field in form.fields:
+                f = form.fields[field]
+                f.widget.attrs['readonly'] = 'readonly'
+        form.initial['project_role'] = u.get_profile().get_project_role(project)
     return render_to_response(
         'admin/project_roster.html', o, context_instance=RequestContext(request))

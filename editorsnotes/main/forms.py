@@ -16,16 +16,14 @@ class ProjectUserForm(ModelForm):
             self.user_display_name = u.get_full_name() or u.username
     def save(self, commit=True):
         model = super(ProjectUserForm, self).save(commit=False)
-        profile = model.get_profile()
-        existing_role = profile.get_project_role()
+        existing_role = model.get_profile().get_project_role(self.project)
         if existing_role != self.cleaned_data['project_role']:
-            old_role = model.groups.get(
-                name__startswith=profile.affiliation.slug)
-            new_role = Group.objects.get(name="%s_%s" % (
-                profile.affiliation.slug, self.cleaned_data['project_role']))
-            user_roles = model.groups
-            user_roles.remove(old_role)
-            user_roles.add(new_role)
+            old_role = model.groups.get(name__startswith='%s_' % (
+                self.project.slug))
+            new_role = Group.objects.get(name__startswith="%s_%s" % (
+                self.project.slug, self.cleaned_data['project_role']))
+            model.groups.remove(old_role)
+            model.groups.add(new_role)
         if commit:
             model.save()
         return model
