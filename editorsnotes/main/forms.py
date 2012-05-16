@@ -14,8 +14,6 @@ class ProjectUserForm(ModelForm):
             u = kwargs['instance']
             self.user_object = u
             self.user_display_name = u.get_full_name() or u.username
-            existing_project_role = u.get_profile().get_project_role()
-            self.initial['project_role'] = existing_project_role
     def save(self, commit=True):
         model = super(ProjectUserForm, self).save(commit=False)
         profile = model.get_profile()

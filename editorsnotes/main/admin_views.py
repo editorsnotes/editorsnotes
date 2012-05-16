@@ -1,48 +1,48 @@
-from django.shortcuts import render_to_response, get_object_or_404
-from django.http import HttpResponseRedirect
-from django.template import RequestContext
-from django.contrib.auth.models import User, Group
 from django.contrib import messages
-from models import Project
+from django.contrib.auth.models import User, Group
+from django.http import HttpResponseRedirect, HttpResponseForbidden
+from django.shortcuts import render_to_response, get_object_or_404
+from django.template import RequestContext
+from models import Project, PermissionError
 from forms import ProjectUserFormSet
 
 def project_roster(request, project_id):
     o = {}
     project = get_object_or_404(Project, id=project_id)
-
     user = request.user
-    user_affiliation = user.get_profile().affiliation
-    editor = Group.objects.get(name='Editors')
-    admin = Group.objects.get(name='Admins')
 
-    is_project_editor = (editor in user.groups.all() and
-                         user_affiliation == project)
-    is_admin = admin in user.groups.all()
-
-    if not (is_project_editor or is_admin):
-        messages.add_message(
-            request,
-            messages.ERROR,
-            'You do not have permission to edit the roster of %s' % (
-                project.name)
-        )
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
-    
+    try:
+        can_view = project.attempt('view', user)
+    except PermissionError:
+        msg = 'You do not have permission to view the roster of %s' % (
+            project.name)
+        return HttpResponseForbidden(content=msg)
     if request.method == 'POST':
-        formset = ProjectUserFormSet(request.POST)
-        if formset.is_valid():
-            formset.save()
+        can_change = False
+        try:
+            can_change = project.attempt('change', user)
+        except PermissionError:
             messages.add_message(
                 request,
-                messages.SUCCESS,
-                'Roster for %s saved.' % (project.name))
-            return HttpResponseRedirect(request.path)
-        else:
-            #TODO
-            pass
-    else:
-        project_roster = User.objects.filter(
+                messages.ERROR,
+                'Cannot edit project roster')
+        if can_change:
+            formset = ProjectUserFormSet(request.POST)
+            if formset.is_valid():
+                formset.save()
+                messages.add_message(
+                    request,
+                    messages.SUCCESS,
+                    'Roster for %s saved.' % (project.name))
+                return HttpResponseRedirect(request.path)
+            else:
+                #TODO
+                pass
+    project_roster = User.objects.filter(
         userprofile__affiliation=project).order_by('-is_active', '-last_login')
-        o['formset'] = ProjectUserFormSet(queryset=project_roster)
+    o['formset'] = ProjectUserFormSet(queryset=project_roster)
+    for form in o['formset']:
+        u = form.instance.get_profile()
+        form.initial['project_role'] = u.get_project_role(project)
     return render_to_response(
         'admin/project_roster.html', o, context_instance=RequestContext(request))

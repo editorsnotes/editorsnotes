@@ -90,16 +90,8 @@ class ProjectSpecific(PermissionsMixin):
     # Custom Project permissions
     def allow_delete_for(self, user):
         object_affiliation = self.get_project_affiliation()
-        can_delete = False
-        while not can_delete:
-            for p in object_affiliation:
-                can_delete = user.has_perm('%s.delete_%s' % (
-                    p.slug, self._meta.module_name))
-        if not can_delete:
-            return False
 
-        # After checking if the user is authorized to delete an object, make
-        # sure no other projects are also using it
+        # Make sure no other projects are using this object before deleting
         other_contributing_projects = set.difference(
             set(object_affiliation), set([user.get_profile().affiliation]))
         if len(other_contributing_projects) and not user.is_superuser:
@@ -116,6 +108,15 @@ class ProjectSpecific(PermissionsMixin):
                 can_change = user.has_perm('%s.change_%s' % (
                     p.slug, self._meta.module_name))
         return can_change
+
+    def allow_view_for(self, user):
+        object_affiliation = self.get_project_affiliation()
+        can_view = False
+        while not can_view:
+            for p in object_affiliation:
+                can_view = user.has_perm('%s.view_%s' % (
+                    p.slug, self._meta.module_name))
+        return can_view
 
 # -------------------------------------------------------------------------------
 # Primary models. These have their own URLs and administration interfaces.
@@ -453,7 +454,7 @@ class Note(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
     class Meta:
         ordering = ['-last_updated']  
 
-class Project(models.Model, URLAccessible):
+class Project(models.Model, URLAccessible, PermissionsMixin):
     name = models.CharField(max_length='80')
     slug = models.SlugField(help_text='Used for project-specific URLs and groups')
     @models.permalink
@@ -461,11 +462,23 @@ class Project(models.Model, URLAccessible):
         return ('index_view', [self.slug])
     def as_text(self):
         return self.name
+    def allow_view_for(self, user):
+        if user.has_perm('main.%s.view_project' % self.slug) or user.is_superuser:
+            return True
+        else:
+            return False
+    def allow_change_for(self, user):
+        if user.has_perm('main.%s.change_project' % self.slug) or user.is_superuser:
+            return True
+        else:
+            return False
     def get_or_create_project_roles(self):
         base_project_permissions = (
-            (Note, ('edit', 'delete')),
-            (Document, ('edit', 'delete')),
-            (Topic, ('edit', 'delete')),
+            (Note, ('change',)),
+            (Project, ('view',)),
+        )
+        editor_project_permissions = (
+            (Project, ('change',)),
         )
 
         slug = self.slug
@@ -486,6 +499,17 @@ class Project(models.Model, URLAccessible):
                 )
                 editors.permissions.add(perm)
                 researchers.permissions.add(perm)
+        for model, actions in editor_project_permissions:
+            ct = ContentType.objects.get_for_model(model)
+            for action in actions:
+                perm, created = Permission.objects.get_or_create(
+                    content_type=ct,
+                    codename='%s.%s_%s' % (
+                        slug, action, model._meta.module_name),
+                    name='Can %s %s %s' % (
+                        action, slug, model._meta.verbose_name_plural.lower())
+                )
+                editors.permissions.add(perm)
     def save(self):
         super(Project, self).save()
         self.get_or_create_project_roles()
@@ -543,15 +567,14 @@ class UserProfile(models.Model, URLAccessible):
             if len(activity) == max_count:
                 break
         return activity, checked_object_ids
-    def get_project_role(self):
-        if self.affiliation:
-            try:
-                role = Group.objects.get(
-                    user=self.user,
-                    name__startswith=self.affiliation.slug)
-                return role.name[role.name.index('_') + 1:]
-            except Group.DoesNotExist:
-                return None
+    def get_project_role(self, project):
+        try:
+            role = Group.objects.get(
+                user=self.user,
+                name__startswith=project.slug)
+            return role.name[role.name.index('_') + 1:-1]
+        except Group.DoesNotExist:
+            return None
     def save(self):
         if self.affiliation:
             project_groups = self.user.groups.filter(
@@ -560,14 +583,12 @@ class UserProfile(models.Model, URLAccessible):
             if len(project_groups) > 1:
                 raise Exception("Only one project role allowed")
         super(UserProfile, self).save()
-        if self.affiliation and not self.get_project_role():
-            user_groups = self.user.groups
-            project_groups = self.affiliation.get_or_create_project_roles()
-            if user_groups.filter(name='Editors'):
-                user_groups.add(project_groups['editor'])
+        if self.affiliation and not self.get_project_role(self.affiliation):
+            if self.user.groups.filter(name='Editors'):
+                g = Group.objects.get(name='%s_editors' % self.affiliation.slug)
             else:
-                # Default project role is researcher
-                user_groups.add(project_groups['researcher'])
+                g = Group.objects.get(name='%s_researchers' % self.affiliation.slug)
+            self.user.groups.add(g)
 
 # -------------------------------------------------------------------------------
 # Support models.
