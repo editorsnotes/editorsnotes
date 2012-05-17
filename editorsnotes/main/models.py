@@ -457,6 +457,8 @@ class Note(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
 class Project(models.Model, URLAccessible, PermissionsMixin):
     name = models.CharField(max_length='80')
     slug = models.SlugField(help_text='Used for project-specific URLs and groups')
+    image = models.ImageField(upload_to='project_images', blank=True, null=True)
+    description = fields.XHTMLField(blank=True, null=True)
     @models.permalink
     def get_absolute_url(self):
         return ('index_view', [self.slug])

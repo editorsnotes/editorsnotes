@@ -4,7 +4,7 @@ from django.http import HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from models import Project, PermissionError
-from forms import ProjectUserFormSet
+from forms import ProjectUserFormSet, ProjectForm
 
 def project_roster(request, project_id):
     o = {}
@@ -52,3 +52,30 @@ def project_roster(request, project_id):
         form.initial['project_role'] = u.get_profile().get_project_role(project)
     return render_to_response(
         'admin/project_roster.html', o, context_instance=RequestContext(request))
+
+def change_project(request, project_id):
+    o = {}
+    project = get_object_or_404(Project, id=project_id)
+    user = request. user
+
+    try:
+        project.attempt('change', user)
+    except PermissionError:
+        msg = 'You do not have permission to edit the details of %s' % (
+            project.name)
+        return HttpResponseForbidden(content=msg)
+
+    if request.method == 'POST':
+        form = ProjectForm(request.POST, instance=project)
+        if form.is_valid():
+            form.save()
+            messages.add_message(
+                request, messages.SUCCESS,
+                'Details of %s saved.' % (project.name))
+            return HttpResponseRedirect(request.path)
+        else:
+            pass
+    o['form'] = ProjectForm(instance=project)
+    return render_to_response(
+        'admin/project_change.html', o, context_instance=RequestContext(request))
+

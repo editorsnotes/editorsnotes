@@ -1,6 +1,8 @@
 from django import forms
 from django.forms.models import modelformset_factory, ModelForm
 from django.contrib.auth.models import User, Group
+from fields import XHTMLWidget
+from models import Project
 
 class ProjectUserForm(ModelForm):
     project_roles = ['editor', 'researcher']
@@ -34,3 +36,8 @@ ProjectUserFormSet = modelformset_factory(
     extra=0,
     fields=('is_active',),
 )
+
+class ProjectForm(ModelForm):
+    class Meta:
+        model = Project
+        exclude = ('slug',)
