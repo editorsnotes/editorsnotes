@@ -29,37 +29,38 @@ def _sort_citations(instance):
     return cites
 
 @login_required
-def index(request, project_slug=None):
-    max_count = 6
+def index(request):
     o = {}
-    if project_slug:
-        o['project'] = get_object_or_404(Project, slug=project_slug)
-    for model in [Topic, Note, Document, Transcript]:
-        model_name = model._meta.module_name
-        if model_name == 'transcript':
-            listname = 'document_list'
-        else:
-            listname = '%s_list' % model_name
-        query_set = model.objects.order_by('-last_updated')
-        if model == Document:
-            # only get top-level documents
-            query_set = query_set.filter(
-                collection__isnull=True)
-        if model == Transcript:
-            # only get top-level documents
-            query_set = query_set.filter(
-                document__collection__isnull=True)
-        if project_slug:
-            query_set = query_set.filter(
-                last_updater__userprofile__affiliation=o['project'])
-        items = o.get(listname, [])
-        items += list(query_set[:max_count])
-        o[listname] = items
-    o['document_list'] = sorted(o['document_list'],
-                              key=lambda x: x.last_updated, 
-                              reverse=True)[:max_count]
     return render_to_response(
         'index.html', o, context_instance=RequestContext(request))
+
+@login_required
+def browse(request):
+    max_count = 6
+    o = {}
+    for model in [Topic, Note, Document]:
+        model_name = model._meta.module_name
+        listname = '%s_list' % model_name
+        query_set = model.objects.order_by('-last_updated')
+
+        items = list(query_set[:max_count])
+        o[listname] = items
+    o['projects'] = Project.objects.all().order_by('name')
+    return render_to_response(
+        'browse.html', o, context_instance=RequestContext(request))
+
+@login_required
+def project(request, project_slug):
+    o = {}
+    o['project'] = get_object_or_404(Project, slug=project_slug)
+    try:
+        o['can_change'] = o['project'].attempt('change', request.user)
+    except PermissionError:
+        pass
+    o['project_role'] = request.user.get_profile().get_project_role(
+        o['project'])
+    return render_to_response(
+        'project.html', o, context_instance=RequestContext(request))
 
 @login_required
 def all_topics(request, project_slug=None):

@@ -70,10 +70,12 @@
       </tbody>
     </table>
   </div>
-  <div class="row">
-    <a class="btn">Add user</a>
-    <input class="btn pull-right" type="submit" value="Save" />
-  </div>
+  {% if can_change %}
+    <div class="row">
+      <a class="btn">Add user</a>
+      <input class="btn pull-right" type="submit" value="Save" />
+    </div>
+  {% endif %}
 </form>
 
 {% endblock %}

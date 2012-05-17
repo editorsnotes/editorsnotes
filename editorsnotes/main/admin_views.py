@@ -12,21 +12,25 @@ def project_roster(request, project_id):
     user = request.user
 
     try:
-        can_view = project.attempt('view', user)
+        project.attempt('view', user)
     except PermissionError:
         msg = 'You do not have permission to view the roster of %s' % (
             project.name)
         return HttpResponseForbidden(content=msg)
-    if request.method == 'POST':
+
+    try:
+        can_change = project.attempt('change', user)
+        o['can_change'] = True
+    except PermissionError:
         can_change = False
-        try:
-            can_change = project.attempt('change', user)
-        except PermissionError:
+
+    if request.method == 'POST':
+        if not can_change:
             messages.add_message(
                 request,
                 messages.ERROR,
                 'Cannot edit project roster')
-        if can_change:
+        else:
             formset = ProjectUserFormSet(request.POST)
             if formset.is_valid():
                 for form in formset:
@@ -40,12 +44,17 @@ def project_roster(request, project_id):
             else:
                 #TODO
                 pass
+
     project_roster = User.objects.filter(
         userprofile__affiliation=project).order_by('-is_active', '-last_login')
     o['formset'] = ProjectUserFormSet(queryset=project_roster)
     for form in o['formset']:
         u = form.instance
-        if u == request.user:
+        if not can_change:
+            for field in form.fields:
+                f = form.fields[field]
+                f.widget.attrs['disabled'] = 'disabled'
+        elif u == request.user:
             for field in form.fields:
                 f = form.fields[field]
                 f.widget.attrs['readonly'] = 'readonly'
@@ -72,7 +81,8 @@ def change_project(request, project_id):
             messages.add_message(
                 request, messages.SUCCESS,
                 'Details of %s saved.' % (project.name))
-            return HttpResponseRedirect(request.path)
+            redirect = request.GET.get('return_to', request.path)
+            return HttpResponseRedirect(redirect)
         else:
             pass
     o['form'] = ProjectForm(instance=project)

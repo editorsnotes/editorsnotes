@@ -8,8 +8,8 @@ admin.autodiscover()
 urlpatterns = patterns('',
     (r'^accounts/login/$', 'django.contrib.auth.views.login'),
     (r'^accounts/profile/$', 'editorsnotes.main.views.user'),
-    (r'^admin/main/project/(?P<project_id>\d+)/roster/$', 'editorsnotes.main.admin_views.project_roster'),
-    (r'^admin/main/project/(?P<project_id>\d+)/$', 'editorsnotes.main.admin_views.change_project'),
+    url(r'^admin/main/project/(?P<project_id>\d+)/roster/$', 'editorsnotes.main.admin_views.project_roster', name='project_roster_view'),
+    url(r'^admin/main/project/(?P<project_id>\d+)/$', 'editorsnotes.main.admin_views.change_project', name='project_edit_view'),
     (r'^admin/', include(admin.site.urls)),
     (r'^comments/', include('django.contrib.comments.urls')),
 
@@ -23,6 +23,7 @@ urlpatterns = patterns('',
     (r'^proxy$', 'editorsnotes.main.views.proxy'),
 )
 urlpatterns += patterns('editorsnotes.main.views',
+    url(r'^project/(?P<project_slug>[-_a-z0-9]+)/$', 'project', name='project_view'),
     url(r'^document/(?P<document_id>\d+)/$', 'document', name='document_view'),
     url(r'^topic/(?P<topic_slug>[-a-z0-9]+)/$', 'topic', name='topic_view'),
     url(r'^note/(?P<note_id>\d+)/$', 'note', name='note_view'),
@@ -39,6 +40,7 @@ urlpatterns += patterns('editorsnotes.main.views',
 )
 index_patterns = patterns('editorsnotes.main.views',
     url(r'^$', 'index', name='index_view'),
+    url(r'^browse/$', 'browse', name='browse_view'),
     url(r'^documents/$', 'all_documents', name='all_documents_view'),
     url(r'^topics/$', 'all_topics', name='all_topics_view'),
     url(r'^notes/$', 'all_notes', name='all_notes_view'),
@@ -49,9 +51,7 @@ static_patterns = patterns('django.views.generic.simple',
 )
 urlpatterns += index_patterns
 urlpatterns += static_patterns
-urlpatterns += patterns('',
-    (r'^(?P<project_slug>[-_a-z0-9]+)/', include(index_patterns)),
-)
+
 urlpatterns += patterns('editorsnotes.djotero.views',
     url(r'^document/upload/$', 'import_zotero', name='import_zotero_view'),
     url(r'^document/upload/libraries/$', 'libraries', name='libraries_view'),

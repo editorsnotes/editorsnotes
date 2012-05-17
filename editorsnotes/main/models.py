@@ -467,7 +467,7 @@ class Project(models.Model, URLAccessible, PermissionsMixin):
     description = fields.XHTMLField(blank=True, null=True)
     @models.permalink
     def get_absolute_url(self):
-        return ('index_view', [self.slug])
+        return ('project_view', [self.slug])
     def as_text(self):
         return self.name
     def allow_view_for(self, user):
