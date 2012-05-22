@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -15,6 +16,7 @@ from reversion import get_unique_for_object
 from urllib import urlopen
 from models import *
 from editorsnotes.djotero.utils import as_readable, type_map
+import forms as main_forms
 import utils
 import json
 import re
@@ -225,6 +227,25 @@ def topic(request, topic_slug):
 def note(request, note_id):
     o = {}
     o['note'] = get_object_or_404(Note, id=note_id)
+    if request.method == 'POST':
+        form = main_forms.NoteSectionForm(request.POST)
+        if form.is_valid():
+            new_section = NoteSection.objects.create(
+                creator=request.user, last_updater=request.user,
+                note=o['note'], content=request.POST.get('content') )
+            if request.POST.get('document'):
+                new_section.document = get_object_or_404(
+                    Document, id=request.POST.get('document') )
+            new_section.save()
+            messages.add_message(
+                request,
+                messages.SUCCESS,
+                'Added section to %s' % o['note'])
+            return HttpResponseRedirect(request.path)
+    user_profile = request.user.get_profile()
+    o['affiliated'] = len([p for p in o['note'].affiliation if
+                           user_profile.get_project_role(p) is not None]) > 0
+    o['add_section_form'] = main_forms.NoteSectionForm()
     o['history'] = get_unique_for_object(o['note'])
     o['topics'] = [ ta.topic for ta in o['note'].topics.all() ]
     o['cites'] = _sort_citations(o['note'])

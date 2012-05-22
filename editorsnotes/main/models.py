@@ -460,6 +460,15 @@ class Note(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
     class Meta:
         ordering = ['-last_updated']  
 
+class NoteSection(LastUpdateMetadata):
+    u"""
+    A section of a note, consisting of a text field and, optionally, a reference
+    to a document and topic assignments.
+    """
+    note = models.ForeignKey(Note, related_name='sections')
+    document = models.ForeignKey(Document, blank=True, null=True)
+    content = fields.XHTMLField(blank=True, null=True)
+
 class Project(models.Model, URLAccessible, PermissionsMixin):
     name = models.CharField(max_length='80')
     slug = models.SlugField(help_text='Used for project-specific URLs and groups')

@@ -6,6 +6,7 @@
 {% block js %}
 <script type="text/javascript" src="/media/function/jquery/jquery.ba-bbq.min.js"></script>
 <script type="text/javascript" src="/media/function/models/note.js"></script>
+<script type="text/javascript" src="/media/function/wymeditor/jquery.wymeditor.pack.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -42,15 +43,27 @@
             {% endfor %}
           </div>
           {% endif %}
-          <div class="row edit-row">
-            <div class="span6 edit-button">
-              <a class="btn" href="{{ note.get_admin_url }}?return_to={{ request.path }}">Edit</a>
-            </div>
-            <div class="span6 edit-history">
-              {{ note|display_edit_history }}
-            </div>
-          </div>
         </article>
+      {% for section in note.sections.all %}
+        <div class="note-section">
+        {% if section.document %}
+          {{ section.document|as_link }}
+        {% endif %}
+        {{ section.content|as_html }}
+        </div>
+      {% endfor %}
+      <hr/>
+      <div>
+        {% if affiliated %}
+          <p>You are a member of the project that owns this note, so you can add to it.</p>
+        {% else %}
+          <p>You are not a member of the project that owns this note, so any additions you make will have to be a proved by that project's editor.</p>
+        {% endif %}
+        <form class="well" method="post" id="add-section">{% csrf_token %}
+          {{ add_section_form.as_p }}
+          <input type="submit" class="btn" value="Add to note">
+        </form>
+      </div>
       </section>
 
       <section id="history-tab" class="tab-pane">

@@ -32,3 +32,6 @@ ul .document-link p {
 .collapse-header a:focus {
     outline: none;
 }
+.wym_box h2 {
+    line-height:18px;
+}

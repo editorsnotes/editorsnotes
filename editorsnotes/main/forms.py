@@ -2,7 +2,7 @@ from django import forms
 from django.forms.models import modelformset_factory, ModelForm
 from django.contrib.auth.models import User, Group
 from fields import XHTMLWidget
-from models import Project
+from models import Project, NoteSection
 
 class ProjectUserForm(ModelForm):
     project_roles = ['editor', 'researcher']
@@ -41,3 +41,11 @@ class ProjectForm(ModelForm):
     class Meta:
         model = Project
         exclude = ('slug',)
+
+class NoteSectionForm(ModelForm):
+    class Meta:
+        model = NoteSection
+        fields = ('document', 'content',)
+        widgets = {
+            'document' : forms.widgets.HiddenInput(
+                attrs={ 'class': 'autocomplete-documents'}) }
