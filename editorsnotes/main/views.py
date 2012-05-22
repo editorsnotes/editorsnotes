@@ -229,21 +229,34 @@ def note(request, note_id):
     o['note'] = get_object_or_404(Note, id=note_id)
     if request.method == 'POST':
         form = main_forms.NoteSectionForm(request.POST)
+        user = request.user
         if form.is_valid():
+
+            # Quick fix with checking if a document field is blank: wymeditor by
+            # default posts '<br/>'
+            if not (request.POST.get('document') or
+                    len(request.POST.get('content')) > 6):
+                messages.add_message(
+                    request, messages.ERROR,
+                    'Enter a value for one or both of the fields "Content" and "Description"')
+                return HttpResponseRedirect(request.path)
+
             new_section = NoteSection.objects.create(
-                creator=request.user, last_updater=request.user,
-                note=o['note'], content=request.POST.get('content') )
+                creator=user, last_updater=user, note=o['note'])
+            if len(request.POST.get('content')) > 6:
+                new_section.content = request.POST.get('content')
             if request.POST.get('document'):
                 new_section.document = get_object_or_404(
-                    Document, id=request.POST.get('document') )
+                    Document, id=request.POST.get('document'))
             new_section.save()
+
             messages.add_message(
                 request,
                 messages.SUCCESS,
                 'Added section to %s' % o['note'])
             return HttpResponseRedirect(request.path)
     user_profile = request.user.get_profile()
-    o['affiliated'] = len([p for p in o['note'].affiliation if
+    o['affiliated'] = len([p for p in o['note'].get_project_affiliation() if
                            user_profile.get_project_role(p) is not None]) > 0
     o['add_section_form'] = main_forms.NoteSectionForm()
     o['history'] = get_unique_for_object(o['note'])

@@ -35,3 +35,31 @@ ul .document-link p {
 .wym_box h2 {
     line-height:18px;
 }
+#add-section .ui-autocomplete-input {
+    width: 500px;
+    margin-right: 5px;
+}
+#document-inline-edit {
+    padding: 10px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+.zotero-key textarea {
+    height: 1.4em;
+    margin-bottom: 5px;
+    width: 600px;
+}
+.zotero-creator textarea {
+    width: 290px;
+}
+.zotero-key select {
+    width: 100px;
+}
+.zotero-key th {
+    text-align: right;
+    vertical-align: top;
+    padding-top: 8px;
+}
+.zotero-key :first-child {
+    padding-right: 3px;
+}

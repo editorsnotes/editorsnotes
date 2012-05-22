@@ -164,6 +164,8 @@ def get_blank_item(request):
         return HttpResponseBadRequest()
     item_type = request.GET.get('itemType')
     blank_item = utils.get_item_template(item_type)
+    if request.GET.get('type', '') == 'json':
+        return HttpResponse(blank_item)
     form = ZoteroWidget()
     new_form = form.render('', blank_item)
     return HttpResponse(new_form, mimetype='text/plain')

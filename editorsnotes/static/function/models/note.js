@@ -40,7 +40,7 @@ $(document).ready(function() {
     });
 
     $('<label>Document</label>').insertBefore($autocomplete);
-    $('<a href="#add-document-modal"><i class="icon-plus-sign"></i></a>')
+    $('<a href="#_" id="add-document-modal"><i class="icon-plus-sign"></i></a>')
       .insertAfter($autocomplete);
 
   var wymconfig = {
@@ -61,6 +61,5 @@ $(document).ready(function() {
     classesHtml: ''
   };
   $('textarea[name="content"]').wymeditor(wymconfig);
-
 
 });
