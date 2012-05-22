@@ -1,0 +1,56 @@
+<script id="item-type-template" type="text/x-handlebars-template">
+  <tr data-zotero-key="itemType">
+    <th>Item Type</th>
+    <td>
+      {{localized itemType}}
+      <a href="#_" id="zotero-change-item-type">
+        <i class="icon-edit"></i>
+      </a>
+    </td>
+  </tr>
+  <input type="hidden" id="zotero-data-string" value="{{stringify this}}">
+</script>
+
+<script id="creators-template" type="text/x-handlebars-template">
+  {{#each creators}}
+  <tr data-zotero-key="creators"
+      data-creator-type="{{creatorType}}">
+    <th>
+      <select class="creator-select">
+        <option value="{{creatorType}}">{{localized creatorType}}<option>
+      </select>
+    </th>
+    <td>
+      {{#if this.name}}
+        <textarea class="creator-attr"
+                  data-creator-key="name">{{this.name}}</textarea>
+      {{else}}
+        <textarea class="creator-attr"
+                  data-creator-key="lastName">{{this.lastName}} </textarea>,&nbsp;
+        <textarea class="creator-attr"
+                  data-creator-key="firstName">{{this.firstName}} </textarea>
+      {{/if}}
+      <input type="hidden" value="{{stringify this}}">
+    </td>
+  </tr>
+  {{/each}}
+</script>
+
+<script id="tags-template" type="text/x-handlebars-template">
+  {{#each tags}}
+  <tr data-zotero-key="tags"
+      data-tag-type="{{type}}">
+    <input type="hidden" value="{{stringify this}}">
+  </tr>
+  {{/each}}
+</script>
+
+<script id="base-template" type="text/x-handlebars-template">
+  <tr data-zotero-key="{{key}}">
+    <th>{{localized key}}</th>
+    <td>
+      <textarea>{{val}}</textarea>
+    </td>
+    <input type="hidden" value="{{val}}">
+  </tr>
+</script>

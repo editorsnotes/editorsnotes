@@ -1,8 +1,9 @@
 from django.contrib import messages
 from django.contrib.auth.models import User, Group
-from django.http import HttpResponseRedirect, HttpResponseForbidden
+from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
+from django.template.loaders.app_directories import load_template_source
 from models import Project, PermissionError
 from forms import ProjectUserFormSet, ProjectForm
 
@@ -89,3 +90,6 @@ def change_project(request, project_id):
     return render_to_response(
         'admin/project_change.html', o, context_instance=RequestContext(request))
 
+def modal_document_edit(request):
+    template_text = load_template_source('handlebars.html')[0]
+    return HttpResponse(template_text)

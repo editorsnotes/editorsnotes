@@ -10,6 +10,7 @@ urlpatterns = patterns('',
     (r'^accounts/profile/$', 'editorsnotes.main.views.user'),
     url(r'^admin/main/project/(?P<project_id>\d+)/roster/$', 'editorsnotes.main.admin_views.project_roster', name='project_roster_view'),
     url(r'^admin/main/project/(?P<project_id>\d+)/$', 'editorsnotes.main.admin_views.change_project', name='project_edit_view'),
+    url(r'^document/templates/$', 'editorsnotes.main.admin_views.modal_document_edit'),
     (r'^admin/', include(admin.site.urls)),
     (r'^comments/', include('django.contrib.comments.urls')),
 
