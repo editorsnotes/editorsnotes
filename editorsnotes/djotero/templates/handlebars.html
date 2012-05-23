@@ -43,21 +43,23 @@
 </script>
 
 <script id="item-type-template" type="text/x-handlebars-template">
-  <tr class="zotero-key" data-zotero-key="itemType">
+  <tr class="zotero-entry" data-zotero-key="itemType">
     <th>Item Type</th>
     <td>
       {{localized itemType}}
     </td>
+    <input type="hidden" name="zotero-key-{{counter}}" value={{itemType}}>
   </tr>
   <input type="hidden" id="zotero-data-string" value="{{stringify this}}">
 </script>
 
 <script id="creators-template" type="text/x-handlebars-template">
   {{#each creators}}
-  <tr class="zotero-key zotero-creator" data-zotero-key="creators"
+  <tr class="zotero-entry zotero-creator" data-zotero-key="creators"
       data-creator-type="{{creatorType}}">
     <th>
-      <select class="creator-select">
+      <select class="creator-attr creator-select not-queried"
+              data-creator-key="creatorType">
         <option value="{{creatorType}}">{{localized creatorType}}<option>
       </select>
     </th>
@@ -72,6 +74,8 @@
                   data-creator-key="firstName">{{this.firstName}} </textarea>
       {{/if}}
       <input type="hidden" value="{{stringify this}}">
+      <i class="add-creator icon-plus-sign"></i>
+      <i class="remove-creator icon-minus-sign"></i>
     </td>
   </tr>
   {{/each}}
@@ -79,7 +83,7 @@
 
 <script id="tags-template" type="text/x-handlebars-template">
   {{#each tags}}
-  <tr class="zotero-key" data-zotero-key="tags"
+  <tr class="zotero-entry" data-zotero-key="tags"
       data-tag-type="{{type}}">
     <input type="hidden" value="{{stringify this}}">
   </tr>
@@ -87,7 +91,7 @@
 </script>
 
 <script id="base-template" type="text/x-handlebars-template">
-  <tr class="zotero-key" data-zotero-key="{{key}}">
+  <tr class="zotero-entry" data-zotero-key="{{key}}">
     <th>{{localized key}}</th>
     <td>
       <textarea>{{val}}</textarea>

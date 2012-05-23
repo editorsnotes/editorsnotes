@@ -1,11 +1,14 @@
 from django.contrib import messages
 from django.contrib.auth.models import User, Group
-from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.template.loaders.app_directories import load_template_source
-from models import Project, PermissionError
+from editorsnotes.djotero.models import ZoteroLink
+from models import Project, PermissionError, Document
 from forms import ProjectUserFormSet, ProjectForm
+from collections import OrderedDict
+import json
 
 def project_roster(request, project_id):
     o = {}
@@ -93,3 +96,23 @@ def change_project(request, project_id):
 def modal_document_edit(request):
     template_text = load_template_source('handlebars.html')[0]
     return HttpResponse(template_text)
+
+def document_add(request):
+    description = request.POST.get('document-description')
+    d = Document.objects.create(creator=request.user,
+                                last_updater=request.user,
+                                description=description)
+
+    zotero_fields = json.loads( request.POST.get('zotero-string') )['fields']
+    if zotero_fields and zotero_fields:
+        zotero_data = OrderedDict()
+        for field in zotero_fields:
+            key, val = field.items()[0]
+            zotero_data[key] = val
+        if len([val for val in zotero_data.values()
+                if isinstance(val, basestring) and val]) > 1:
+            ZoteroLink.objects.create(doc=d,
+                                      zotero_data=json.dumps(zotero_data))
+
+    return HttpResponse(json.dumps({'document': d.as_text(),
+                                    'id': d.id}))

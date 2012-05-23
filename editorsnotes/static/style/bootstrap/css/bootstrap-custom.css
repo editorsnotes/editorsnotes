@@ -41,10 +41,23 @@ ul .document-link p {
 }
 #document-inline-edit {
     padding: 10px;
-    max-height: 500px;
+    height: 550px;
+}
+#document-inline-edit #document-description {
+    height: 167px;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 1px;
+}
+#document-inline-edit #document-zotero-information {
+    height: 348px;
     overflow-y: auto;
 }
-.zotero-key textarea {
+#document-inline-edit #modal-edit-row {
+    margin-top: 1px;
+    padding-top: 6px;
+    border-top: 1px solid #ddd;
+}
+.zotero-entry textarea {
     height: 1.4em;
     margin-bottom: 5px;
     width: 600px;
@@ -52,14 +65,25 @@ ul .document-link p {
 .zotero-creator textarea {
     width: 290px;
 }
-.zotero-key select {
+.zotero-creator i {
+    cursor: pointer;
+    cursor: hand;
+    margin-top: 5px;
+}
+.zotero-entry select {
     width: 100px;
 }
-.zotero-key th {
+.zotero-entry th {
     text-align: right;
     vertical-align: top;
     padding-top: 8px;
 }
-.zotero-key :first-child {
+.zotero-creator th {
+    padding-top: 1px;
+}
+.zotero-creator th select {
+    margin-bottom: 0px;
+}
+.zotero-entry :first-child {
     padding-right: 3px;
 }

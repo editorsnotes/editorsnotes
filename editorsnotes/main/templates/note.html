@@ -10,6 +10,12 @@
 <script type="text/javascript" src="/media/function/handlebars-1.0.0.beta.6.js"></script>
 <script type="text/javascript" src="/media/function/models/zotero-localization.js"></script>
 <script type="text/javascript" src="/media/function/models/zotero-form-modal.js"></script>
+
+<script type="text/javascript" src="/media/function/citeproc-js/xmle4x.js"></script>
+<script type="text/javascript" src="/media/function/citeproc-js/xmldom.js"></script>
+<script type="text/javascript" src="/media/function/citeproc-js/citeproc.js"></script>
+<script type="text/javascript" src="/media/function/citeproc-js/simple.js"></script>
+
 {% endblock %}
 
 {% block content %}
@@ -60,7 +66,7 @@
         {% if affiliated %}
           <p>You are a member of the project that owns this note, so you can add to it.</p>
         {% else %}
-          <p>You are not a member of the project that owns this note, so any additions you make will have to be a proved by that project's editor.</p>
+          <p>You are not a member of the project that owns this note, so any additions you make will have to be approved by that project's editor.</p>
         {% endif %}
         <form class="well" method="post" id="add-section">{% csrf_token %}
           {{ add_section_form.as_p }}
