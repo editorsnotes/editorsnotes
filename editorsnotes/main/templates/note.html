@@ -34,31 +34,30 @@
     </header>
 
     <ul id="tabs" class="nav nav-tabs">
-      <li class="active"><a href="#note-tab">Note</a></li>
+      <li class="active"><a href="#about-tab">About</a></li>
+      <li><a href="#note-tab">Note</a></li>
       <li><a href="#history-tab">History</a></li>
     </ul>
 
     <div class="tab-content">
+      <section id="about-tab" class="tab-pane">
+        {{ note.content|as_html }}
+      </section>
+
       <section id="note-tab" class="tab-pane active">
-        <article id="note-{{ note.id }}" class="note">
-          <div class="note-content">
-            {{ note.content|as_html }}
-          </div>
-          {% if cites.all %}
-          <h4>Sources</h4>
-          <div class="citation-list">
-            {% for cite in cites.all %}
-              {% include "citation.include" %}
-            {% endfor %}
-          </div>
-          {% endif %}
-        </article>
       {% for section in note.sections.all %}
-        <div class="note-section">
+        <div class="note-section{% if section.document %} has-document{% endif %}{% if section.has_content %} has-content{% endif %}">
         {% if section.document %}
-          {{ section.document|as_link }}
+          <div class="note-section-document">
+            <a href="{{ section.document.get_absolute_url }}" target="_blank"><i class="icon-file"></i></a>
+            {{ section.document.as_html }}
+          </div>
         {% endif %}
-        {{ section.content|as_html }}
+        {% if section.has_content %}
+          <div class="note-section-content">
+            {{ section.content|as_html }}
+          </div>
+        {% endif %}
         </div>
       {% endfor %}
       <hr/>

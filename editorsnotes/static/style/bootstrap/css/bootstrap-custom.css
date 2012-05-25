@@ -1,3 +1,7 @@
+a:focus {
+    outline: none;
+}
+
 .topic-list, .topic-list li {
     display: inline;
 }
@@ -87,3 +91,24 @@ ul .document-link p {
 .zotero-entry :first-child {
     padding-right: 3px;
 }
+
+
+.note-section {
+    /* Spacing between note sections */
+    margin-bottom: 1em;
+}
+.note-section-document * {
+    /* display all elements in a citation inline, except icons */
+    display: inline;
+    margin: 0px;
+    padding: 0px;
+}
+.note-section-document i[class^="icon"] {
+    display: inline-block;
+}
+.note-section.has-document .note-section-content {
+    margin: 2px 0 1.25em 0;
+    padding: 3px 0px 0px 7px;
+    border-left: 1px dashed #ccc;
+    border-top: 1px dashed #ccc;
+} 

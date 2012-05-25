@@ -468,6 +468,8 @@ class NoteSection(LastUpdateMetadata):
     note = models.ForeignKey(Note, related_name='sections')
     document = models.ForeignKey(Document, blank=True, null=True)
     content = fields.XHTMLField(blank=True, null=True)
+    def has_content(self):
+        return self.content is not None
 
 class Project(models.Model, URLAccessible, PermissionsMixin):
     name = models.CharField(max_length='80')
