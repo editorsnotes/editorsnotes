@@ -6,17 +6,21 @@ $(document).ready(function(){
    Helper functions without side effects
    ****************************************************************************/
   var initTemplates = function() {
-    var typeSelectSrc = $('#item-type-select-template').clone().html(),
+    var t = {},
+      typeSelectSrc = $('#item-type-select-template').clone().html(),
       itemTypeSrc = $('#item-type-template').html(),
       creatorsSrc = $('#creators-template').html(),
       tagsSrc = $('#tags-template').html(),
       baseSrc = $('#base-template').html(),
-      t = {};
+      rebuildDelimiters = function(t) {
+        // Needed because Django does not allow "raw" templates
+        return t.replace('((', '{{', 'g').replace('))', '}}', 'g');
+      };
     t.itemTypeSelect = typeSelectSrc;
-    t.itemTypeTemplate = Handlebars.compile(itemTypeSrc);
-    t.creatorsTemplate = Handlebars.compile(creatorsSrc);
-    t.tagsTemplate = Handlebars.compile(tagsSrc);
-    t.baseTemplate = Handlebars.compile(baseSrc);
+    t.itemTypeTemplate = Handlebars.compile(rebuildDelimiters(itemTypeSrc));
+    t.creatorsTemplate = Handlebars.compile(rebuildDelimiters(creatorsSrc));
+    t.tagsTemplate = Handlebars.compile(rebuildDelimiters(tagsSrc));
+    t.baseTemplate = Handlebars.compile(rebuildDelimiters(baseSrc));
     return t;
   };
 
@@ -170,24 +174,21 @@ $(document).ready(function(){
    * Bindings
    ***************************************************************************/
   $('#add-document-modal').live('click', function(){
-    $.get('/document/templates/', function(data) {
-      $('body').append(data);
-      if (!templates.length) {
-        templates = initTemplates();
-      }
-      $documentwym.html('');
+    if (!templates.length) {
+      templates = initTemplates();
+    }
+    $documentwym.html('');
 
-      $modal
-        .modal({backdrop: 'static'}).css({
-          'width': '800px',
-          'top': '45%',
-          'margin-left': function() {
-            return -($(this).width() / 2);
-          }
-        })
-        .find('#document-zotero-information')
-          .html('').append(templates.itemTypeSelect);
-    });
+    $modal
+      .modal({backdrop: 'static'}).css({
+        'width': '800px',
+        'top': '45%',
+        'margin-left': function() {
+          return -($(this).width() / 2);
+        }
+      })
+      .find('#document-zotero-information')
+        .html('').append(templates.itemTypeSelect);
   });
 
   $('#document-edit-close').live('click', function(){

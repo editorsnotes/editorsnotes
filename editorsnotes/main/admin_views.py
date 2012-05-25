@@ -3,7 +3,6 @@ from django.contrib.auth.models import User, Group
 from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
-from django.template.loaders.app_directories import load_template_source
 from editorsnotes.djotero.models import ZoteroLink
 from models import Project, PermissionError, Document
 from forms import ProjectUserFormSet, ProjectForm
@@ -92,10 +91,6 @@ def change_project(request, project_id):
     o['form'] = ProjectForm(instance=project)
     return render_to_response(
         'admin/project_change.html', o, context_instance=RequestContext(request))
-
-def modal_document_edit(request):
-    template_text = load_template_source('handlebars.html')[0]
-    return HttpResponse(template_text)
 
 def document_add(request):
     description = request.POST.get('document-description')
