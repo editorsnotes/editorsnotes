@@ -153,6 +153,7 @@ class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific)
     language = models.CharField(max_length=32, default='English')
     topics = generic.GenericRelation('TopicAssignment')
     objects = DocumentManager()
+    edtf_date = models.TextField(blank=True, null=True)
     @property
     def transcript(self):
         try:
