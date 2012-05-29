@@ -134,7 +134,7 @@ def as_readable(zotero_json_string):
 def get_creator_name(contributor):
     name_parts = [contributor[key] for key in contributor.keys()
                   if key != 'creatorType']
-    name = contributor.get('lastName') or contributor.get('name')
+    name = contributor.get('lastName') or contributor.get('name') or ''
     name += ', %s' % contributor.get('firstName') if contributor.get('firstName') else ''
     return name or None
 

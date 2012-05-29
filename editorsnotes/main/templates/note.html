@@ -45,6 +45,19 @@
       </section>
 
       <section id="note-tab" class="tab-pane active">
+      <div class="sort">
+        <ul class="unstyled">
+          <li><span class="big">Sort by:</span></li>
+          <li>
+            <a href="#"
+               class="inactive ascending"
+               id="sort-by-date">
+               Date in document
+               <i class="ascending-icon icon-chevron-up"></i>
+            </a></li>
+        </ul>
+      </div>
+      <div id="note-sections">
       {% for section in note.sections.all %}
         <div class="note-section{% if section.document %} has-document{% endif %}{% if section.has_content %} has-content{% endif %}">
         {% if section.document %}
@@ -60,6 +73,8 @@
         {% endif %}
         </div>
       {% endfor %}
+      </div>
+
       <hr/>
       <div>
         {% if affiliated %}

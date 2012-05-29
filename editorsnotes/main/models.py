@@ -221,6 +221,8 @@ class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific)
                   for k, v in self.zotero_link().get_zotero_fields() if v != "" and k not in ['tags', 'extra'] ])
         else:
             data_attributes = ''
+        if self.edtf_date:
+            data_attributes += ' data-edtf-date="%s"' % self.edtf_date
         return mark_safe(
             '<div id="document-%s" class="document%s"%s>%s</div>' % (
                 self.id,

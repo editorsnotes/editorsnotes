@@ -112,3 +112,19 @@ ul .document-link p {
     border-left: 1px dashed #ccc;
     border-top: 1px dashed #ccc;
 } 
+#sort-by-date.inactive i {
+    display: none;
+}
+.sort {
+    margin-bottom: 2em;
+}
+.sort li {
+    display: inline-block;
+}
+.sort li a:hover {
+    text-decoration: none;
+}
+.sort li span {
+    padding-right: 8px;
+    font-weight: bold;
+}

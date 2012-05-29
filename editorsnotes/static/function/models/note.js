@@ -62,4 +62,35 @@ $(document).ready(function() {
   };
   $('textarea[name="content"]').wymeditor(wymconfig);
 
+  $('#sort-by-date').click(function(event) {
+    event.preventDefault();
+    var $sortAnchor = $(this);
+    if ($sortAnchor.hasClass('active')) {
+      $sortAnchor
+        .toggleClass('ascending descending')
+        .find('i').toggleClass('icon-chevron-up icon-chevron-down');
+    } else {
+      $sortAnchor.toggleClass('inactive active').siblings('a').removeClass('active').addClass('inactive');
+    }
+    $docs = $('#note-sections').children();
+    $sortedDocs = _.sortBy($docs, function(doc) {
+      var $doc = $(doc),
+        date;
+      
+      date = '' + ($doc.find('.document').data('edtf-date') || '99999999');
+      if (date.indexOf('/') > 0) {
+        date = date.slice(0, date.indexOf('/'))
+      }
+      date.replace(/[^0-9]/, '');
+      while (date.length < 8) { date += '0' };
+
+      return date
+    });
+    if ($sortAnchor.hasClass('descending')) {
+      $sortedDocs = $.makeArray($sortedDocs).reverse()
+    }
+    $('#note-sections').append($sortedDocs);
+  });
+
+
 });
