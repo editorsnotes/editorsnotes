@@ -3,26 +3,57 @@
 
 {% block title %}: All Documents{% endblock %}
 
+{% block css %}
+<style type="text/css">
+#sort-options {
+  font-size: 120%;
+  font-weight: bold;
+  margin-bottom: 1em;
+}
+#sort-options .sort-option.sort-option-selected {
+  padding-left: 18px;
+}
+#sort-options .sort-option:first-child {
+  padding-left: 10px;
+}
+.sort-option {
+  cursor: pointer;
+  cursor: hand;
+  margin-left: .75em;
+}
+.sort-option i {
+  display: none;
+}
+.sort-option.sort-option-selected i {
+  display: inline-block;
+  vertical-align: baseline;
+}
+.timeago-label {
+  margin-top: .75em;
+}
+.timeago-label:first-child {
+  margin-top: 0;
+}
+.timeago-label:last-child {
+  display: none
+}
+</style>
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript" src="/media/function/models/all-documents.js">
+</script>
+{% endblock %}
+
 {% block content %}
 <header>
   <h2>All Documents</h2>
 </header>
 
-{% regroup documents by first_letter as alpha_list %}
 
-<section id="all-documents" class="span-24 last">
-<p>Documents in bold have scans or annotated transcripts.</p>
-<ul class="alpha-list">
-  {% for letter in alpha_list %}
-  <li id="{{ letter.grouper }}">
-    <span class="alpha-index">{{ letter.grouper }}</span>
-    <ul class="alpha-items">
-      {% for item in letter.list %}
-      <li>{{ item.document|as_link|typogrify }}</li>
-      {% endfor %}
-    </ul>
-  </li>
-  {% endfor %}
-</ul>
+<section id="all-documents">
+  {% include "filtered-documents.html" %}
 </section>
 {% endblock %}
+
+

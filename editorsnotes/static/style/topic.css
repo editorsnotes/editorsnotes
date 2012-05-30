@@ -7,6 +7,13 @@
 }
 #document-facets {
   float: left;
+  margin-right: 1em;
+}
+#document-facets ul {
+    border-bottom: 1px solid #ccc;
+}
+#document-facets ul:last-child {
+    border: none;
 }
 .document-item {
   margin: 0 0.5em 0.5em 0.5em;
@@ -19,6 +26,7 @@
 }
 .sort-button {
   display: inline-block;
+  float: right;
   padding: 2px 0;
   margin-left: 4px;
   vertical-align: -25%;
@@ -31,24 +39,9 @@
 label {
   font-weight: normal;
   cursor: pointer;
+  display: inline-block;
 }
 input[type="checkbox"] {
   top: 0;
   cursor: pointer;
 }
-
-/* styles for hiding document facets */
-#sidebar {display: none; }
-#content {width: 97%;}
-
-.use-sidebar #content {width: 75%;}
-.use-sidebar #sidebar {display: block; width: 20%;}
- 
-.sidebar-at-left #sidebar {margin-right: 1%;}
-.sidebar-at-right #sidebar {margin-left: 1%;}
- 
-.sidebar-at-left #content, .use-sidebar.sidebar-at-right #sidebar, .sidebar-at-right #separator {float: right;}
-.sidebar-at-right #content, .use-sidebar.sidebar-at-left #sidebar, .sidebar-at-left #separator {float: left;}
- 
-#separator {background-color: #ddd; display: block; outline: none; width: 7px;}
-#separator:hover { background: #C1DDFE;}

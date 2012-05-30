@@ -4,47 +4,51 @@
 {% regroup topics_2 by first_letter as alpha_list_2 %}
 {% regroup topics_3 by first_letter as alpha_list_3 %}
 
-<section id="{{ type }}-topics" class="span-23 last">
-<div class="span-8">
-<ul class="alpha-list">
-  {% for letter in alpha_list_1 %}
-  <li id="{{ letter.grouper }}">
-    <span class="alpha-index">{{ letter.grouper }}</span>
-    <ul class="alpha-items">
-      {% for item in letter.list %}
-      <li>{{ item.topic|as_link:fragment|typogrify }}</li>
-      {% endfor %}
-    </ul>
-  </li>
-  {% endfor %}
-</ul>
+<div class="row">
+
+  <div class="span4">
+  <ul class="alpha-list">
+    {% for letter in alpha_list_1 %}
+    <li id="{{ letter.grouper }}">
+      <span class="alpha-index">{{ letter.grouper }}</span>
+      <ul class="unstyled alpha-items">
+        {% for item in letter.list %}
+        <li>{{ item.topic|as_link:fragment|typogrify }}</li>
+        {% endfor %}
+      </ul>
+    </li>
+    {% endfor %}
+  </ul>
+  </div>
+
+  <div class="span4">
+  <ul class="alpha-list">
+    {% for letter in alpha_list_2 %}
+    <li id="{{ letter.grouper }}">
+      <span class="alpha-index">{{ letter.grouper }}</span>
+      <ul class="unstyled alpha-items">
+        {% for item in letter.list %}
+        <li>{{ item.topic|as_link:fragment|typogrify }}</li>
+        {% endfor %}
+      </ul>
+    </li>
+    {% endfor %}
+  </ul>
+  </div>
+
+  <div class="span4">
+  <ul class="unstyled alpha-list">
+    {% for letter in alpha_list_3 %}
+    <li id="{{ letter.grouper }}">
+      <span class="alpha-index">{{ letter.grouper }}</span>
+      <ul class="alpha-items">
+        {% for item in letter.list %}
+        <li>{{ item.topic|as_link:fragment|typogrify }}</li>
+        {% endfor %}
+      </ul>
+    </li>
+    {% endfor %}
+  </ul>
+  </div>
+
 </div>
-<div class="span-7">
-<ul class="alpha-list">
-  {% for letter in alpha_list_2 %}
-  <li id="{{ letter.grouper }}">
-    <span class="alpha-index">{{ letter.grouper }}</span>
-    <ul class="alpha-items">
-      {% for item in letter.list %}
-      <li>{{ item.topic|as_link:fragment|typogrify }}</li>
-      {% endfor %}
-    </ul>
-  </li>
-  {% endfor %}
-</ul>
-</div>
-<div class="span-8 last">
-<ul class="alpha-list">
-  {% for letter in alpha_list_3 %}
-  <li id="{{ letter.grouper }}">
-    <span class="alpha-index">{{ letter.grouper }}</span>
-    <ul class="alpha-items">
-      {% for item in letter.list %}
-      <li>{{ item.topic|as_link:fragment|typogrify }}</li>
-      {% endfor %}
-    </ul>
-  </li>
-  {% endfor %}
-</ul>
-</div>
-</section>

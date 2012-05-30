@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% load display typogrify %}
+
+{% block content %}
+<h1>{{ project.name }}</h1>
+{{ project.description|as_html|typogrify }}
+
+
+
+{% if project_role or can_change %}
+  <hr/>
+  {% if project_role %}
+    <p> You are a{% if project_role == 'editor' %}n{% endif %} {{ project_role }} of this project.</p>
+  {% endif %}
+
+  {% if can_change %}
+    <a class="btn" href="{% url project_roster_view project_id=project.id %}">Edit roster</a>
+    <a class="btn" href="{% url project_edit_view project_id=project.id %}?return_to={{ request.path }}">Edit description</a>
+  {% else %}
+    {% if project_role %}
+      <a class="btn" href="{% url project_roster_view project_id=project.id %}">View roster</a>
+    {% endif %}
+  {% endif %}
+
+{% endif %}
+
+{% endblock %}

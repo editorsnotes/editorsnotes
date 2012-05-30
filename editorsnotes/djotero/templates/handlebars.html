@@ -1,0 +1,101 @@
+<script id="item-type-select-template" type="text/x-handlebars-template">
+  <div id="item-type-select-dialog">
+    <label>Item type</label>
+    <select name="item-type-select">
+      <option value=""></option>
+      <option value="book">Book</option>
+      <option value="bookSection">Book Section</option>
+      <option value="document">Document</option>
+      <option value="journalArticle">Journal Article</option>
+      <option value="letter">Letter</option>
+      <option value="magazineArticle">Magazine Article</option>
+      <option value="manuscript">Manuscript</option>
+      <option value="newspaperArticle">Newspaper Article</option>
+      <option value="">---</option>
+      <option value="artwork">Artwork</option>
+      <option value="audioRecording">Audio Recording</option>
+      <option value="bill">Bill</option>
+      <option value="case">Case</option>
+      <option value="blogPost">Blog Post</option>
+      <option value="computerProgram">Computer Program</option>
+      <option value="conferencePaper">Conference Paper</option>
+      <option value="dictionaryEntry">Dictionary Entry</option>
+      <option value="email">Email</option>
+      <option value="encyclopediaArticle">Encyclopedia Article</option>
+      <option value="film">Film</option>
+      <option value="forumPost">Forum Post</option>
+      <option value="hearing">Hearing</option>
+      <option value="instantMessage">Instant Message</option>
+      <option value="interview">Interview</option>
+      <option value="map">Map</option>
+      <option value="patent">Patent</option>
+      <option value="podcast">Podcast</option>
+      <option value="presentation">Presentation</option>
+      <option value="radioBroadcast">Radio Broadcast</option>
+      <option value="report">Report</option>
+      <option value="statute">Statute</option>
+      <option value="thesis">Thesis</option>
+      <option value="tvBroadcast">TV Broadcast</option>
+      <option value="videoRecording">Video Recording</option>
+      <option value="webpage">Webpage</option>
+    </select>
+  </div>
+</script>
+
+<script id="item-type-template" type="text/x-handlebars-template">
+  <tr class="zotero-entry" data-zotero-key="itemType">
+    <th>Item Type</th>
+    <td>
+      ((localized itemType))
+    </td>
+    <input type="hidden" name="zotero-key-((counter))" value=((itemType))>
+  </tr>
+  <input type="hidden" id="zotero-data-string" value="((stringify this))">
+</script>
+
+<script id="creators-template" type="text/x-handlebars-template">
+  ((#each creators))
+  <tr class="zotero-entry zotero-creator" data-zotero-key="creators"
+      data-creator-type="((creatorType))">
+    <th>
+      <select class="creator-attr creator-select not-queried"
+              data-creator-key="creatorType">
+        <option value="((creatorType))">((localized creatorType))<option>
+      </select>
+    </th>
+    <td>
+      ((#if this.name))
+        <textarea class="creator-attr"
+                  data-creator-key="name">((this.name))</textarea>
+      ((else))
+        <textarea class="creator-attr"
+                  data-creator-key="lastName">((this.lastName))</textarea>,&nbsp;
+        <textarea class="creator-attr"
+                  data-creator-key="firstName">((this.firstName))</textarea>
+      ((/if))
+      <input type="hidden" value="((stringify this))">
+      <i class="add-creator icon-plus-sign"></i>
+      <i class="remove-creator icon-minus-sign"></i>
+    </td>
+  </tr>
+  ((/each))
+</script>
+
+<script id="tags-template" type="text/x-handlebars-template">
+  ((#each tags))
+  <tr class="zotero-entry" data-zotero-key="tags"
+      data-tag-type="((type))">
+    <input type="hidden" value="((stringify this))">
+  </tr>
+  ((/each))
+</script>
+
+<script id="base-template" type="text/x-handlebars-template">
+  <tr class="zotero-entry" data-zotero-key="((key))">
+    <th>((localized key))</th>
+    <td>
+      <textarea>((val))</textarea>
+    </td>
+    <input type="hidden" value="((val))">
+  </tr>
+</script>

@@ -9,7 +9,7 @@ from lxml import etree
 from unaccent import unaccent
 from django.db import models
 from django.contrib.admin.models import LogEntry
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.core import urlresolvers
@@ -17,6 +17,7 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.urlresolvers import NoReverseMatch
 from django.utils.html import conditional_escape, escape
 from django.utils.safestring import mark_safe
+from reversion import get_for_object
 from io import StringIO
 
 # -------------------------------------------------------------------------------
@@ -53,6 +54,70 @@ class URLAccessible():
         return '<span class="%s">%s</span>' % (
             self._meta.module_name, conditional_escape(self.as_text()))
 
+class PermissionError(StandardError):
+    pass
+
+# Adapted from http://djangosnippets.org/snippets/1502/
+class PermissionsMixin(object):
+    def attempt(self, action, user, msg=None):
+        return PermissionsMixin._attempt(self, action, user, msg)
+
+    @staticmethod
+    def _attempt(obj, action, user, msg):
+        if not (isinstance(action, basestring) and isinstance(user, User)):
+            raise TypeError
+        if getattr(obj, 'allow_%s_for' % action)(user):
+            return True
+        else:
+            if msg is None:
+                msg = u'%s doesn\'t have permission to %s %s' % (
+                    user.username, action.lower(), repr(obj) )
+            raise PermissionError(msg)
+
+class ProjectSpecific(PermissionsMixin):
+    def get_all_updaters(self):
+        all_updaters = set()
+        for version in get_for_object(self):
+            uid = json.loads(
+                version.serialized_data)[0]['fields'].get('last_updater')
+            if uid:
+                all_updaters.add(uid)
+        return [UserProfile.objects.get(user__id=u) for u in all_updaters]
+    def get_project_affiliation(self):
+        projects = {u.affiliation for u in self.get_all_updaters() if u.affiliation}
+        return list(projects)
+
+    # Custom Project permissions
+    def allow_delete_for(self, user):
+        object_affiliation = self.get_project_affiliation()
+
+        # Make sure no other projects are using this object before deleting
+        other_contributing_projects = set.difference(
+            set(object_affiliation), set([user.get_profile().affiliation]))
+        if len(other_contributing_projects) and not user.is_superuser:
+            msg = 'Cannot delete %s because it is in use by %s' % (
+                self, ', '.join([p.name for p in other_contributing_projects]))
+            raise PermissionError(msg)
+        else:
+            return True
+    def allow_change_for(self, user):
+        object_affiliation = self.get_project_affiliation()
+        can_change = False
+        while not can_change:
+            for p in object_affiliation:
+                can_change = user.has_perm('%s.change_%s' % (
+                    p.slug, self._meta.module_name))
+        return can_change
+
+    def allow_view_for(self, user):
+        object_affiliation = self.get_project_affiliation()
+        can_view = False
+        while not can_view:
+            for p in object_affiliation:
+                can_view = user.has_perm('%s.view_%s' % (
+                    p.slug, self._meta.module_name))
+        return can_view
+
 # -------------------------------------------------------------------------------
 # Primary models. These have their own URLs and administration interfaces.
 # -------------------------------------------------------------------------------
@@ -71,7 +136,7 @@ FROM main_document AS part WHERE part.collection_id = main_document.id''',
                               '_has_transcript': '''EXISTS ( SELECT 1 
 FROM main_transcript WHERE main_transcript.document_id = main_document.id )''' })
 
-class Document(LastUpdateMetadata, Administered, URLAccessible):
+class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
     u"""
     Anything that can be taken as evidence for (documentation of) something.
 
@@ -88,6 +153,7 @@ class Document(LastUpdateMetadata, Administered, URLAccessible):
     language = models.CharField(max_length=32, default='English')
     topics = generic.GenericRelation('TopicAssignment')
     objects = DocumentManager()
+    edtf_date = models.TextField(blank=True, null=True)
     @property
     def transcript(self):
         try:
@@ -121,6 +187,12 @@ class Document(LastUpdateMetadata, Administered, URLAccessible):
             return self._zotero_link
         except:
             return None
+    def get_all_related_topics(self):
+        topics = []
+        topics += [ta.topic for ta in self.topics.all()]
+        topics += [c.content_object for c in self.citations.filter(
+            content_type=ContentType.objects.get_for_model(Topic))]
+        return topics
     def get_metadata(self):
         metadata = {}
         for md in self.metadata.all():
@@ -149,6 +221,8 @@ class Document(LastUpdateMetadata, Administered, URLAccessible):
                   for k, v in self.zotero_link().get_zotero_fields() if v != "" and k not in ['tags', 'extra'] ])
         else:
             data_attributes = ''
+        if self.edtf_date:
+            data_attributes += ' data-edtf-date="%s"' % self.edtf_date
         return mark_safe(
             '<div id="document-%s" class="document%s"%s>%s</div>' % (
                 self.id,
@@ -304,7 +378,7 @@ class Footnote(LastUpdateMetadata, Administered, URLAccessible):
         self.transcript.save()
         super(Footnote, self).delete(*args, **kwargs)
 
-class Topic(LastUpdateMetadata, Administered, URLAccessible):
+class Topic(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
     """ 
     A controlled topic such as a person name, an organization name, a
     place name, an event name, a publication name, or the name of a
@@ -372,7 +446,7 @@ class Topic(LastUpdateMetadata, Administered, URLAccessible):
     class Meta:
         ordering = ['slug']
 
-class Note(LastUpdateMetadata, Administered, URLAccessible):
+class Note(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
     u""" 
     Text written by an editor or curator. The text is stored as XHTML,
     so it may have hyperlinks and all the other features that XHTML
@@ -389,14 +463,78 @@ class Note(LastUpdateMetadata, Administered, URLAccessible):
     class Meta:
         ordering = ['-last_updated']  
 
-class Project(models.Model, URLAccessible):
+class NoteSection(LastUpdateMetadata):
+    u"""
+    A section of a note, consisting of a text field and, optionally, a reference
+    to a document and topic assignments.
+    """
+    note = models.ForeignKey(Note, related_name='sections')
+    document = models.ForeignKey(Document, blank=True, null=True)
+    content = fields.XHTMLField(blank=True, null=True)
+    def has_content(self):
+        return self.content is not None
+
+class Project(models.Model, URLAccessible, PermissionsMixin):
     name = models.CharField(max_length='80')
-    slug = models.SlugField(help_text='Used for project-specific URLs')
+    slug = models.SlugField(help_text='Used for project-specific URLs and groups')
+    image = models.ImageField(upload_to='project_images', blank=True, null=True)
+    description = fields.XHTMLField(blank=True, null=True)
     @models.permalink
     def get_absolute_url(self):
-        return ('index_view', [self.slug])
+        return ('project_view', [self.slug])
     def as_text(self):
         return self.name
+    def allow_view_for(self, user):
+        if user.has_perm('main.%s.view_project' % self.slug) or user.is_superuser:
+            return True
+        else:
+            return False
+    def allow_change_for(self, user):
+        if user.has_perm('main.%s.change_project' % self.slug) or user.is_superuser:
+            return True
+        else:
+            return False
+    def get_or_create_project_roles(self):
+        base_project_permissions = (
+            (Note, ('change',)),
+            (Project, ('view',)),
+        )
+        editor_project_permissions = (
+            (Project, ('change',)),
+        )
+
+        slug = self.slug
+        editors, created = Group.objects.get_or_create(
+            name='%s_editors' % slug)
+        researchers, created = Group.objects.get_or_create(
+            name='%s_researchers' % slug)
+
+        for model, actions in base_project_permissions:
+            ct = ContentType.objects.get_for_model(model)
+            for action in actions:
+                perm, created = Permission.objects.get_or_create(
+                    content_type=ct,
+                    codename='%s.%s_%s' % (
+                        slug, action, model._meta.module_name),
+                    name='Can %s %s %s' % (
+                        action, slug, model._meta.verbose_name_plural.lower())
+                )
+                editors.permissions.add(perm)
+                researchers.permissions.add(perm)
+        for model, actions in editor_project_permissions:
+            ct = ContentType.objects.get_for_model(model)
+            for action in actions:
+                perm, created = Permission.objects.get_or_create(
+                    content_type=ct,
+                    codename='%s.%s_%s' % (
+                        slug, action, model._meta.module_name),
+                    name='Can %s %s %s' % (
+                        action, slug, model._meta.verbose_name_plural.lower())
+                )
+                editors.permissions.add(perm)
+    def save(self):
+        super(Project, self).save()
+        self.get_or_create_project_roles()
         
 class UserProfile(models.Model, URLAccessible):
     user = models.ForeignKey(User, unique=True)
@@ -451,7 +589,28 @@ class UserProfile(models.Model, URLAccessible):
             if len(activity) == max_count:
                 break
         return activity, checked_object_ids
-        
+    def get_project_role(self, project):
+        try:
+            role = Group.objects.get(
+                user=self.user,
+                name__startswith=project.slug)
+            return role.name[role.name.index('_') + 1:-1]
+        except Group.DoesNotExist:
+            return None
+    def save(self):
+        if self.affiliation:
+            project_groups = self.user.groups.filter(
+                user = self.user,
+                name__startswith=self.affiliation.slug)
+            if len(project_groups) > 1:
+                raise Exception("Only one project role allowed")
+        super(UserProfile, self).save()
+        if self.affiliation and not self.get_project_role(self.affiliation):
+            if self.user.groups.filter(name='Editors'):
+                g = Group.objects.get(name='%s_editors' % self.affiliation.slug)
+            else:
+                g = Group.objects.get(name='%s_researchers' % self.affiliation.slug)
+            self.user.groups.add(g)
 
 # -------------------------------------------------------------------------------
 # Support models.

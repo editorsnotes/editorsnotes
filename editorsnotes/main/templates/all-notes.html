@@ -3,39 +3,55 @@
 
 {% block title %}: All Notes{% endblock %}
 
+{% block css %}
+<style type="text/css">
+#sort-options {
+  font-size: 120%;
+  font-weight: bold;
+  margin-bottom: 1em;
+}
+#sort-options .sort-option.sort-option-selected {
+  padding-left: 18px;
+}
+#sort-options .sort-option:first-child {
+  padding-left: 10px;
+}
+.sort-option {
+  cursor: pointer;
+  cursor: hand;
+  margin-left: .75em;
+}
+.sort-option i {
+  display: none;
+}
+.sort-option.sort-option-selected i {
+  display: inline-block;
+  vertical-align: baseline;
+}
+.timeago-label {
+  margin-top: .75em;
+}
+.timeago-label:first-child {
+  margin-top: 0;
+}
+.timeago-label:last-child {
+  display: none
+}
+</style>
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript" src="/media/function/models/all-notes.js">
+
+</script>
+{% endblock %}
+
 {% block content %}
 <header>
   <h2>All Notes</h2>
 </header>
 
-<section id="all-notes" class="span-24 last">
-<div class="span-12">
-<ul class="all-topic-list">
-  {% for topic in notes_by_topic_1 %}
-  <li id="{{ topic.slug }}">
-    <span class="topic-index">{{ topic.name }}</span>
-    <ul class="topic-items">
-      {% for note in topic.notes %}
-      <li>{{ note|as_link|typogrify }}</li>
-      {% endfor %}
-    </ul>
-  </li>
-  {% endfor %}
-</ul>
-</div>
-<div class="span-12 last">
-<ul class="all-topic-list">
-  {% for topic in notes_by_topic_2 %}
-  <li id="{{ topic.slug }}">
-    <span class="topic-index">{{ topic.name }}</span>
-    <ul class="topic-items">
-      {% for note in topic.notes %}
-      <li>{{ note|as_link|typogrify }}</li>
-      {% endfor %}
-    </ul>
-  </li>
-  {% endfor %}
-</ul>
-</div>
+<section id="all-notes">
+  {% include "filtered-notes.html" %}
 </section>
 {% endblock %}

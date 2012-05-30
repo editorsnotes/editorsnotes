@@ -1,5 +1,34 @@
 $(document).ready(function() {
 
+  var zoteroFormToObject = function($form) {
+    var zoteroObject = {},
+      $fields = $.form.find('.zotero-entry');
+    $.each($fields, function(key, val) {
+      var $field = $(val),
+        fieldKey = $field.data('zotero-key'),
+        fieldValue;
+        switch (fieldKey) {
+          case 'creators':
+            if (!zoteroObject.creators) {
+              zoteroObject.creators = [];
+            }
+            fieldValue = $(val).find('input[type="hidden"]');
+            zoteroObject.creators.push( JSON.parse(fieldValue) );
+            break;
+          case 'tags':
+            if (!zoteroObject.tags) {
+              zoteroObject.tags = [];
+            }
+            fieldValue = $(val).find('input[type="hidden"]');
+            zoterObject.creators.push( JSON.parse(fieldValue) );
+            break;
+          default:
+            zoteroObject[fieldValue] = $(val).find('input[type="hidden"]').val();
+            break;
+    });
+    return zoteroObject
+  };
+
   var buildZoteroJson = function() {
     var zoteroDataObject = new Object;
     var fields = $('.zotero-entry');
