@@ -5,40 +5,5 @@
 {% block title %}{% endblock %}
 
 {% block content %}
-{% if project %}<header><h2 style="margin-bottom:1em;">{{ project }}</h2></header>{% else %}{% endif %}
-    <section id="documents" class="span-24 last">
-      <h3>Recently Edited Documents</h3>
-      <ul>
-        {% for document in document_list %}
-        <li>{{ document|as_link|typogrify }}</li>
-        {% endfor %}
-        {% if document_list %}
-        <li><a class="more-link" href="{% if project %}{% url all_documents_view project.slug %}{% else %}{% url all_documents_view %}{% endif %}">All documents</a></li>
-        {% endif %}      
-      </ul>
-    </section>
-    <div class="span-24 last">
-      <section id="topics" class="span-11 colborder">
-        <h3>Recently Edited Topics</h3>
-        <ul>
-          {% for topic in topic_list %}
-          <li>{{ topic|as_link|typogrify }}</li>
-          {% endfor %}
-          {% if topic_list %}
-          <li><a class="more-link" href="{% if project %}{% url all_topics_view project.slug %}{% else %}{% url all_topics_view %}{% endif %}">All topics</a></li>
-          {% endif %}      
-        </ul>
-      </section>
-      <section id="notes" class="span-12 last">
-        <h3>Recently Edited Notes</h3>
-        <ul>
-          {% for note in note_list %}
-          <li>{{ note|as_link|typogrify }}</li>
-          {% endfor %}
-          {% if note_list %}
-          <li><a class="more-link" href="{% if project %}{% url all_notes_view project.slug %}{% else %}{% url all_notes_view %}{% endif %}">All notes</a></li>
-          {% endif %}      
-        </ul>
-      </section>
-    </div>
+...
 {% endblock %}

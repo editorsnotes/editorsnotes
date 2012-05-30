@@ -1,0 +1,71 @@
+{% load display %}
+
+<div class="row" id="note-facets">
+  <div class="span12">
+    <h3 style="cursor: pointer; cursor: hand" class="facet-title">
+      Filters
+      <i style="vertical-align: baseline;" class="icon-{% if filtered %}minus{% else %}plus{% endif %}"></i>
+    </h3>
+  </div>
+  <div class="facets {% if not filtered %}hide{% endif %}">
+    <div class="span12" id="note-facets-project">
+      <h6>Projects</h6>
+      <ul class="unstyled">
+      {% for p, count in project_facets %}
+      <li>
+        <input type="checkbox" name="project" value="{{ p.id }}">&nbsp;
+        {{ p|as_link }} ({{ count}})
+      </li>
+      {% endfor %}
+      </ul>
+    </div>
+    <div class="span12" id="note-facets-topic">
+      <h6>Topics</h6>
+      <ul class="span6 unstyled">
+      {% for t, count in topic_facets_1 %} 
+        <li>
+          <input type="checkbox" name="topic" value="{{ t.id }}">&nbsp;
+          {{ t|as_link }}&nbsp;({{ count }})
+        </li>
+      {% endfor %}
+      </ul>
+      <ul class="span6 unstyled">
+      {% for t, count in topic_facets_2 %} 
+        <li>
+          <input type="checkbox" name="topic" value="{{ t.id }}">&nbsp;
+          {{ t|as_link }}&nbsp;({{ count }})
+        </li>
+      {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+<hr />
+<div class="row">
+  <div class="span12" id="sort-options">
+    Sort by:
+    <span class="sort-option sort-option-selected" sort-by="title" sort-order="asc">
+      <span class="sort-option-title">Title</span>
+      <i class="icon-chevron-down"></i>
+    </span>
+    <span class="sort-option" sort-by="date" sort-order="desc">
+      <span class="sort-option-title">Date modified</span>
+      <i class="icon-chevron-down"></i>
+    </span>
+  </div>
+
+  <div class="span12 row">
+    <ul class="unstyled span6" id="note-list-1">
+    {% for note in notes %}
+    <li class="note" date-modified="{{ note.last_updated|date:"Ymd" }}">
+        <a href="{% url note_view note_id=note.pk %}">
+          {{ note.title }}
+        </a>
+      </li>
+    {% endfor %}
+    </ul>
+    <ul class="unstyled span6" id="note-list-2">
+    </ul>
+  </div>
+
+</div>

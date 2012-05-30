@@ -1,0 +1,139 @@
+a:focus {
+    outline: none;
+}
+
+.topic-list, .topic-list li {
+    display: inline;
+}
+.related-topics {
+    margin-bottom: 1em;
+}
+span.quiet {
+    color: #AAA;
+}
+.citation div, .citation p {
+    display: inline;
+}
+.citation {
+    margin-bottom: 1em;
+}
+.edit-history {
+    text-align: right;
+}
+.edit-row .edit-button {
+    margin-top: .3em;
+}
+ul .document-link p {
+    margin: 0;
+}
+.collapse-group .accordian-toggle,
+.collapse-group .accordian-toggle h4 {
+    padding: 4px 6px;
+}
+.collapse-group {
+    margin-bottom: 3px;
+}
+.collapse-header a:focus {
+    outline: none;
+}
+.wym_box h2 {
+    line-height:18px;
+}
+#add-section .ui-autocomplete-input {
+    width: 500px;
+    margin-right: 5px;
+}
+#document-inline-edit {
+    padding: 10px;
+    height: 550px;
+}
+#document-inline-edit #document-description {
+    height: 167px;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 1px;
+}
+#document-inline-edit #document-zotero-information {
+    height: 348px;
+    overflow-y: auto;
+}
+#document-inline-edit #modal-edit-row {
+    margin-top: 1px;
+    padding-top: 6px;
+    border-top: 1px solid #ddd;
+}
+.zotero-entry textarea {
+    height: 1.4em;
+    margin-bottom: 5px;
+    width: 600px;
+}
+.zotero-creator textarea {
+    width: 290px;
+}
+.zotero-creator i {
+    cursor: pointer;
+    cursor: hand;
+    margin-top: 5px;
+}
+.zotero-entry select {
+    width: 100px;
+}
+.zotero-entry th {
+    text-align: right;
+    vertical-align: top;
+    padding-top: 8px;
+}
+.zotero-creator th {
+    padding-top: 1px;
+}
+.zotero-creator th select {
+    margin-bottom: 0px;
+}
+.zotero-entry :first-child {
+    padding-right: 3px;
+}
+
+
+.note-section {
+    /* Spacing between note sections */
+    margin-bottom: 1em;
+}
+.note-section-document * {
+    /* display all elements in a citation inline, except icons */
+    display: inline;
+    margin: 0px;
+    padding: 0px;
+}
+.note-section-document i[class^="icon"] {
+    display: inline-block;
+}
+.note-section.has-document .note-section-content {
+    margin: 2px 0 1.25em 0;
+    padding: 3px 0px 0px 7px;
+    border-left: 1px dashed #ccc;
+    border-top: 1px dashed #ccc;
+} 
+#sort-by-date.inactive i {
+    display: none;
+}
+.sort {
+    margin-bottom: 2em;
+}
+.sort li {
+    display: inline-block;
+}
+.sort li a:hover {
+    text-decoration: none;
+}
+.sort li span {
+    padding-right: 8px;
+    font-weight: bold;
+}
+
+
+.related-note {
+    margin-bottom: 2em;
+}
+.related-note .note-link {
+    font-size: 16px;
+    font-weight: bold;
+}

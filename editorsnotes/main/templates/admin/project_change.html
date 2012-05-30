@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block js %}
+<script type="text/javascript" src="/media/function/wymeditor/jquery.wymeditor.pack.js"></script>
+<script type="text/javascript" src="/media/function/models/admin.js"></script>
+{% endblock %}
+
+{% block css %}
+{% endblock %}
+{% block content %}
+<form method="post">{% csrf_token %}
+  {{ form.as_p }}
+  <input class="btn" type="submit" value="Save">
+</form>
+{% endblock %}

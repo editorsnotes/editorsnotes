@@ -20,147 +20,134 @@
 
 {% block js %}
     <script type="text/javascript" src="http://seadragon.com/ajax/0.8/seadragon-min.js"></script>
-    <script type="text/javascript" src="/media/function/jquery.ellipsis.js"></script>
-    <script type="text/javascript" src="/media/function/document.js"></script>
-    <script type="text/javascript" src="/media/function/jquery.collapse.js"></script>
-
-    <script type="text/javascript">
-      $(function() {
-        $('#collapse').jqcollapse({ slide: true, speed: 300, easing: '' });
-      });
-    </script>
-
+    <script type="text/javascript" src="/media/function/jquery/jquery.ellipsis.js"></script>
+    <script type="text/javascript" src="/media/function/models/document.js"></script>
 {% endblock %}
 
 {% block content %}
+
     <header>
       <h3>{{ document.description|as_html|typogrify }}</h3>
-      {% if document.collection %}<p>Part of {{ document.collection|as_link }}</p>{% endif %}
       <div class="related-topics">
         {% if topics %}
         <span class="quiet">Related topics:</span> 
-        <ul class="topic-list">
+        <ul class="topic-list unstyled">
           {% for topic in topics %}
-          <li><a href="{{ topic.get_absolute_url }}">{{ topic.preferred_name }}</a>{% if not forloop.last %} | {% endif %}</li>
+          <li><a data-toggle="tab" href="{{ topic.get_absolute_url }}">{{ topic.preferred_name }}</a>{% if not forloop.last %} | {% endif %}</li>
           {% endfor %}
         </ul>
         {% endif %}
       </div>    
     </header>
 
-    <div id="tabs" class="span-24 last tabs">
-      <ul>
-        <li><a href="#info">Info</a></li>
+      <ul id="tabs" class="nav nav-tabs">
+        <li class="active"><a href="#info-tab">Info</a></li>
         {% if document.has_parts %}
-        <li><a href="#parts">Parts</a></li>
+        <li><a href="#parts-tab">Parts</a></li>
         {% endif %}
-        <li><a href="#scans">Scans</a></li>
-        <li><a href="#transcript">Transcript</a></li>
-        <li><a href="#notes">Related Notes <span class="alt">&amp;</span> Queries</a></li>
+        <li><a href="#scans-tab">Scans</a></li>
+        <li><a href="#transcript-tab">Transcript</a></li>
+        <li><a href="#notes-tab">Related Notes <span class="alt">&amp;</span> Queries</a></li>
       </ul>
-      <section id="info" class="span-23 last">
-        <div class="span-23 last">
-          {% if zotero_data %}
-            {% include "item-information.include" %}
-          {% else %}
-            This document has no connected Zotero data.
-          {% endif %}
-        </div>
-        <div class="span-2 last">
-          <a class="button" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
-        </div>
-      </section>
-      {% if document.has_parts %}
-      <section id="parts" class="span-23 last">
-        <div id="scanlist-container">
-          <ul id="parts-list">
-            {% for part in document.parts.all %}
-            <li>{{ part|as_link }}</li>
+
+      <div class="tab-content">
+        <section id="info-tab" class="tab-pane active">
+          <div id="zotero">
+            {% if zotero_data %}
+              {% include "item-information.include" %}
+            {% else %}
+            <p>This document has no connected Zotero data.</p>
+            {% endif %}
+          </div>
+          <a class="btn edit-button" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
+        </section>
+
+        {% if document.has_parts %}
+        <section id="parts-tab" class="tab-pane">
+          <div id="scanlist-container">
+            <ul id="parts-list">
+              {% for part in document.parts.all %}
+              <li>{{ part|as_link }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          <a class="btn" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
+        </section>
+        {% endif %}
+
+        <section id="scans-tab" class="tab-pane">
+          {% if scans %}
+          {% comment %}
+          TODO: enable scans
+          <div id="scanlist-container">
+          <ul id="scan-list">
+            {% for scan in scans %}
+            <li><a class="scan btn" href="http://{{ domain }}{{ scan.image.url }}">{{ forloop.counter }}</a></li>
             {% endfor %}
           </ul>
-        </div>
-        <div class="span-2 last">
-          <a class="button" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
-        </div>
-      </section>
-      {% endif %}
-
-      <section id="scans" class="span-23 last">
-        {% if scans %}
-        <div id="scanlist-container">
-        <ul id="scan-list">
-          {% for scan in scans %}
-          <li><a class="scan button" href="http://{{ domain }}{{ scan.image.url }}">{{ forloop.counter }}</a></li>
-          {% endfor %}
-        </ul>
-        </div>
-        <br/>
-        <div id="scan-viewer"></div>
-        <div id="progress-notify">
-          <span id="progress-message">Loading scanned document...</span>
-          <div id="progressbar"></div>
-        </div>
-        {% else %}
-        <div class="span-23 last">
-          {% if document.has_links %}
-          This document has not been scanned, but it (or information about how to find it) is available online elsewhere:
-            <ul>
-            {% for link in document.links.all %}
-            <li><a href="{{ link.url }}">{{ link.url }}</a></li>
-            {% endfor %}
-            </ul>
+          </div>
+          <br/>
+          <div id="scan-viewer"></div>
+          <div id="progress-notify">
+            <span id="progress-message">Loading scanned document...</span>
+            <div id="progressbar"></div>
+          </div>
+          {% endcomment %}
           {% else %}
-          This document has not been scanned.
+          <div>
+            {% if document.has_links %}
+            This document has not been scanned, but it (or information about how to find it) is available online elsewhere:
+              <ul>
+              {% for link in document.links.all %}
+              <li><a href="{{ link.url }}">{{ link.url }}</a></li>
+              {% endfor %}
+              </ul>
+            {% else %}
+            <p>This document has not been scanned.</p>
+            {% endif %}
+          </div>
           {% endif %}
-        </div>
-        {% endif %}
-        <div class="span-2 last">
-          <a class="button" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
-        </div>
-      </section>
+          <a class="btn edit-button" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
+        </section>
 
-      <section id="transcript" class="span-23 last">
-        {% if document.transcript %}
-        <article id="transcript-{{ document.transcript.id }}" class="transcript">
-          <div id="transcript-content" class="span-23 last">
-            {{ document.transcript.content|as_html|typogrify }}
-          </div>
-          <div id="transcript-notes" class="span-23 last">
-            {% for note in document.transcript.footnotes.all %}
-            <div id="note-{{ note.id }}" class="transcript-note">
-              {{ note.content|as_html|typogrify }}
-              <a href="{{ note.get_absolute_url }}">More information about this footnote</a>
+        <section id="transcript-tab" class="tab-pane">
+          {% if document.transcript %}
+          <article id="transcript-{{ document.transcript.id }}" class="transcript">
+            <div id="transcript-content">
+              {{ document.transcript.content|as_html|typogrify }}
             </div>
+            <div id="transcript-notes">
+              {% for note in document.transcript.footnotes.all %}
+              <div id="note-{{ note.id }}" class="transcript-note">
+                {{ note.content|as_html|typogrify }}
+                <a href="{{ note.get_absolute_url }}">More information about this footnote</a>
+              </div>
+              {% endfor %}
+            </div>
+            <div>
+              <a class="btn" href="{{ document.transcript.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
+              <div class="edit-history">
+                {{ document.transcript|display_edit_history }}
+              </div>
+            </div>
+          </article>
+          {% else %}
+          <p>This document has not been transcribed.</p>
+          <a class="btn edit-button" href="{% url admin:main_transcript_add %}?document={{ document.id }}&amp;return_to={{ document.get_absolute_url }}">Edit</a>
+          {% endif %}
+        </section>
+
+        <section id="notes-tab" class="tab-pane">
+          {% if notes %}
+          <ul id="collapse">
+            {% for note, topics, cites in notes %}
+              {% include "note.include" %}
+              {% if forloop.last %}{% else %}<hr/>{% endif %}
             {% endfor %}
-          </div>
-          <div class="span-23 last">
-            <a class="button" href="{{ document.transcript.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
-            <div class="edit-history">
-              {{ document.transcript|display_edit_history }}
-            </div>
-          </div>
-        </article>
-        {% else %}
-        <div class="span-23 last">
-          This document has not been transcribed.
-        </div>
-        <div class="span-2 last">
-          <a class="button" href="{% url admin:main_transcript_add %}?document={{ document.id }}&amp;return_to={{ document.get_absolute_url }}">Edit</a>
-        </div>
-        {% endif %}
-      </section>
-
-      <section id="notes" class="span-23 last">
-        {% if notes %}
-	    <ul id="collapse">
-          {% for note, topics, cites in notes %}
-            {% include "note.include" %}
-            {% if forloop.last %}{% else %}<hr/>{% endif %}
-          {% endfor %}
-        </ul>
-        {% else %}
-          There are no notes or queries citing this document.
-        {% endif %}
-      </section>
-    </div>
+          </ul>
+          {% else %}
+          <p>There are no notes or queries citing this document.</p>
+          {% endif %}
+        </section>
+      </div>
 {% endblock %}

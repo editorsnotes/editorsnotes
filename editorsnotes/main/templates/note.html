@@ -3,6 +3,21 @@
 
 {% block title %}: {{ note.title }}{% endblock %}
 
+{% block js %}
+<script type="text/javascript" src="/media/function/jquery/jquery.ba-bbq.min.js"></script>
+<script type="text/javascript" src="/media/function/models/note.js"></script>
+<script type="text/javascript" src="/media/function/wymeditor/jquery.wymeditor.pack.js"></script>
+<script type="text/javascript" src="/media/function/handlebars-1.0.0.beta.6.js"></script>
+<script type="text/javascript" src="/media/function/models/zotero-localization.js"></script>
+<script type="text/javascript" src="/media/function/models/zotero-form-modal.js"></script>
+
+<script type="text/javascript" src="/media/function/citeproc-js/xmle4x.js"></script>
+<script type="text/javascript" src="/media/function/citeproc-js/xmldom.js"></script>
+<script type="text/javascript" src="/media/function/citeproc-js/citeproc.js"></script>
+<script type="text/javascript" src="/media/function/citeproc-js/simple.js"></script>
+
+{% endblock %}
+
 {% block content %}
     <header>
       <h2>{{ note.title|typogrify }}</h2>
@@ -17,25 +32,78 @@
       </div>
       {% endif %}
     </header>
-    <section id="note" class="span-24 last">
-      <article id="note-{{ note.id }}" class="note">
-        <div class="note-content">
-          {{ note.content|as_html }}
-        </div>
-        {% if cites.all %}
-        <h4>Sources</h4>
-        <div class="citation-list">
-          {% for cite in cites.all %}
-            {% include "citation.include" %}
-          {% endfor %}
-        </div>
+
+    <ul id="tabs" class="nav nav-tabs">
+      <li class="active"><a href="#about-tab">About</a></li>
+      <li><a href="#note-tab">Note</a></li>
+      <li><a href="#history-tab">History</a></li>
+    </ul>
+
+    <div class="tab-content">
+      <section id="about-tab" class="tab-pane">
+        {{ note.content|as_html }}
+      </section>
+
+      <section id="note-tab" class="tab-pane active">
+      <div class="sort">
+        <ul class="unstyled">
+          <li><span class="big">Sort by:</span></li>
+          <li>
+            <a href="#"
+               class="inactive ascending"
+               id="sort-by-date">
+               Date in document
+               <i class="ascending-icon icon-chevron-down"></i>
+            </a></li>
+        </ul>
+      </div>
+      <div id="note-sections">
+      {% for section in note.sections.all %}
+        <div class="note-section{% if section.document %} has-document{% endif %}{% if section.has_content %} has-content{% endif %}">
+        {% if section.document %}
+          <div class="note-section-document">
+            <a href="{{ section.document.get_absolute_url }}" target="_blank"><i class="icon-file"></i></a>
+            {{ section.document.as_html }}
+          </div>
         {% endif %}
-        <div class="span-2">
-          <a class="button" href="{{ note.get_admin_url }}?return_to={{ request.path }}">Edit</a>
+        {% if section.has_content %}
+          <div class="note-section-content">
+            {{ section.content|as_html }}
+          </div>
+        {% endif %}
         </div>
-        <div class="edit-history">
-          {{ note|display_edit_history }}
-        </div>
-      </article>
-    </section>
+      {% endfor %}
+      </div>
+
+      <hr/>
+      <div>
+        {% if affiliated %}
+          <p>You are a member of the project that owns this note, so you can add to it.</p>
+        {% else %}
+          <p>You are not a member of the project that owns this note, so any additions you make will have to be approved by that project's editor.</p>
+        {% endif %}
+        <form class="well" method="post" id="add-section">{% csrf_token %}
+          {{ add_section_form.as_p }}
+          <input type="submit" class="btn" value="Add to note">
+        </form>
+      </div>
+      </section>
+
+      <section id="history-tab" class="tab-pane">
+        <p>Showing {{ history|length }} revisions, most recent first.</p>
+        <ol>
+        {% for version in history %}
+          {% with fields=version.field_dict %}
+          <li>
+            {{ fields.last_updated|date }} by {{ fields.last_updater|user_from_id }}
+            (<a href="history/?compare={{ version.revision_id }}">compare</a>)
+          </li>
+          {% endwith %}
+        {% endfor %}
+        </ol>
+      </section>
+    </div>
+
+    {% include "handlebars.html" %}
+
 {% endblock %}

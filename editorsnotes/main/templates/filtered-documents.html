@@ -1,0 +1,73 @@
+{% load display facet %}
+
+<div class="row" id="document-facets">
+  <div class="span12">
+    <h3 style="cursor: pointer; cursor: hand" class="facet-title">
+      Filters
+      <i style="vertical-align: baseline;"
+         class="icon-{% if filtered %}minus{% else %}plus{% endif %}"></i>
+    </h3>
+  </div>
+
+  <div class="facets {% if not filtered %}hide{% endif %}">
+    {% if facets.project_id %}
+    <div class="span12" class="document-facet">
+      {% create_facet_field "Project" facets.project_id %}
+    </div>
+    {% endif %}
+
+    {% if facets.related_topic_id %}
+    <div class="span12" class="document-facet">
+      {% create_facet_field "Related Topic" facets.related_topic_id %}
+    </div>
+    {% endif %}
+
+    {% if facets.archive %}
+    <div class="span12" class="document-facet">
+      {% create_facet_field "Containing Archive" facets.archive %}
+    </div>
+    {% endif %}
+
+    {% if facets.publicationTitle %}
+    <div class="span12" class="document-facet">
+      {% create_facet_field "Publication Title" facets.publicationTitle %}
+    </div>
+    {% endif %}
+
+    {% if facets.itemType %}
+    <div class="span12" class="document-facet">
+      {% create_facet_field "Item Type" facets.itemType %}
+    </div>
+    {% endif %}
+
+    {% if facets.creators %}
+    <div class="span12" class="document-facet">
+      {% create_facet_field "Creator" facets.creators %}
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+<hr />
+<div class="row">
+  <div class="span12" id="sort-options">
+    Sort By:
+    <span class="sort-option sort-option-selected"
+          data-sort-by="title"
+          data-sort-order="asc">
+      <span class="sort-option-title">Title</span>
+      <i class="icon-chevron-down"></i>
+    </span>
+  </div>
+  <div class="span12">
+    <ul class="unstyled" id="document-list">
+    {% for document in documents %}
+    <li class="document">
+      <a href="{% url document_view document_id=document.pk %}">
+        {{ document.title }}
+      </a>
+    </li>
+    {% endfor %}
+    </ul>
+  </div>
+</div>

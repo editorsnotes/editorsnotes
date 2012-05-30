@@ -3,83 +3,101 @@
   <head>
     <title>Editors' Notes{% if project %}: {{ project }}{% else %}{% endif %}{% block title %}{% endblock %}</title>
     <link rel="stylesheet" href="/media/style/custom-theme/jquery-ui-1.8.10.custom.css" type="text/css"/>
-    <link rel="stylesheet" href="/media/style/screen.css" type="text/css" media="screen, projection"/>
-    <link rel="stylesheet" href="/media/style/print.css" type="text/css" media="print"/>
-    <link rel="stylesheet" href="/media/style/droppy.css" type="text/css"/>	
+    <link rel="stylesheet" href="/media/style/bootstrap/css/bootstrap.css" type="text/css"/>
+    <link rel="stylesheet" href="/media/style/bootstrap/css/bootstrap-custom.css" type="text/css"/>
     <!--[if lt IE 8]><link rel="stylesheet" href="/media/style/ie.css" type="text/css" media="screen, projection"/><![endif]-->
     {% block css %}{% endblock %}
-    <script type="text/javascript" src="/media/function/jquery-1.5.1.min.js"></script>
-    <script type="text/javascript" src="/media/function/jquery-ui-1.8.10.custom.min.js"></script>
+    <script type="text/javascript" src="/media/function/jquery/jquery-1.7.1.min.js"></script>
+    <script type="text/javascript" src="/media/function/jquery/jquery-ui-1.8.18.custom.min.js"></script>
     <script type="text/javascript" src="/media/function/underscore-min.js"></script>
-    <script type="text/javascript" src="/media/function/jquery.droppy.js"></script>
-    <script type="text/javascript" src="/media/function/jquery.timeago.js"></script>
-    <script type="text/javascript" src="/media/function/jquery.ba-bbq.min.js"></script>
-    <script type="text/javascript" src="/media/function/base.js"></script>
-	  <script type='text/javascript'>
-      $(function() {
-        $('#nav').droppy({trigger: 'click'});
-      });
-	  </script>
+    <script type="text/javascript" src="/media/function/jquery/jquery.timeago.js"></script>
+    <script type="text/javascript" src="/media/function/jquery/jquery.ba-bbq.min.js"></script>
+    <script type="text/javascript" src="/media/function/models/base.js"></script>
+    <script type="text/javascript" src="/media/function/bootstrap.min.js"></script>
     {% block js %}
     {% endblock %}
   </head>
-  {% load typogrify %}
+  {% load typogrify display %}
   <body>
-    <div id="wrap">
-    <div id="stripe-1"></div>
-    <div id="stripe-2"></div>
-    <div id="main" class="container">
-      <nav id="topnav">
-        <div id="logo">
-          <a href="/">
-            <h1>{% filter smartypants %}The Editors' Notes Project{% endfilter %}</h1>
-          </a>
-        </div>
-        <div id="searchform">
-          <form action="/search/" method="get" class="inline">
-            <div id="searchinput">
-              <input type="text" class="text" name="q" value="{{ query }}"/>
-            </div>
-            <div id="searchbutton">
-              <button type="submit">Search</button>
-            </div>
-          </form>
-        </div>
-        {% load display %}
-        <div id="user-information">
-            {% if user.is_authenticated %}{{ user|login_information }}{% else %}Not logged in{% endif %}
-        </div>
-        <div id="navigation-projects">
-        <ul id="nav">
-          <li><a class="button" href="{% url admin:main_topic_add  %}">Add Topic</a></li>
-          <li><a class="button" href="{% url admin:main_note_add %}">Add Note</a></li>
-          <li><a class="button" href="{% url admin:main_document_add %}">Add Document</a></li>
-          <li class="right"><a class="button" style="float: right; margin-right: 10px;" href="/logout/">Log out</a></li>
-          <li class="right"><a class="button" style="float: right; margin-right: 10px;" href="https://docs.google.com/document/edit?id=1u9XlHBaVZnPUm5qNSSjcJ5n0xZSkSpduHSAFRlMTIy4&amp;hl=en&amp;authkey=CNHZyK4C">Help</a></li>
-          <li class="right"><a class="button" style="float: right; margin-right: 10px;" href='#'>Member Projects</a>
-            <ul>
-              {% for proj in list_projects %}
-              <li>{{ proj|as_link }}</li>
-              {% endfor %}
+    <div class="navbar">
+      <div class="navbar-inner">
+          <div class="container">
+            <ul class="nav">
+              <li><a class="brand" href="/">Editors' Notes</a></li>
+              <li class="divider-vertical"></li>
+              <form class="navbar-search" action="/search/" method="get">
+                <input type="text" class="search-query search-autocomplete" name="q" search-target="topics" placeholder="Search">
+              </form> 
+              <li><a href="/browse/">Browse</a></li>
+              <li><a href="/about/">About</a></li>
+              <li><a href="#">Help</a></li>
             </ul>
-          </li>
-        </ul>
-        </div>
-      </nav>
-      {% if messages %}
-      <div class="message-list">
-        {% for message in messages %}
-        <div class="message{% if message.tags %} {{ message.tags }}{% endif %}">
+            <ul class="nav pull-right">
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                  {{ user }}
+                  <b class="caret"></b>
+                </a>
+                <ul class="dropdown-menu">
+                  {% with profile=user.get_profile %}
+                  <li><a href="{{ profile.get_absolute_url }}">My Profile</a></li>
+                  {% if profile.affiliation %}
+                  <li>{{ profile.affiliation|as_link }}</li>
+                  {% endif %}
+                  {% endwith %}
+                  <li><a href="#">Recent edits</a></li>
+                  <li><a href="#">Log out</a></li>
+                </ul>
+              </li>
+              <li>
+                <div class="btn-group">
+                  <a class="btn dropdown-toggle" data-toggle="dropdown" href="#" style="padding: 4px 5px; margin-bottom: 7px;">
+                    <b class="icon-pencil"></b>
+                    <b class="caret caret-dark"></b>
+                  </a>
+                  <ul class="dropdown-menu">
+                    {% block extra_edit_actions %}{% endblock %}
+                    <li><a href="#">Add note</a></li>
+                    <li><a href="#">Add document</a></li>
+                    <li><a href="#">Add topic</a></li>
+                  </ul>
+                </div>
+              </li>
+              <li>&nbsp;</li>
+              <li>
+                <div class="btn-group">
+                  <a class="btn dropdown-toggle" data-toggle="dropdown" href="#" style="padding: 4px 5px; margin-bottom: 7px;">
+                    <b class="icon-inbox"></b>
+                    <b class="caret caret-dark"></b>
+                  </a>
+                  <ul class="dropdown-menu">
+                    <li><a href="#">New query</a></li>
+                    <li><a href="#">Tasks</a></li>
+                  </ul>
+                </div>
+              </li>
+            </ul>
+          </div>
+      </div>
+    </div>
+
+    {% if messages %}
+    <div id="message-list" class="container">
+      {% for message in messages %}
+        <div class="alert {% if message.tags %} alert-{{ message.tags }}{% endif %}">
           {{ message|safe }}
         </div>
-        {% endfor %}
-      </div>
-      {% endif %}      
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div id="main" class="container">
       {% block content %}{% endblock %}
     </div>
-    </div>
+    <!--
     <footer>
       <span class="version">version <a class="subtle" href="https://github.com/rybesh/editorsnotes/commit/{% include "version.txt" %}">{% include "version.txt" %}</a>deployed {% include "time-deployed.txt" %}</span>
     </footer>
+    !-->
   </body>
 </html>

@@ -12,7 +12,7 @@ class ZoteroLinkAdmin(admin.ModelAdmin):
         css = {
             'all' : ('/media/style/zotero-admin-inline.css',)
         }
-        js = ('function/jquery-1.5.1.min.js',
-              'function/zotero-admin-inline.js',
+        js = ('function/jquery/jquery-1.7.1.min.js',
+              'function/models/zotero-admin-inline.js',
               'function/json2.js',)
 admin.site.register(ZoteroLink, ZoteroLinkAdmin)

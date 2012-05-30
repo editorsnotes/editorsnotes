@@ -6,7 +6,17 @@
 {% block js %}
     <script type="text/javascript">
       $(function() {
-        $('#tabs').tabs();
+        var tabs = $('#tabs a[data-toggle="tab"]');
+        tabs.on('shown', function(e) {
+          var targetPanel = $(e.target.hash);
+          if (! targetPanel.hasClass('loaded') ){
+            t = e.target.hash.slice(8);
+            $.get('?type=' + t, function(data) {
+              targetPanel.html(data);
+              targetPanel.addClass('loaded');
+            });
+          }
+        });
       });
     </script>
 {% endblock %}
@@ -16,18 +26,28 @@
   <h2>All Topics</h2>
 </header>
 
-<div id="tabs" class="span-24 last">
-  <ul>
-    <li><a href="#PER-topics">People</a></li>
-    <li><a href="{{ request.path }}?type=ORG">Organizations</a></li>
-    <li><a href="{{ request.path }}?type=PUB">Publications</a></li>
-    <li><a href="{{ request.path }}?type=EVT">Events</a></li>
-    <li><a href="{{ request.path }}?type=">Uncategorized</a></li>
-  </ul>
+<ul id="tabs" class="nav nav-tabs">
+  <li class="active"><a data-toggle="tab" href="#topics-PER">People</a></li>
+  <li><a data-toggle="tab" href="#topics-ORG">Organizations</a></li>
+  <li><a data-toggle="tab" href="#topics-PUB">Publications</a></li>
+  <li><a data-toggle="tab" href="#topics-EVT">Events</a></li>
+  <li><a data-toggle="tab" href="#topics-">Uncategorized</a></li>
+</ul>
 
-  {% with '' as fragment %}
-  {% include "topic-columns.include" %}
-  {% endwith %}
-
+<div class="tab-content">
+  <section class="tab-pane loaded active" id="topics-PER">
+    {% with '' as fragment %}
+    {% include "topic-columns.include" %}
+    {% endwith %}
+  </section>
+  <section class="tab-pane" id="topics-ORG">
+  </section>
+  <section class="tab-pane" id="topics-PUB">
+  </section>
+  <section class="tab-pane" id="topics-EVT">
+  </section>
+  <section class="tab-pane" id="topics-">
+  </section>
 </div>
+
 {% endblock %}

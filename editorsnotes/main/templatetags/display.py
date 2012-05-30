@@ -66,3 +66,8 @@ def login_information(name):
         return mark_safe(
             'Logged in as %s' % (
             as_link(UserProfile.get_for(name))))
+
+@register.filter
+def user_from_id(uid):
+    return mark_safe(
+        as_link(UserProfile.objects.get(user__id=uid)))

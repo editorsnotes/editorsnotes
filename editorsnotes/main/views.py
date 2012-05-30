@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -11,9 +12,11 @@ from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequ
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
+from reversion import get_unique_for_object
 from urllib import urlopen
 from models import *
-from editorsnotes.djotero.utils import as_readable
+from editorsnotes.djotero.utils import as_readable, type_map
+import forms as main_forms
 import utils
 import json
 import re
@@ -28,37 +31,38 @@ def _sort_citations(instance):
     return cites
 
 @login_required
-def index(request, project_slug=None):
-    max_count = 6
+def index(request):
     o = {}
-    if project_slug:
-        o['project'] = get_object_or_404(Project, slug=project_slug)
-    for model in [Topic, Note, Document, Transcript]:
-        model_name = model._meta.module_name
-        if model_name == 'transcript':
-            listname = 'document_list'
-        else:
-            listname = '%s_list' % model_name
-        query_set = model.objects.order_by('-last_updated')
-        if model == Document:
-            # only get top-level documents
-            query_set = query_set.filter(
-                collection__isnull=True)
-        if model == Transcript:
-            # only get top-level documents
-            query_set = query_set.filter(
-                document__collection__isnull=True)
-        if project_slug:
-            query_set = query_set.filter(
-                last_updater__userprofile__affiliation=o['project'])
-        items = o.get(listname, [])
-        items += list(query_set[:max_count])
-        o[listname] = items
-    o['document_list'] = sorted(o['document_list'],
-                              key=lambda x: x.last_updated, 
-                              reverse=True)[:max_count]
     return render_to_response(
         'index.html', o, context_instance=RequestContext(request))
+
+@login_required
+def browse(request):
+    max_count = 6
+    o = {}
+    for model in [Topic, Note, Document]:
+        model_name = model._meta.module_name
+        listname = '%s_list' % model_name
+        query_set = model.objects.order_by('-last_updated')
+
+        items = list(query_set[:max_count])
+        o[listname] = items
+    o['projects'] = Project.objects.all().order_by('name')
+    return render_to_response(
+        'browse.html', o, context_instance=RequestContext(request))
+
+@login_required
+def project(request, project_slug):
+    o = {}
+    o['project'] = get_object_or_404(Project, slug=project_slug)
+    try:
+        o['can_change'] = o['project'].attempt('change', request.user)
+    except PermissionError:
+        pass
+    o['project_role'] = request.user.get_profile().get_project_role(
+        o['project'])
+    return render_to_response(
+        'project.html', o, context_instance=RequestContext(request))
 
 @login_required
 def all_topics(request, project_slug=None):
@@ -86,66 +90,113 @@ def all_topics(request, project_slug=None):
 @login_required
 def all_documents(request, project_slug=None):
     o = {}
-    if project_slug:
-        o['project'] = get_object_or_404(Project, slug=project_slug)
-    o['documents'] = []
-    if project_slug:
-        query_set = Document.objects.filter(
-            last_updater__userprofile__affiliation=o['project'])
-    else:
-        query_set = Document.objects.all()
-    # only get top-level documents
-    query_set = query_set.filter(collection__isnull=True)
-    for document in query_set:
-        first_letter = document.ordering[0].upper()
-        o['documents'].append(
-            { 'document': document, 'first_letter': first_letter })
+    template = 'all-documents.html'
+    o['filtered'] = False
+
+    if request.GET.get('filter'):
+        template = 'filtered-documents.html'
+        o['filtered'] = True
+
+    valid_facets = [
+        'project_id',
+        'related_topic_id',
+        'archive',
+        'publicationTitle',
+        'itemType',
+        'creators'
+    ]
+
+
+    # Narrow search query according to GET parameters
+    qs = SearchQuerySet().models(Document)
+    params = set.intersection(set(valid_facets), set(request.GET))
+    query = []
+    for param in params:
+        query_filter = [ '%s:"%s"' % (param, val) for val
+                        in request.GET.get(param).split('|') ]
+        query += [ ' AND '.join(query_filter)]
+    qs = qs.narrow(' AND '.join(query)) if query else qs
+
+    # Facet results
+    for f in valid_facets:
+        qs = qs.facet(f)
+
+    # Pass facets to template
+    o['facets'] = {}
+    facet_counts = qs.facet_counts()['fields'] 
+    for facet in facet_counts:
+
+        # Leave out facets with no more than one choice that are not selected
+        if len(facet_counts[facet]) == 1 and \
+           facet_counts[facet][0][0] == None and \
+           facet not in params:
+            continue
+        
+        # Sort results & limit to 30
+        sorted_facets = sorted(facet_counts[facet],
+                               key=lambda x: x[1],
+                               reverse=True)
+        sorted_facets = sorted_facets[:30]
+
+        # Specific actions for individual facets.
+        # Tuple represents one input: value, label, count
+        if facet == 'project_id':
+            o['facets']['project_id'] = [ (p_id, Project.objects.get(id=p_id), count)
+                                      for p_id, count in sorted_facets ]
+        elif facet == 'related_topic_id':
+            o['facets']['related_topic_id'] = \
+                    [ (t_id, Topic.objects.get(id=t_id), count)
+                     for t_id, count in sorted_facets ]
+        elif facet =='itemType':
+            o['facets']['itemType'] = [ (item, type_map['readable'].get(item), count)
+                                       for item, count in sorted_facets ]
+        else:
+            o['facets'][facet] = [ (f, f, count)
+                                  for f, count in sorted_facets if f ]
+
+    o['documents'] = qs 
+    o['query'] = query
     return render_to_response(
-        'all-documents.html', o, context_instance=RequestContext(request))
+        template, o, context_instance=RequestContext(request))
 
 @login_required
 def all_notes(request, project_slug=None):
     o = {}
-    if project_slug:
-        o['project'] = get_object_or_404(Project, slug=project_slug)
-    if project_slug:
-        query_set = Note.objects.filter(
-            last_updater__userprofile__affiliation=o['project'])
-    else:
-        query_set = Note.objects.all()
-    # TODO: Make this a custom manager method for Note, maybe
-    notes = dict((n.id, n) for n in query_set)
-    o['notes_by_topic_1'] = []
-    o['notes_by_topic_2'] = []
-    topic_assignments = [ ta for ta in 
-                          TopicAssignment.objects.assigned_to_model(Note) 
-                          if ta.object_id in notes ]
-    ta_index = 1
-    list_index = 1
-    topic = None
-    categorized_note_ids = set()
-    for ta in topic_assignments:
-        if topic and not ta.topic.slug == topic['slug']:
-            o['notes_by_topic_%s' % list_index].append(topic)
-            topic = None
-            if list_index < 2 and ta_index > (len(topic_assignments) / 2.2):
-                ta_index = 1
-                list_index += 1        
-        if not topic:
-            topic = { 'slug': ta.topic.slug, 
-                      'name': ta.topic.preferred_name, 
-                      'notes': [] }
-        topic['notes'].append(notes[ta.object_id])
-        categorized_note_ids.add(ta.object_id)
-        ta_index += 1
-    uncategorized_notes = []
-    for note_id in (set(notes.keys()) - categorized_note_ids):
-        uncategorized_notes.append(notes[note_id])
-    o['notes_by_topic_1'].insert(0, { 'slug': 'uncategorized',
-                                      'name': 'uncategorized', 
-                                      'notes': uncategorized_notes })
+    template = 'all-notes.html'
+    o['filtered'] = False
+
+    if request.GET.get('filter'):
+        template = 'filtered-notes.html'
+        o['filtered'] = True
+
+    qs = SearchQuerySet().models(Note)
+    query = []
+    if request.GET.get('topic'):
+        query += [ ' AND '.join([ 'related_topic_id:%s' % topic for topic
+                                in request.GET.get('topic').split(',') ]) ]
+    if request.GET.get('project'):
+        query += [ ' AND '.join([ 'project_id:%s' % project for project
+                                in request.GET.get('project').split(',') ]) ]
+    qs = qs.narrow(' AND '.join(query)) if query else qs
+
+    qs = qs.facet('related_topic_id').facet('project_id')
+    facet_fields = qs.facet_counts()['fields']
+    topic_facets = sorted(facet_fields['related_topic_id'],
+                          key=lambda t: t[1], reverse=True)
+    project_facets = sorted(facet_fields['project_id'],
+                            key=lambda p: p[1], reverse=True)
+
+    topic_facets = [ (Topic.objects.get(id=t_id), t_count)
+                         for t_id, t_count in topic_facets[:16] ]
+    o['topic_facets_1'] = topic_facets[:8]
+    o['topic_facets_2'] = topic_facets[8:] if (len(topic_facets) > 8) else []
+
+    o['project_facets'] = [ (Project.objects.get(id=p_id), p_count)
+                           for p_id, p_count in project_facets ]
+    o['notes'] = qs
+
     return render_to_response(
-        'all-notes.html', o, context_instance=RequestContext(request))
+        template, o, context_instance=RequestContext(request)) 
 
 @login_required
 def topic(request, topic_slug):
@@ -155,20 +206,16 @@ def topic(request, topic_slug):
                      'email': settings.ADMINS[0][1] }
     o['related_topics'] = o['topic'].related_topics.all()
     o['summary_cites'] = _sort_citations(o['topic'])
+
     notes = o['topic'].related_objects(Note)
-    o['note_count'] = len(notes)
     note_topics = [ [ ta.topic for ta in n.topics.exclude(topic=o['topic']) ] for n in notes ]
-    note_citations = [ _sort_citations(n) for n in notes ]
-    o['notes'] = zip(notes, note_topics, note_citations)
+    o['notes'] = zip(notes, note_topics)
+
     o['documents'] = o['topic'].related_objects(Document)
-    for note, topics, citations in o['notes']:
-       for cite in citations['all']:
-           if not cite.document in o['documents']:
-               cite.document.related_via = note
-               o['documents'].append(cite.document)
-    o['doc_count'] = len(o['documents'])
+
     o['thread'] = { 'id': 'topic-%s' % o['topic'].id, 'title': o['topic'].preferred_name }
     o['alpha'] = (request.user.groups.filter(name='Alpha').count() == 1)
+
     return render_to_response(
         'topic.html', o, context_instance=RequestContext(request))
 
@@ -176,6 +223,39 @@ def topic(request, topic_slug):
 def note(request, note_id):
     o = {}
     o['note'] = get_object_or_404(Note, id=note_id)
+    if request.method == 'POST':
+        form = main_forms.NoteSectionForm(request.POST)
+        user = request.user
+        if form.is_valid():
+
+            # Quick fix with checking if a document field is blank: wymeditor by
+            # default posts '<br/>'
+            if not (request.POST.get('document') or
+                    len(request.POST.get('content')) > 6):
+                messages.add_message(
+                    request, messages.ERROR,
+                    'Enter a value for one or both of the fields "Content" and "Description"')
+                return HttpResponseRedirect(request.path)
+
+            new_section = NoteSection.objects.create(
+                creator=user, last_updater=user, note=o['note'])
+            if len(request.POST.get('content')) > 6:
+                new_section.content = request.POST.get('content')
+            if request.POST.get('document'):
+                new_section.document = get_object_or_404(
+                    Document, id=request.POST.get('document'))
+            new_section.save()
+
+            messages.add_message(
+                request,
+                messages.SUCCESS,
+                'Added section to %s' % o['note'])
+            return HttpResponseRedirect(request.path)
+    user_profile = request.user.get_profile()
+    o['affiliated'] = len([p for p in o['note'].get_project_affiliation() if
+                           user_profile.get_project_role(p) is not None]) > 0
+    o['add_section_form'] = main_forms.NoteSectionForm()
+    o['history'] = get_unique_for_object(o['note'])
     o['topics'] = [ ta.topic for ta in o['note'].topics.all() ]
     o['cites'] = _sort_citations(o['note'])
     return render_to_response(

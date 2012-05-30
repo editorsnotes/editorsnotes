@@ -196,32 +196,6 @@ $(document).ready(function() {
     });
   });
 
-  // Initialize tabs.
-  var tabs = $('#tabs');
-  var tab_selector = 'ul.ui-tabs-nav a';
-
-  tabs.tabs({
-    show: function(event, ui) { 
-      if (ui.panel.id == 'scans') {
-        if ($('a.pushed').click().length == 0) {
-          $('a.scan:first').click();
-        }
-      } else if (ui.panel.id == 'transcript') {
-        var firstshow = (! footnote.done);
-        footnote.setup();
-        if (firstshow && 'fn' in url_params) {
-          var fn = $('a.footnote[href="/footnote/' + url_params.fn + '/"]');
-          if (fn.length == 1) {
-            window.setTimeout(function() {
-              $('html,body').scrollTop(fn.offset().top - 10);
-            }, 100);
-          }
-        }
-      }
-    },
-    event: 'change'
-  });
-
   // If no hash is present in URL, load default tab into history
   var url = $.param.fragment();
   if ( url == '' ) {
@@ -229,22 +203,40 @@ $(document).ready(function() {
     url = $.param.fragment();
   }
 
-  // Enable jquery-bbq
-  tabs.find(tab_selector).click(function() {
-      index = $(this).attr('href').substr(1);
-      $.bbq.pushState(index, 2);
+  var tabs = $('#tabs a');
+  
+  // Initialize tabs & jquery-bbq
+  tabs.click(function(e) {
+    e.preventDefault();
+    var index = $(this).attr('href').match(/#(.+)-tab/)[1];
+    $.bbq.pushState(index, 2);
+  }).on('show', function(e) {
+    var targetPanel = e.target.hash;
+    if (targetPanel.match(/scans/)) {
+      if ($('a.pushed').click().length == 0) {
+        $('a.scan:first').click();
+      }
+    } else if (targetPanel.match(/transcript/)) {
+      var firstshow = (! footnote.done);
+      footnote.setup();
+      if (firstshow && 'fn' in url_params) {
+        var fn = $('a.footnote[href="/footnote/' + url_params.fn + '/"]');
+        if (fn.length == 1) {
+          window.setTimeout(function() {
+            $('html,body').scrollTop(fn.offset().top - 10);
+          }, 100);
+        }
+      }
+    }
   });
-
-  var tabOptions = tabs.find(tab_selector);
 
   $(window).bind('hashchange', function(e) {
     var index = $.bbq.getState();
     $.each(index, function(key, value) {
-      var tabSearch = tabOptions.filter('a[href$="' + key + '"]')
-      if ( tabSearch.length > 0 ) {
-        tabSearch.triggerHandler('change');
+      var tabToOpen = tabs.filter('a[href*="' + key + '"]')
+      if ( tabToOpen.length > 0 ) {
+        tabToOpen.tab('show');
       }
     });
-  })
-  .trigger('hashchange');
+  }).trigger('hashchange');
 });
