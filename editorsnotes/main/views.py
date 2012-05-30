@@ -206,20 +206,16 @@ def topic(request, topic_slug):
                      'email': settings.ADMINS[0][1] }
     o['related_topics'] = o['topic'].related_topics.all()
     o['summary_cites'] = _sort_citations(o['topic'])
+
     notes = o['topic'].related_objects(Note)
-    o['note_count'] = len(notes)
     note_topics = [ [ ta.topic for ta in n.topics.exclude(topic=o['topic']) ] for n in notes ]
-    note_citations = [ _sort_citations(n) for n in notes ]
-    o['notes'] = zip(notes, note_topics, note_citations)
+    o['notes'] = zip(notes, note_topics)
+
     o['documents'] = o['topic'].related_objects(Document)
-    for note, topics, citations in o['notes']:
-       for cite in citations['all']:
-           if not cite.document in o['documents']:
-               cite.document.related_via = note
-               o['documents'].append(cite.document)
-    o['doc_count'] = len(o['documents'])
+
     o['thread'] = { 'id': 'topic-%s' % o['topic'].id, 'title': o['topic'].preferred_name }
     o['alpha'] = (request.user.groups.filter(name='Alpha').count() == 1)
+
     return render_to_response(
         'topic.html', o, context_instance=RequestContext(request))
 

@@ -31,8 +31,8 @@
     <ul id="tabs" class="nav nav-tabs">
       <li class="active"><a href="#article-tab">Article</a></li>
       <li><a href="#discuss-tab">Discussion</a></li>
-      <li><a href="#notes-tab">Related Notes <span class="alt">&amp;</span> Queries ({{ note_count }})</a></li>
-      <li><a href="#documents-tab">Related Documents ({{ doc_count }})</a></li>
+      <li><a href="#notes-tab">Related Notes <span class="alt">&amp;</span> Queries ({{ notes|length }})</a></li>
+      <li><a href="#documents-tab">Related Documents ({{ documents|length }})</a></li>
     </ul>
 
     <div class="tab-content">
@@ -72,17 +72,24 @@
 
       <section id="notes-tab" class="tab-pane">
         {% if notes %}
-          {% for note, topics, cites in notes %}
-          <div class="collapse-group">
-            <div class="collapse-header">
-              <a class="accordian-toggle"
-                href="#note-{{ note.id }}"
-                data-parent="#notes"
-                data-toggle="collapse"><h4>{{ note.title }}</h4></a>
+          {% for note, topics in notes %}
+          <div id="note-{{ note.id }}" class="related-note">
+            <div class="note-link">
+              <a href="{{ note.get_absolute_url }}">{{ note.title}}</a>
             </div>
-            <div id="note-{{ note.id }}" class="accordian-body collapse">
-              {% include "note.include" %}
+            <div class="note-last-modified">
+              <span class="quiet">Last modified: </span><span>{{ note.last_updated|date:"F j, Y" }}</span>
             </div>
+            {% if topics %}
+            <div class="note-topics">
+              <span class="quiet">Related topics: </span>
+              <ul class="topic-list unstyled">
+                {% for topic in topics %}
+                  <li>{{ topic|as_link }}</a>{% if not forloop.last %} | {% endif %}</li>
+                {% endfor %}
+              </ul>
+            </div>
+            {% endif %}
           </div>
           {% endfor %}
         {% else %}

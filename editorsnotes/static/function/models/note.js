@@ -68,9 +68,14 @@ $(document).ready(function() {
     if ($sortAnchor.hasClass('active')) {
       $sortAnchor
         .toggleClass('ascending descending')
-        .find('i').toggleClass('icon-chevron-up icon-chevron-down');
+        .find('i')
+          .toggleClass('icon-chevron-up icon-chevron-down');
     } else {
-      $sortAnchor.toggleClass('inactive active').siblings('a').removeClass('active').addClass('inactive');
+      $sortAnchor
+        .toggleClass('inactive active')
+        .siblings('a')
+          .removeClass('active')
+          .addClass('inactive');
     }
     $docs = $('#note-sections').children();
     $sortedDocs = _.sortBy($docs, function(doc) {
@@ -82,7 +87,9 @@ $(document).ready(function() {
         date = date.slice(0, date.indexOf('/'))
       }
       date.replace(/[^0-9]/, '');
-      while (date.length < 8) { date += '0' };
+      while (date.length < 8) {
+        date += '0'
+      };
 
       return date
     });
