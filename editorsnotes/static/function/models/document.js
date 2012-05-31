@@ -176,20 +176,13 @@ $(document).ready(function() {
   // Main routine starts here  --------------------------------------------------
 
   $('#scan-viewer').each(function() {
-
     // Initialize scan viewer.
     var viewer = new Seadragon.Viewer(this);
-    console.log(viewer);
-    $('#progressbar').progressbar({ value: 0 });
-    $('#progress-notify').position({
-      of: $(this),
-      my: 'center center',
-      at: 'center center'
-    }).hide();
 
     // Handle scan button clicks.
     $('a.scan').click(function(event) {
       event.preventDefault();
+
       $('a.btn-info').removeClass('btn-info');
       $(this).addClass('btn-info');
       viewer.close();
@@ -212,12 +205,22 @@ $(document).ready(function() {
     e.preventDefault();
     var index = $(this).attr('href').match(/#(.+)-tab/)[1];
     $.bbq.pushState(index, 2);
-  }).on('show', function(e) {
+  }).on('shown', function(e) {
     var targetPanel = e.target.hash;
     if (targetPanel.match(/scans/)) {
       if ($('a.pushed').click().length == 0) {
         $('a.scan:first').click();
       }
+      if ($('#progress-notify') && !monitor.initialized) {
+        $('#progressbar').progressbar({ value: 0 });
+        $('#progress-notify').position({
+          of: '#scan-viewer',
+          my: 'center center',
+          at: 'center center'
+        }).hide();
+        monitor.initialized = true;
+      }
+
     } else if (targetPanel.match(/transcript/)) {
       var firstshow = (! footnote.done);
       footnote.setup();

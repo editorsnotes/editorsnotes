@@ -1,5 +1,5 @@
-a:focus {
-    outline: none;
+a:focus, .btn:focus {
+    outline: none !important;
 }
 
 .topic-list, .topic-list li {
