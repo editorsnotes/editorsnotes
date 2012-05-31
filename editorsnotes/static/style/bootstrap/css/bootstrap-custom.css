@@ -137,3 +137,14 @@ ul .document-link p {
     font-size: 16px;
     font-weight: bold;
 }
+
+#scan-list {
+    width: 940px;
+    white-space: nowrap;
+    overflow-x: auto;
+    margin: 0 0 0px 0;
+    padding-bottom: 5px;
+}
+#scan-list li {
+    display: inline;
+}

@@ -77,12 +77,10 @@
 
         <section id="scans-tab" class="tab-pane">
           {% if scans %}
-          {% comment %}
-          TODO: enable scans
           <div id="scanlist-container">
           <ul id="scan-list">
             {% for scan in scans %}
-            <li><a class="scan btn" href="http://{{ domain }}{{ scan.image.url }}">{{ forloop.counter }}</a></li>
+            <li><a class="scan btn btn-info" href="http://{{ domain }}{{ scan.image.url }}">{{ forloop.counter }}</a></li>
             {% endfor %}
           </ul>
           </div>
@@ -92,7 +90,6 @@
             <span id="progress-message">Loading scanned document...</span>
             <div id="progressbar"></div>
           </div>
-          {% endcomment %}
           {% else %}
           <div>
             {% if document.has_links %}
