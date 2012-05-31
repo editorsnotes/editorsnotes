@@ -22,10 +22,11 @@ def project_roster(request, project_id):
         return HttpResponseForbidden(content=msg)
 
     try:
-        can_change = project.attempt('change', user)
-        o['can_change'] = True
+        project.attempt('change', user)
+        can_change = True
     except PermissionError:
         can_change = False
+    o['can_change'] = can_change
 
     if request.method == 'POST':
         if not can_change:
