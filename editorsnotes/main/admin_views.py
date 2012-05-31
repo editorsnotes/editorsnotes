@@ -78,7 +78,7 @@ def change_project(request, project_id):
         return HttpResponseForbidden(content=msg)
 
     if request.method == 'POST':
-        form = ProjectForm(request.POST, instance=project)
+        form = ProjectForm(request.POST, request.FILES, instance=project)
         if form.is_valid():
             form.save()
             messages.add_message(

@@ -4,6 +4,9 @@
 
 {% block content %}
 <h1>{{ project.name }}</h1>
+{% if project.image %}
+  <img src="{{ project.image.url }}" />
+{% endif %}
 {{ project.description|as_html|typogrify }}
 
 
