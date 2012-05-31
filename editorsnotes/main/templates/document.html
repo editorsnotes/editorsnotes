@@ -19,7 +19,7 @@
 {% endblock %}
 
 {% block js %}
-    <script type="text/javascript" src="http://seadragon.com/ajax/0.8/seadragon-min.js"></script>
+    <script type="text/javascript" src="/media/function/seadragon/seadragon-min.js"></script>
     <script type="text/javascript" src="/media/function/jquery/jquery.ellipsis.js"></script>
     <script type="text/javascript" src="/media/function/models/document.js"></script>
 {% endblock %}
@@ -80,12 +80,12 @@
           <div id="scanlist-container">
           <ul id="scan-list">
             {% for scan in scans %}
-            <li><a class="scan btn btn-info" href="http://{{ domain }}{{ scan.image.url }}">{{ forloop.counter }}</a></li>
+            <li><a class="scan btn" href="http://{{ domain }}{{ scan.image.url }}">{{ forloop.counter }}</a></li>
             {% endfor %}
           </ul>
           </div>
           <br/>
-          <div id="scan-viewer"></div>
+          <div id="scan-viewer" style="height: 500px;"></div>
           <div id="progress-notify">
             <span id="progress-message">Loading scanned document...</span>
             <div id="progressbar"></div>

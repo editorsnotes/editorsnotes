@@ -1,4 +1,5 @@
 Seadragon.Config.proxyUrl = '/proxy?url='
+Seadragon.Config.imagePath = '/media/function/seadragon/img/'
 $(document).ready(function() {
 
   // Parse URL params.
@@ -178,6 +179,7 @@ $(document).ready(function() {
 
     // Initialize scan viewer.
     var viewer = new Seadragon.Viewer(this);
+    console.log(viewer);
     $('#progressbar').progressbar({ value: 0 });
     $('#progress-notify').position({
       of: $(this),
@@ -188,8 +190,8 @@ $(document).ready(function() {
     // Handle scan button clicks.
     $('a.scan').click(function(event) {
       event.preventDefault();
-      $('a.pushed').removeClass('pushed');
-      $(this).addClass('pushed');
+      $('a.btn-info').removeClass('btn-info');
+      $(this).addClass('btn-info');
       viewer.close();
       monitor.init(viewer, 'http://api.zoom.it/v1/content/?url=' + encodeURIComponent(this.href));
       monitor.start();

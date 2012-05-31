@@ -148,3 +148,5 @@ ul .document-link p {
 #scan-list li {
     display: inline;
 }
+#scan-viewer {width:auto;height:400px;background-color:black;border:2px solid black;color:white;}
+#progress-notify {width:400px;height:53px;z-index:10;color:white;}
