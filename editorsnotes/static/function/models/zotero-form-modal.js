@@ -25,10 +25,17 @@ $(document).ready(function(){
   };
 
   var buildZoteroForm = function (zoteroString) {
-    var zoteroData = JSON.parse(zoteroString),
+    var zoteroData,
       $table = $('<table><tbody>');
       $tbody = $table.find('tbody');
 
+    console.log(zoteroString);
+
+    if (typeof(zoteroString) == 'string') {
+      zoteroData = JSON.parse(zoteroString)
+    } else {
+      zoteroData = zoteroString;
+    }
     $.each(zoteroData, function(key, val){
       switch (key) {
         case 'itemType':
@@ -141,12 +148,16 @@ $(document).ready(function(){
                 '</div>' +
                 '<div id="modal-edit-row">' +
                   '<a id="document-edit-close" class="btn btn-danger">Cancel</a>' +
+                  '<span id="modal-loading">Loading... ' +
+                  '<img src="/media/style/icons/ajax-loader.gif">' +
+                  '</span>' +
                   '<a id="document-save" class="btn btn-primary pull-right">Save</a>' +
                 '</div>' +
               '</div>';
 
   var $modal = $(modal).hide().appendTo($('body')),
-    $documentwym;
+    $documentwym,
+    $loader;
   $modal.find('#document-description-edit').wymeditor({
     skin: 'custom',
     toolsItems: [
@@ -179,16 +190,25 @@ $(document).ready(function(){
     }
     $documentwym.html('');
 
-    $modal
-      .modal({backdrop: 'static'}).css({
-        'width': '800px',
-        'top': '45%',
-        'margin-left': function() {
-          return -($(this).width() / 2);
-        }
-      })
-      .find('#document-zotero-information')
-        .html('').append(templates.itemTypeSelect);
+    if ($modal.hasClass('modal-initialized')) {
+      $modal.modal('show');
+    } else {
+      $modal
+        .modal({backdrop: 'static'})
+        .css({
+          'width': '800px',
+          'top': '45%',
+          'margin-left': function() {
+            return -($(this).width() / 2);
+          }
+        }).addClass('modal-initialized');
+      $loader = $modal.find('#modal-loading')
+        .position({'of' : '#modal-edit-row'})
+        .hide();
+    }
+
+    $modal.find('#document-zotero-information')
+      .html('').append(templates.itemTypeSelect);
   });
 
   $('#document-edit-close').live('click', function(){
@@ -218,11 +238,16 @@ $(document).ready(function(){
 
   $('select[name="item-type-select"]').live('change', function() {
     var selectedItemType = $(this).val();
+    $loader.show();
     if (selectedItemType.length) {
       $.ajax({
-        url: '/api/document/blank/',
-        data: {'itemType': selectedItemType, 'type': 'json'},
+        url: '/api/document/template/',
+        data: {
+          'itemType': selectedItemType,
+          'templateFor': 'item'
+        },
         success: function(data) {
+          $loader.hide();
           $modal.find('#document-zotero-information')
             .html('')
             .append(buildZoteroForm(data));
@@ -246,10 +271,15 @@ $(document).ready(function(){
     };
 
     if (!creatorsCache[selectedItemType]) {
+      $loader.show();
       $.ajax({
-        url: '/api/document/creators/',
-        data: {'itemType': selectedItemType},
+        url: '/api/document/template/',
+        data: {
+          'itemType': selectedItemType,
+          'templateFor': 'creators'
+        },
         success: function(data) {
+          $loader.hide();
           replaceCreatorTypes(data);
           creatorsCache[selectedItemType] = data;
         }

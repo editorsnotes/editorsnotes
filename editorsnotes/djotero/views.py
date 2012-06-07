@@ -1,7 +1,8 @@
+from django.core.cache import cache
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from editorsnotes.main.models import Document, Topic, TopicAssignment, Note, Citation
 from editorsnotes.main.templatetags.display import as_link
@@ -159,13 +160,40 @@ def update_zotero_info(request, username=None):
     redirect_url = request.GET.get('return_to', '/')
     return HttpResponseRedirect(redirect_url)
 
+def zotero_template(request):
+    if not request.is_ajax():
+        return HttpResponseBadRequest()
+    item_type = request.GET.get('itemType')
+    template_for = request.GET.get('templateFor')
+
+    if not item_type:
+        return HttpResponseBadRequest(
+            content='Provide an item type')
+
+    if template_for == 'item':
+        cache.add(
+            'item_template_%s' % item_type,
+            utils.get_item_template(item_type),
+            60 * 24 * 7)
+        item_template = cache.get('item_template_%s' % item_type)
+        return HttpResponse(item_template, mimetype='application/json')
+
+    elif template_for == 'creators':
+        creators = cache.add(
+            'creators_%s' % item_type,
+            utils.get_creator_types(item_type),
+            60 * 24 * 7)
+        creators = cache.get('creators_%s' % item_type)
+        return HttpResponse(creators, mimetype='application/json')
+
+    else:
+        return HttpResponseBadRequest()
+
 def get_blank_item(request):
     if not request.is_ajax() or not request.GET.get('itemType', False):
         return HttpResponseBadRequest()
     item_type = request.GET.get('itemType')
     blank_item = utils.get_item_template(item_type)
-    if request.GET.get('type', '') == 'json':
-        return HttpResponse(blank_item)
     form = ZoteroWidget()
     new_form = form.render('', blank_item)
     return HttpResponse(new_form, mimetype='text/plain')
