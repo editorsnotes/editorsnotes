@@ -208,9 +208,11 @@ def topic(request, topic_slug):
 
     notes = o['topic'].related_objects(Note)
     note_topics = [ [ ta.topic for ta in n.topics.exclude(topic=o['topic']) ] for n in notes ]
+    note_cites = [ ns.document for note in notes for ns in note.sections.all()
+                   if ns.document ]
     o['notes'] = zip(notes, note_topics)
 
-    o['documents'] = o['topic'].related_objects(Document)
+    o['documents'] = o['topic'].related_objects(Document) + note_cites
 
     o['thread'] = { 'id': 'topic-%s' % o['topic'].id, 'title': o['topic'].preferred_name }
     o['alpha'] = (request.user.groups.filter(name='Alpha').count() == 1)

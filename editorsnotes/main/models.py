@@ -189,10 +189,19 @@ class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific)
             return None
     def get_all_related_topics(self):
         topics = []
+
+        # Explicitly stated topic assignments
         topics += [ta.topic for ta in self.topics.all()]
+
+        # Topic assignments via Citation objects
         topics += [c.content_object for c in self.citations.filter(
             content_type=ContentType.objects.get_for_model(Topic))]
-        return topics
+
+        # Topic assignments via NoteSection objects
+        for ns in self.notesection_set.all():
+            topics += [ t for t in ns.get_all_related_topics() ]
+
+        return set(topics)
     def get_metadata(self):
         metadata = {}
         for md in self.metadata.all():
@@ -442,7 +451,7 @@ class Topic(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
             return [ ta.content_object for ta in self.assignments.filter(
                     content_type=ContentType.objects.get_for_model(model)) ]
         else:
-            return [ ta.content_object for ta in o['topic'].assignments.all() ]
+            return [ ta.content_object for ta in self.assignments.all() ]
     class Meta:
         ordering = ['slug']
 
@@ -471,8 +480,15 @@ class NoteSection(LastUpdateMetadata):
     note = models.ForeignKey(Note, related_name='sections')
     document = models.ForeignKey(Document, blank=True, null=True)
     content = fields.XHTMLField(blank=True, null=True)
+    topics = generic.GenericRelation('TopicAssignment')
     def has_content(self):
         return self.content is not None
+    def get_all_related_topics(self):
+        # Note sections can have their own topic assignments, but also inherit
+        # the topic assignments of the parent note
+        return set( [ta.topic for ta in self.note.topics.all()] +
+                    [ta.topic for ta in self.topics.all()] )
+
 
 class Project(models.Model, URLAccessible, PermissionsMixin):
     name = models.CharField(max_length='80')
