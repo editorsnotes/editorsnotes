@@ -97,27 +97,26 @@ def all_documents(request, project_slug=None):
         template = 'filtered-documents.html'
         o['filtered'] = True
 
-    valid_facets = [
+    # Narrow search query according to GET parameters
+    qs = SearchQuerySet().models(Document)
+
+    query = []
+    params = [p for p in request.GET.keys() if p[-2:] == '[]']
+    for param in params:
+        this_query = [ '%s:"%s"' % (param[:-2], val)
+                      for val in request.GET.getlist(param) ]
+        query += [' AND '.join(this_query)]
+    qs = qs.narrow(' AND '.join(query)) if query else qs
+
+    # Facet results
+    valid_facets = (
         'project_id',
         'related_topic_id',
         'archive',
         'publicationTitle',
         'itemType',
-        'creators'
-    ]
-
-
-    # Narrow search query according to GET parameters
-    qs = SearchQuerySet().models(Document)
-    params = set.intersection(set(valid_facets), set(request.GET))
-    query = []
-    for param in params:
-        query_filter = [ '%s:"%s"' % (param, val) for val
-                        in request.GET.get(param).split('|') ]
-        query += [ ' AND '.join(query_filter)]
-    qs = qs.narrow(' AND '.join(query)) if query else qs
-
-    # Facet results
+        'creators',
+    )
     for f in valid_facets:
         qs = qs.facet(f)
 
@@ -154,7 +153,7 @@ def all_documents(request, project_slug=None):
             o['facets'][facet] = [ (f, f, count)
                                   for f, count in sorted_facets if f ]
 
-    o['documents'] = qs 
+    o['documents'] = qs
     o['query'] = query
     return render_to_response(
         template, o, context_instance=RequestContext(request))

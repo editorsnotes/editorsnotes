@@ -15,6 +15,7 @@ class DocumentIndex(RealTimeSearchIndex):
     creators = MultiValueField()
     archive = CharField()
     itemType = CharField()
+    publicationTitle = CharField()
     def prepare_project_id(self, obj):
         return [p.id for p in obj.get_project_affiliation()]
     def prepare_related_topic_id(self, obj):

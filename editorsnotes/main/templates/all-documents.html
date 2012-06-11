@@ -5,6 +5,32 @@
 
 {% block css %}
 <style type="text/css">
+#filters {
+  margin-top: .75em;
+}
+#filters.loaded h3 img {
+  display: none;
+}
+#available-filters li {
+  margin: 4px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  display: block;
+  text-align: left;
+}
+.document-filter i {
+  opacity: .7;
+}
+#filter-form div[class*="-filter"] {
+  display: none;
+}
+#available-filters {
+  padding-right: 10px;
+  border-right: 1px solid #ccc;
+}
+#filter-form, #filter-form div.span10 {
+  margin-left: 6px;
+}
 #sort-options {
   font-size: 120%;
   font-weight: bold;
@@ -47,7 +73,7 @@
 
 {% block content %}
 <header>
-  <h2>All Documents</h2>
+<h2>All Documents</h2>
 </header>
 
 
