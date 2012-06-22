@@ -39,12 +39,11 @@ class ZoteroLink(models.Model):
             for part in date_parts:
                 z[part] = date_parts[part]
         if z['creators']:
-            names = utils.resolve_names(z, 'facets')
-            z.pop('creators')
+            names = z.pop('creators')
             output = z.items()
             for name in names:
-                for creator_type, creator_value in name.items():
-                    output.append((creator_type, creator_value))
+                output.append(
+                    (name['creatorType'], utils.get_creator_name(name)) )
         else:
             output = z.items()
         return output

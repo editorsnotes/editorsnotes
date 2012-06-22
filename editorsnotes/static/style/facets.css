@@ -1,0 +1,71 @@
+#facets,
+#filters {
+  margin-bottom: .75em;
+}
+
+#filters.loaded h3 img {
+  display: none;
+}
+
+#available-facets li,
+#available-filters li {
+  margin: 4px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  display: block;
+  text-align: left;
+}
+
+.document-facet i,
+.document-filter i {
+  opacity: .7;
+}
+
+#facet-inputs div[class*="filter"],
+#filter-form div[class*="filter"] {
+  display: none;
+}
+
+#available-facets,
+#available-filters {
+  padding-right: 10px;
+  border-right: 1px solid #ccc;
+}
+
+#facet-inputs, #facet-inputs div.span10,
+#filter-form, #filter-form div.span10 {
+  margin-left: 6px;
+}
+
+#sort-options {
+  font-size: 120%;
+  font-weight: bold;
+  margin-bottom: 1em;
+}
+#sort-options .sort-option.sort-option-selected {
+  padding-left: 18px;
+}
+#sort-options .sort-option:first-child {
+  padding-left: 10px;
+}
+.sort-option {
+  cursor: pointer;
+  cursor: hand;
+  margin-left: .75em;
+}
+.sort-option i {
+  display: none;
+}
+.sort-option.sort-option-selected i {
+  display: inline-block;
+  vertical-align: baseline;
+}
+.timeago-label {
+  margin-top: .75em;
+}
+.timeago-label:first-child {
+  margin-top: 0;
+}
+.timeago-label:last-child {
+  display: none
+}

@@ -227,7 +227,7 @@ class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific)
         if self.zotero_link():
             data_attributes = ''.join(
                 [ ' data-%s="%s"' % (k, escape(v)) 
-                  for k, v in self.zotero_link().get_zotero_fields() if v != "" and k not in ['tags', 'extra'] ])
+                  for k, v in self.zotero_link().get_zotero_fields() if v and k not in ['tags', 'extra'] ])
         else:
             data_attributes = ''
         if self.edtf_date:

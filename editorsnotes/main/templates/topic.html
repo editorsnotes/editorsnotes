@@ -6,11 +6,13 @@
 {% block js %}
 <script type="text/javascript" src="/media/function/jquery/jquery.isotope.min.js"></script>
 <script type="text/javascript" src="/media/function/models/topic.js"></script>
+<script type="text/javascript" src="/media/function/facets.js"></script>
 {% endblock %}
 
 {% block css %}
 <link rel="stylesheet" href="/media/style/disqus.css" type="text/css"/>
 <link rel="stylesheet" href="/media/style/topic.css" type="text/css"/>
+<link rel="stylesheet" href="/media/style/facets.css" type="text/css" />
 {% endblock %}
 
 {% block content %}
@@ -67,7 +69,9 @@
       </section>
 
       <section id="discuss-tab" class="tab-pane">
+      {% comment %}
         {% include "disqus.include" %}
+      {% endcomment %}
       </section>
 
       <section id="notes-tab" class="tab-pane">
@@ -99,49 +103,14 @@
 
       <section id="documents-tab" class="tab-pane">
         {% if documents %}
-        <div id="main">
-          <div id="document-facets">
-            <div class="facet-header">
-              <label class="checkbox">
-                <input id="year-select-all" type="checkbox" checked/>
-                <span class="facet-name">Year</span>
-              </label>
-              <span id='year-sort-button'
-                    class="sort-button ui-state-default ui-corner-all"
-                    data-facet="year">
-                <span class="ui-icon ui-icon-triangle-1-s"></span>
-              </span>
-            </div>
-            <ul class="unstyled" id="document-year-facet">
-            </ul>
-            <div class="facet-header">
-              <label class="checkbox">
-                <input id="itemtype-select-all" type="checkbox" checked/>
-                <span class="facet-name">Item Type</span>
-              </label>
-              <span class="sort-button ui-state-default ui-corner-all"
-                    data-facet="itemtype">
-                <span class="ui-icon ui-icon-triangle-1-s"></span>
-              </span>
-            </div>
-            <ul class="unstyled" id="document-itemtype-facet">
-            </ul>
-          </div>
+        <ul id="document-list" class="unstyled">
+          {% for document in documents %}
+          <li class="document-list-item">
+            {{ document|as_link|typogrify }}
+          </li>
+          {% endfor %}
+        </ul>
 
-          <div id="content">
-            <div id="document-list">
-              {% for document in documents %}
-              <div class="document-item">
-              {{ document|as_link|typogrify }}
-              {% if document.related_via %}
-              [via {{ document.related_via|as_link|typogrify }}]
-              {% endif %}
-              </div>
-              {% endfor %}
-            </div>        
-          </div>
-
-        </div>
         {% else %}
           There are no documents related to <em>{{ topic.preferred_name }}</em>.
             <div id="import-documents">
