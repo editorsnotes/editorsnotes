@@ -12,6 +12,7 @@ from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequ
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
+from itertools import chain
 from reversion import get_unique_for_object
 from urllib import urlopen
 from models import *
@@ -207,12 +208,14 @@ def topic(request, topic_slug):
     o['summary_cites'] = _sort_citations(o['topic'])
 
     notes = o['topic'].related_objects(Note)
-    note_topics = [ [ ta.topic for ta in n.topics.exclude(topic=o['topic']) ] for n in notes ]
-    note_cites = [ ns.document for note in notes for ns in note.sections.all()
-                   if ns.document ]
+    note_topics = [ [ ta.topic for ta in n.topics.exclude(topic=o['topic']).select_related('topic') ] for n in notes ]
+    note_sections = NoteSection.objects.filter(note__in=[n.id for n in notes])
+
     o['notes'] = zip(notes, note_topics)
 
-    o['documents'] = o['topic'].related_objects(Document) + note_cites
+    o['documents'] = set(chain(
+        o['topic'].related_objects(Document),
+        Document.objects.filter(notesection__in=note_sections)))
 
     o['thread'] = { 'id': 'topic-%s' % o['topic'].id, 'title': o['topic'].preferred_name }
     o['alpha'] = (request.user.groups.filter(name='Alpha').count() == 1)

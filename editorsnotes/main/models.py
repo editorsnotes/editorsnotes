@@ -126,7 +126,7 @@ class DocumentManager(models.Manager):
     # Include whether or not documents have scans/transcripts in default query.
     def get_query_set(self):
         return super(DocumentManager, self).get_query_set()\
-            .select_related('_transcript')\
+            .select_related('_transcript', '_zotero_link')\
             .extra(select = { 'link_count': '''SELECT COUNT(*) 
 FROM main_documentlink WHERE main_documentlink.document_id = main_document.id''',
                               'scan_count': '''SELECT COUNT(*) 
@@ -447,9 +447,14 @@ class Topic(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
                     e.message_dict['preferred_name'].append(u'Topic with a very similar Preferred name already exists.')
             raise e
     def related_objects(self, model=None):
+        u"""
+        If provided with a model, returns a queryset for that model. Otherwise,
+        simply return a list of objects
+        """
         if model:
-            return [ ta.content_object for ta in self.assignments.filter(
-                    content_type=ContentType.objects.get_for_model(model)) ]
+            return model.objects.filter(
+                id__in=[ ta.object_id for ta in self.assignments.filter(
+                    content_type=ContentType.objects.get_for_model(model)) ])
         else:
             return [ ta.content_object for ta in self.assignments.all() ]
     class Meta:
