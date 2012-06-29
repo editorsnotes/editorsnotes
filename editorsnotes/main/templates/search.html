@@ -4,14 +4,44 @@
 
 {% load highlight display typogrify %}
 
+{% block js %}
+<script type="text/javascript" src="/media/function/facets.js"></script>
+<script type="text/javascript">
+  $(document).ready(function() {
+      var facets = $('#results').facet({
+        'fields': [
+          {'key': 'model', 'label': 'Result type'}
+        ],
+        'itemSelector': '.searchresult'
+      });
+  });
+</script>
+{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="/media/style/facets.css" type="text/css" />
+<style type="text/css">
+  .highlighted {
+    background: #faa732;
+    padding: 2px;
+  }
+  .searchresult > a * {
+    display: inline;
+  }
+  .searchresult {
+    margin-bottom: .75em;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div id="searchresults" class="span-24 last">
 {% if query %}
   {% if results %}
   <p id="message">Search results for <em>{{ query }}</em>:</p>
-  <ol class="span-18 last">
+  <ol id="results" class="span-18 last">
     {% for result in results %}
-    <li class="searchresult">
+    <li data-model="{{ result.verbose_name }}" class="searchresult">
       {{ result.verbose_name }}:
       {{ result.object|as_link }}
       <div>
