@@ -19,7 +19,16 @@ $(document).ready(function() {
     var targetPanel = e.target.hash;
     if (targetPanel.match(/documents/)) {
       if (!facetsInitiated) {
-        $('#document-list').facet();
+        $('#document-list').facet({
+          fields: [
+            {'key': 'itemtype', 'label': 'Item Type'},
+            {'key': 'publicationtitle', 'label': 'Publication Title'},
+            {'key': 'author', 'label': 'Author'},
+            {'key': 'recipient', 'label': 'Recipient'},
+            {'key': 'archive', 'label': 'Archive'}
+          ],
+          itemSelector: '.document'
+        });
         facetsInitiated = true;
       }
     }
