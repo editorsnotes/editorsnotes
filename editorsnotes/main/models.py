@@ -187,6 +187,15 @@ class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific)
             return self._zotero_link
         except:
             return None
+    def get_all_representations(self):
+        r = []
+        if self.has_transcript():
+            r.append('Transcript')
+        if self.has_scans():
+            r.append('Scans')
+        if hasattr(self, 'link_count') and self.link_count:
+            r.append('External Link')
+        return r
     def get_all_related_topics(self):
         topics = []
 
@@ -232,6 +241,8 @@ class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific)
             data_attributes = ''
         if self.edtf_date:
             data_attributes += ' data-edtf-date="%s"' % self.edtf_date
+        data_attributes += ' data-representations="%s"' % (
+            self.get_all_representations()) if self.get_all_representations() else ''
         return mark_safe(
             '<div id="document-%s" class="document%s"%s>%s</div>' % (
                 self.id,

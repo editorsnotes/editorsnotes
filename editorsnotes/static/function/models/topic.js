@@ -25,7 +25,8 @@ $(document).ready(function() {
             {'key': 'publicationtitle', 'label': 'Publication Title'},
             {'key': 'author', 'label': 'Author'},
             {'key': 'recipient', 'label': 'Recipient'},
-            {'key': 'archive', 'label': 'Archive'}
+            {'key': 'archive', 'label': 'Archive'},
+            {'key': 'representations', 'label': 'Representations'}
           ],
           itemSelector: '.document'
         });

@@ -200,6 +200,9 @@
           var facetKey = this.key;
           if (data.hasOwnProperty(facetKey)){
             var facetVal = data[facetKey];
+            if (facetVal.substr(0,2) == "['" && facetVal.substr(-2) == "']") {
+              facetVal = JSON.parse(facetVal.replace(/'/g, '"'));
+            }
             if (!typeof(facetVal) == 'string') {
               $.each(facetVal, function() {
                 f.pushFacetValue(facetKey, this, $this[0]);

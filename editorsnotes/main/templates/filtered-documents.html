@@ -37,6 +37,10 @@
           <i class="icon-plus"></i>
           Publication title
         </li>
+        <li for="representations" class="document-filter btn">
+          <i class="icon-plus"></i>
+          Representation
+        </li>
       </ul>
     </div>
 
@@ -74,6 +78,12 @@
       {% if facets.publicationTitle %}
       <div class="publication-filter span10">
         {% create_facet_field "Publication Title" facets.publicationTitle %}
+      </div>
+      {% endif %}
+
+      {% if facets.representations %}
+      <div class="representations-filter span10">
+        {% create_facet_field "Representation" facets.representations %}
       </div>
       {% endif %}
     </div>

@@ -117,6 +117,7 @@ def all_documents(request, project_slug=None):
         'publicationTitle',
         'itemType',
         'creators',
+        'representations'
     )
     for f in valid_facets:
         qs = qs.facet(f)
