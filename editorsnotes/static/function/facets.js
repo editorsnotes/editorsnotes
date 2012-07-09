@@ -201,13 +201,13 @@
           if (data.hasOwnProperty(facetKey)){
             var facetVal = data[facetKey];
             if (facetVal.substr(0,2) == "['" && facetVal.substr(-2) == "']") {
-              facetVal = JSON.parse(facetVal.replace(/'/g, '"'));
+              facetVal = facetVal.slice(1,-1).split(/, ?/).map(function(a) { return a.slice(1,-1) });
             }
-            if (!typeof(facetVal) == 'string') {
+            if (facetVal instanceof Array) {
               $.each(facetVal, function() {
                 f.pushFacetValue(facetKey, this, $this[0]);
               });
-            } else {
+            } else if (typeof(facetVal) == 'string') {
               f.pushFacetValue(facetKey, facetVal, $this[0]);
             }
           }
