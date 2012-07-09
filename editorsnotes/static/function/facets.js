@@ -163,6 +163,7 @@
               $.each(thisFacet, function(item, arr) {
                 facetLength += 1;
                 var $item = $('<li>')
+                  .data('length', arr.length)
                   .appendTo($filterList)
                   .html('&nbsp;' + item + ' (' + arr.length + ')')
                 $('<input class="facet-input" type="checkbox">')
@@ -173,6 +174,14 @@
               if (!facetLength) {
                 $('<span class="quiet">(no values)</span>').appendTo($filterList);
               }
+
+              // Sort by number of matches
+              var itemsToSort = $filterList.children('li').get();
+              itemsToSort.sort(function(a, b) {
+                return $(b).data('length') - $(a).data('length');
+              });
+              $.each(itemsToSort, function(i, item) { $filterList.append(item) });
+
             });
             
             $.each(checkedInputs, function() {
