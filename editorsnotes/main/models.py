@@ -442,7 +442,7 @@ class Topic(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
             return [ ta.content_object for ta in self.assignments.filter(
                     content_type=ContentType.objects.get_for_model(model)) ]
         else:
-            return [ ta.content_object for ta in o['topic'].assignments.all() ]
+            return [ ta.content_object for ta in self.assignments.all() ]
     class Meta:
         ordering = ['slug']
 
