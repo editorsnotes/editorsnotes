@@ -29,6 +29,10 @@ def as_link(obj, fragment=''):
             obj.as_html()))
 
 @register.filter
+def object_name(obj):
+    return obj._meta.object_name
+
+@register.filter
 def timeago(datetime):
     utc_datetime = utils.naive_to_utc(datetime)
     return mark_safe(

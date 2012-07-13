@@ -68,4 +68,5 @@ urlpatterns += patterns('editorsnotes.djotero.views',
 )
 urlpatterns += patterns('editorsnotes.refine.views',
     url(r'^topics/clusters/$', 'show_clusters', name='show_clusters_view'),
+    url(r'^topics/merge/$', 'merge_cluster', name='merge_cluster_view'),
 )
