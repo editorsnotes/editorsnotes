@@ -50,6 +50,8 @@
 <script type="text/javascript">
   $(document).ready(function() {
 
+    jQuery.ajaxSettings.traditional = true;
+
     var strayDot = $('<div>').css({
       'height': '1px',
       'width': '1px',
@@ -60,9 +62,11 @@
     // Clear inputs on page load
     $('input:checked').prop('checked', false);
 
+    // Show topic details along right side of page
     $('.view-candidate-details').click(function() {
       var $this = $(this),
-        $thisCandidate = $this.closest('.merge-candidate');
+        $thisCandidate = $this.closest('.merge-candidate'),
+        $thisCandidateDetail;
 
       $('.view-candidate-details').show();
       $this.hide();
@@ -72,10 +76,22 @@
         .siblings()
         .removeClass('viewing-details');
 
-      $('.candidate-detail')
+      $thisCandidateDetail = $('.candidate-detail')
         .hide()
         .filter('#' + $thisCandidate.attr('id') + '-detail')
         .show();
+
+      var detailBottom = $thisCandidateDetail.position()['top'] +
+        $thisCandidateDetail.innerHeight();
+      var candidateBottom = $thisCandidate.position()['top'] + 
+        $thisCandidate.innerHeight();
+
+      // Resize detail box if it doesn't reach below its corresponding selector
+      if(candidateBottom > detailBottom) {
+        $thisCandidateDetail.css({
+            'min-height': $thisCandidateDetail.innerHeight() + candidateBottom - detailBottom
+        });
+      }
 
       strayDot.position({
         'my': 'right bottom',
@@ -85,8 +101,9 @@
       });
     });
 
-
+    // Allow merge when at least two topics selected
     $('.mark-for-merge').click(function() {
+
       var $checked = $('.mark-for-merge:checked'),
         $continueButton = $('#merge-topics');
 
@@ -95,6 +112,25 @@
       } else {
         $continueButton.addClass('disabled').removeClass('btn-primary');
       }
+    });
+
+    // Continue button redirect
+    $('#merge-topics').click(function() {
+      if ($(this).hasClass('disabled')) {
+        return;
+      }
+
+      var checked = $('.mark-for-merge:checked').map(function() {
+        return this.value;
+      }).get();
+
+      var url = window.location.pathname + '?' + $.param({
+        'continue' : 1,
+        'topic': checked
+      });
+
+      window.location.href = url;
+
     });
   });
 </script>
@@ -112,7 +148,9 @@
         <h4>{{ candidate }}</h4>
         <div class="candidate-actions">
           <label class="checkbox">
-            <input type="checkbox" class="mark-for-merge" />Mark for merge
+            <input value={{ candidate.id }}
+                   type="checkbox"
+                   class="mark-for-merge" />Mark for merge
           </label>
           <a href="#" class="view-candidate-details btn pull-right">View details</a>
         </div>
@@ -120,9 +158,14 @@
       {% endfor %}
 
       <div id="cluster-actions">
-        <a href="#" id="merge-topics" class="btn disabled">Continue merge</a>
-        <a href="#" id="delete-cluster" class="btn btn-danger pull-right">Delete cluster</a>
-        <p>Select at least two items to merge in order to continue. If none of these items should be merged, delete the cluster.</p>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete_cluster" />
+          <button id="merge-topics" type="button" class="btn disabled">Continue</button>
+          <button id="delete-cluster" type="submit" class="btn btn-danger pull-right">Delete cluster</button>
+          <p style="text-align: justify;">Mark items to be merged after reviewing their details. Select 'Continue' to preview the resulting merged topic before completing the process.</p>
+          <p style="text-align: justify;">If none of these items should be combined, delete the cluster.</p>
+        </form>
       </div>
   </div>
 
