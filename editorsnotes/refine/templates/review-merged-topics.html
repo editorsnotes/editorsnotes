@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% load display %}
+
+{% block css %}
+<style type="text/css">
+  /* viewing candidate detail */
+  dd .related-object * {
+    display: inline;
+  }
+  .related-object {
+    text-indent: -18px;
+    padding-left: 18px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<p>
+  Review the following information to ensure that the topics you have selected to merge all refer to the same thing.
+  Save to complete the merge.
+  After completing the merge, you will be redirected to the new topic page, where you can add or remove aliases and change the topic's article as needed.
+</p>
+
+<hr />
+
+<form method="post">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="merge_cluster" />
+  {% for topic in topics %}
+  <input type="hidden" name="topic" value="{{ topic.id }}" />
+  {% endfor %}
+  <h3>{{ preferred_name }}</h3>
+
+  <dl>
+
+    <dt>Aliases</dt>
+    <dd>
+      <ul class="unstyled">
+      {% for alias in existing_aliases %}
+      {% endfor %}
+      {% for alias in new_aliases %}
+        <li>{{ alias }}</li>
+      {% endfor %}
+      </ul>
+    </dd>
+
+    <dt>Article</dt>
+    <dd>
+      {% if article %}
+        {{ article|as_html }}
+      {% else %}
+        <span class="quiet">None</span>
+      {% endif %}
+    </dd>
+
+    <dt>Related Objects</dt>
+    <dd>
+      {% for object in related_objects %}
+      <div class="related-object">{{ object|object_name }}: {{ object|as_link }}</div>
+      {% endfor %}
+    </dd>
+
+  </dl>
+
+  <hr />
+
+  <div>
+    <button type="submit" class="btn btn-primary">Save new topic</button>
+    <button type="submit" class="btn btn-danger">Cancel</button>
+  </div>
+
+</form>
+{% endblock %}
