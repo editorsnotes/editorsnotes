@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from editorsnotes.main.models import Topic, Document
 
 class BaseCluster(models.Model):
@@ -15,3 +16,9 @@ class TopicCluster(BaseCluster):
 
 class DocumentCluster(BaseCluster):
     documents = models.ManyToManyField(Document, related_name='in_cluster')
+
+class BadClusterPair(models.Model):
+    content_type = models.ForeignKey(ContentType)
+    obj1 = models.PositiveIntegerField()
+    obj2 = models.PositiveIntegerField()
+
