@@ -1,11 +1,13 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from editorsnotes.main.models import Topic, Document
-from models import TopicCluster
+from models import TopicCluster, BadClusterPair
+from itertools import combinations
 from lxml import html
 import utils as rutils
 import re
@@ -32,13 +34,17 @@ def merge_cluster(request, cluster_id):
                     if next_cluster else '/')
 
         if action == 'delete_cluster':
+            for obj1, obj2 in combinations(o['cluster'].topics.all(), 2):
+                BadClusterPair.objects.create(
+                    content_type=ContentType.objects.get_for_model(Topic),
+                    obj1=int(obj1.id),
+                    obj2=int(obj2.id))
             o['cluster'].delete()
-            messages.add_message(
-                request, messages.SUCCESS,
-                'Cluster with id %s deleted' % cluster_id)
+
+            messages.add_message(request, messages.SUCCESS,
+                                 'Cluster with id %s deleted' % cluster_id)
 
             url = request.GET.get('return_to', next_url)
-
             return HttpResponseRedirect(url)
 
         elif action == 'merge_cluster':
@@ -50,14 +56,13 @@ def merge_cluster(request, cluster_id):
             messages.add_message(request, messages.SUCCESS, message)
 
             url = request.GET.get('return_to', next_url)
-
             return HttpResponseRedirect(url)
 
     # Review choices for merging
     elif request.GET.get('continue'):
         topics_to_merge = request.GET.getlist('topic')
         topics = Topic.objects.filter(id__in=topics_to_merge,
-                                      topiccluster=cluster_id)
+                                      in_cluster=cluster_id)
 
         if len(topics) != len(topics_to_merge):
             return HttpResponseBadRequest()

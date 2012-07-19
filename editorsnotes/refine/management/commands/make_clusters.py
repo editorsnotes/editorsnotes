@@ -1,8 +1,9 @@
+from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import LabelCommand, CommandError
 from django.db import transaction
 from django.conf import settings
 from editorsnotes.main.models import Topic, Document
-from editorsnotes.refine.models import TopicCluster, DocumentCluster
+from editorsnotes.refine.models import TopicCluster, DocumentCluster, BadClusterPair
 from google.refine import refine
 from urllib2 import URLError
 import datetime
@@ -92,6 +93,9 @@ class Command(LabelCommand):
     @transaction.commit_on_success
     def write_clusters(self, model_name, cluster_list):
         new_cluster_count = 0
+        skipped_count = 0
+
+        ct = ContentType.objects.get(name=model_name)
 
         for cluster in filter(lambda x: len(x) < 5, cluster_list):
             unique_cluster_set = True
@@ -100,15 +104,24 @@ class Command(LabelCommand):
                 potential_cluster = [ Topic.objects.get(
                     preferred_name=match['value']) for match in cluster ]
             elif model_name == 'document':
-                potential_cluster = [ document.objects.get(
+                potential_cluster = [ Document.objects.get(
                     name=match['value']) for match in cluster ]
 
-            # Clusters will not be created from objects which are already in
-            # another cluster, to avoid confusion. They can be picked up in
-            # later passes.
+            # Don't create clusters made up of any objects already in another
+            # cluster to avoid confusion. They can be picked up in later passes.
             if any(map(lambda x: x.in_cluster.count(), potential_cluster)):
                 continue
 
+            # Don't create clusters already marked as not being matches
+            obj_ids = [o.id for o in potential_cluster]
+            bad_cluster = BadClusterPair.objects.filter(
+                content_type=ct, obj1__in=obj_ids, obj2__in=obj_ids)
+
+            if bad_cluster:
+                skipped_count += 1
+                continue
+
+            # Create the new cluster
             if model_name == 'topic':
                 new_cluster_object = TopicCluster.objects.create()
                 for t in potential_cluster:
@@ -117,10 +130,11 @@ class Command(LabelCommand):
                 new_cluster_object = DocumentCluster.objects.create()
                 for d in potential_cluster:
                     new_cluster_object.documents.add(d)
-
             new_cluster_object.message = 'Created automatically'
             new_cluster_object.save()
             new_cluster_count += 1
 
+        self.stderr.write('%s clusters skipped, ' % str(skipped_count))
         self.stderr.write('%s clusters created.\n' % str(new_cluster_count))
+
         return new_cluster_count
