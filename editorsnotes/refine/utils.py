@@ -10,6 +10,9 @@ def get_preferred_topic_name(topics):
     Returns a tuple of (Preferred name, [rest of names])
     """
     topics = sorted(topics, key=lambda t: t.created)
+
+    # Basic check for LOC personal name heading format. If none of the names
+    # match this, the oldest one is used.
     PREFERRED_NAME_FMT = re.compile('.*?\d{4}-(?:\d{4})?.?$')
 
     preferred_name = ''
@@ -31,6 +34,7 @@ def get_combined_article(topics):
     """
     article = ''
     combined = False
+
     for topic in topics:
         if topic.has_summary():
             article += '<hr />' if article else ''
@@ -46,11 +50,11 @@ def get_combined_article(topics):
 @transaction.commit_on_success
 def merge_topics(topics, user):
     """
-    Given a list of topics, blah
+    Combine multiple topics into one. First argument is either a list or a
+    QuerySet, second is a User. Accepts between 2 and 5 topics.
     """
-    if len(topics) < 2:
+    if not 2 <= len(topics) <= 5:
         return
-
     topics = sorted(topics, key=lambda t: t.created)
 
     # Topic with the oldest creation date will be the one merged into
@@ -59,13 +63,16 @@ def merge_topics(topics, user):
     # Get preferred & alternate names for the new topic, to be saved later.
     preferred_name, alternate_names = get_preferred_topic_name(topics)
 
-    # New topic article & article citations
+    # New topic article
     combined_article = get_combined_article(topics)
-    merged_topic.summary = etree.tostring(
-        combined_article) if combined_article else None
+    merged_topic.summary = (etree.tostring(combined_article)
+                            if combined_article else None)
 
-    # Changed references for topic assignments
+    # Change foreign key references
     for topic in topics:
+        for cite in topic.summary_citations.all():
+            cite.topic = merged_topic
+            cite.save()
         for ta in topic.assignments.all():
             ta.topic = merged_topic
             ta.save()
@@ -73,11 +80,10 @@ def merge_topics(topics, user):
             alias.topic = merged_topic
             alias.save()
 
-    # Delete all old topics
+    # Delete all old topics but keep names as aliases
     topics.remove(merged_topic)
     for topic_to_remove in topics:
         topic_to_remove.delete()
-
     for new_alias in alternate_names:
         Alias.objects.create(topic=merged_topic, name=new_alias, creator=user)
 
