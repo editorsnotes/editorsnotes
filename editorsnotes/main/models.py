@@ -17,8 +17,8 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.urlresolvers import NoReverseMatch
 from django.utils.html import conditional_escape, escape
 from django.utils.safestring import mark_safe
-from reversion import get_for_object
 from io import StringIO
+import reversion
 
 # -------------------------------------------------------------------------------
 # Abstract base classes and interfaces.
@@ -74,10 +74,13 @@ class PermissionsMixin(object):
                     user.username, action.lower(), repr(obj) )
             raise PermissionError(msg)
 
-class ProjectSpecific(PermissionsMixin):
+class ProjectSpecific(models.Model, PermissionsMixin):
+    affiliated_projects = models.ManyToManyField('Project', blank=True,
+                                                 null=True)
+
     def get_all_updaters(self):
         all_updaters = set()
-        for version in get_for_object(self):
+        for version in reversion.get_for_object(self):
             uid = json.loads(
                 version.serialized_data)[0]['fields'].get('last_updater')
             if uid:
@@ -86,11 +89,15 @@ class ProjectSpecific(PermissionsMixin):
     def get_project_affiliation(self):
         projects = {u.affiliation for u in self.get_all_updaters() if u.affiliation}
         return list(projects)
+    def save(self, *args, **kwargs):
+        super(ProjectSpecific, self).save(*args, **kwargs)
+        last_updating_project = self.last_updater.get_profile().affiliation
+        if last_updating_project:
+            self.affiliated_projects.add(last_updating_project)
 
     # Custom Project permissions
     def allow_delete_for(self, user):
-        object_affiliation = self.get_project_affiliation()
-
+        object_affiliation = self.affiliated_projects.all()
         # Make sure no other projects are using this object before deleting
         other_contributing_projects = set.difference(
             set(object_affiliation), set([user.get_profile().affiliation]))
@@ -101,22 +108,24 @@ class ProjectSpecific(PermissionsMixin):
         else:
             return True
     def allow_change_for(self, user):
-        object_affiliation = self.get_project_affiliation()
+        object_affiliation = self.affiliated_projects.all()
         can_change = False
         while not can_change:
             for p in object_affiliation:
                 can_change = user.has_perm('%s.change_%s' % (
                     p.slug, self._meta.module_name))
         return can_change
-
     def allow_view_for(self, user):
-        object_affiliation = self.get_project_affiliation()
+        object_affiliation = self.affiliated_projects.all()
         can_view = False
         while not can_view:
             for p in object_affiliation:
                 can_view = user.has_perm('%s.view_%s' % (
                     p.slug, self._meta.module_name))
         return can_view
+
+    class Meta:
+        abstract = True
 
 # -------------------------------------------------------------------------------
 # Primary models. These have their own URLs and administration interfaces.
