@@ -105,7 +105,7 @@ class Command(LabelCommand):
                     preferred_name=match['value']) for match in cluster ]
             elif model_name == 'document':
                 potential_cluster = [ Document.objects.get(
-                    name=match['value']) for match in cluster ]
+                    description=match['value']) for match in cluster ]
 
             # Don't create clusters made up of any objects already in another
             # cluster to avoid confusion. They can be picked up in later passes.
