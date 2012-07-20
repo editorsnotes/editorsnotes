@@ -16,6 +16,7 @@ from reversion import get_unique_for_object
 from urllib import urlopen
 from models import *
 from editorsnotes.djotero.utils import as_readable, type_map
+from editorsnotes.refine.models import TopicCluster
 import forms as main_forms
 import utils
 import json
@@ -304,7 +305,16 @@ def user(request, username=None):
     else:
         o['zotero_status'] = False
     o['profile'] = UserProfile.get_for(user)
-    o['log_entries'], ignored = UserProfile.get_activity_for(user)
+    o['log_entries'], ignored = UserProfile.get_activity_for(user, max_count=20)
+
+    affiliation = o['profile'].affiliation
+    if affiliation and (o['profile'].get_project_role(affiliation) == 'editor'
+                        or user.is_superuser):
+        if user.is_superuser:
+            o['clusters'] = TopicCluster.objects.all()
+        else:
+            o['clusters'] = TopicCluster.objects.filter(
+                topics__affiliated_projects=o['profile'].affiliation)
     return render_to_response(
         'user.html', o, context_instance=RequestContext(request))
 

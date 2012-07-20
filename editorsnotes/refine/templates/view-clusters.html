@@ -17,6 +17,10 @@
 
 {% block content %}
   <h3>Topic Clusters</h3>
+  <p>Viewing {{ start }}-{{ end }} of {{ total_clusters }}
+    {% if previous >= 0 %} <a href="{{ request.path }}?start={{ previous }}"> &lt;&lt; Previous </a>{% endif %}
+    {% if next %} <a href="{{ request.path }}?start={{ next }}">Next &gt;&gt;</a>{% endif %}
+  </p> 
     {% for cluster in clusters %}
     <div class="topic-cluster span4" >
       <ol>

@@ -27,12 +27,25 @@ def show_topic_clusters(request):
     max_count = 20
 
     if request.user.is_superuser:
-        o['clusters'] = TopicCluster.objects\
-                .order_by('id')[start:start + max_count]
+        clusters = TopicCluster.objects.all()
     else:
-        o['clusters'] = TopicCluster.objects.filter(
-            topics__afiliated_projects=affiliation)\
-                .order_by('id')[start:start + max_count]
+        clusters = TopicCluster.objects.filter(
+            topics__afiliated_projects=affiliation)
+
+    o['total_clusters'] = clusters.count()
+    o['start'] = start + 1
+
+    if start + max_count < o['total_clusters'] + 1:
+        o['end'] = start + max_count
+        o['next'] = o['end']
+    else:
+        o['end'] = o['total_clusters']
+
+    if start > 0:
+        o['previous'] = (start - max_count
+                         if start - max_count > 0 else 0)
+    o['clusters'] = clusters.order_by('id')[start:start + max_count]
+
     return render_to_response(
         'view-clusters.html', o, context_instance=RequestContext(request))
 
@@ -51,19 +64,24 @@ def merge_topic_cluster(request, cluster_id):
                   if user_affiliation in t.affiliated_projects.all()] )):
         return HttpResponseBadRequest('Insufficient permissions')
 
+    if request.user.is_superuser:
+        next_cluster = TopicCluster.objects.filter(id__gt=cluster_id)
+    else:
+        next_cluster = TopicCluster.objects.filter(
+            id__gt=cluster_id,
+            topics__affiliated_projects=user_affiliation)
+
+    next_url = (reverse('merge_topic_cluster_view',
+                        kwargs={'cluster_id': next_cluster[0].id}) 
+                if next_cluster else '/')
+
+    if next_url != '/':
+        o['next_cluster_url'] = next_url
+
     # Merge or delete the cluster
     if request.POST:
         action = request.POST.get('action')
 
-        if request.user.is_superuser:
-            next_cluster = TopicCluster.objects.filter(id__gt=cluster_id)
-        else:
-            next_cluster = TopicCluster.objects.filter(
-                id__gt=cluster_id,
-                topics__affiliated_projects=user_affiliation)
-        next_url = (reverse('merge_topic_cluster_view',
-                            kwargs={'cluster_id': next_cluster[0].id}) 
-                    if next_cluster else '/')
 
         if action == 'delete_cluster':
             for obj1, obj2 in combinations(o['cluster'].topics.all(), 2):

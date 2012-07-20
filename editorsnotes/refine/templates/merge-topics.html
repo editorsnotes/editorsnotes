@@ -140,6 +140,24 @@
 
 {% with cluster.topics.all as candidates %}
 
+<div>
+  <a href="{% url show_topic_clusters_view %}" class="btn">
+    <i class="icon-list"></i>
+    Return to cluster list
+  </a>
+
+  {% if next_cluster_url %}
+  <a href="{{ next_cluster_url }}" class="btn pull-right">
+    Skip this cluster
+    <i class="icon-chevron-right"></i>
+  </a>
+  {% endif %}
+
+</div>
+
+
+<hr/>
+
 <div id="merge-candidates" class="row">
 
   <div id="candidate-select" class="span5">
