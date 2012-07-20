@@ -14,22 +14,54 @@ import re
 
 
 @login_required
-def show_clusters(request):
+def show_topic_clusters(request):
     o = {}
-    o['clusters'] = TopicCluster.objects.all()
+    user_profile = request.user.get_profile()
+    affiliation = user_profile.affiliation
+    if not (request.user.is_superuser or
+             ( affiliation and
+               user_profile.get_project_role(affiliation) == 'editor')):
+        return HttpResponseBadRequest('Insufficient permissions')
+
+    start = int(request.GET.get('start', 0))
+    max_count = 20
+
+    if request.user.is_superuser:
+        o['clusters'] = TopicCluster.objects\
+                .order_by('id')[start:start + max_count]
+    else:
+        o['clusters'] = TopicCluster.objects.filter(
+            topics__afiliated_projects=affiliation)\
+                .order_by('id')[start:start + max_count]
     return render_to_response(
         'view-clusters.html', o, context_instance=RequestContext(request))
 
-def merge_cluster(request, cluster_id):
+def merge_topic_cluster(request, cluster_id):
     o = {}
     o['cluster'] = get_object_or_404(TopicCluster, id=cluster_id)
+
+    # Make sure person trying to merge topics is an editor of one of the
+    # affiliated projects or a site admin
+    #
+    # (This is a quick fix-- Should integrate with overall permissions framework
+    # at some point)
+    user_affiliation = request.user.get_profile().affiliation
+    if not (request.user.is_superuser or
+            any([ t for t in o['cluster'].topics.all()
+                  if user_affiliation in t.affiliated_projects.all()] )):
+        return HttpResponseBadRequest('Insufficient permissions')
 
     # Merge or delete the cluster
     if request.POST:
         action = request.POST.get('action')
 
-        next_cluster = TopicCluster.objects.filter(id__gt=cluster_id)
-        next_url = (reverse('merge_cluster_view',
+        if request.user.is_superuser:
+            next_cluster = TopicCluster.objects.filter(id__gt=cluster_id)
+        else:
+            next_cluster = TopicCluster.objects.filter(
+                id__gt=cluster_id,
+                topics__affiliated_projects=user_affiliation)
+        next_url = (reverse('merge_topic_cluster_view',
                             kwargs={'cluster_id': next_cluster[0].id}) 
                     if next_cluster else '/')
 

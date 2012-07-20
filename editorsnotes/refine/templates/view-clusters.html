@@ -2,14 +2,29 @@
 
 {% load typogrify display %}
 
+{% block css %}
+<style type="text/css">
+  .topic-cluster {
+    padding: 8px;
+    border: 1px solid #aaa;
+    margin: 4px;
+  }
+  .topic-cluster > * {
+    display: block-inline;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
+  <h3>Topic Clusters</h3>
     {% for cluster in clusters %}
-        <div class="span-7" id="{{ cluster.id }}">
-            <ul>
-            {% for topic in cluster.clustered_topics.all %}
-                <li>{{ topic|as_link|typogrify }}</li>
-            {% endfor %}
-            </ul>
-        </div>
+    <div class="topic-cluster span4" >
+      <ol>
+      {% for topic in cluster.topics.all %}
+        <li>{{ topic|as_link|typogrify }}</li>
+      {% endfor %}
+      </ol>
+      <a href="{% url merge_topic_cluster_view cluster.id %}">Review</a>
+    </div>
     {% endfor %}
 {% endblock %}
