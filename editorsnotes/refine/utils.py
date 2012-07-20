@@ -3,7 +3,11 @@ from django.db import transaction
 from django.db.models import get_models, Model
 from editorsnotes.main.models import Topic, Alias
 from lxml import etree
+import reversion
 import re
+
+# importing the following so that reversion sees registered models
+from editorsnotes.main import admin
 
 def get_preferred_topic_name(topics):
     """
@@ -57,6 +61,15 @@ def merge_topics(topics, user):
         return
     topics = sorted(topics, key=lambda t: t.created)
 
+    # Create revisions for each topic before merging
+    with reversion.create_revision():
+        comment = 'Merged topics: %s' % (' and '.join(
+            ['%s [id: %s]' % (t.preferred_name, str(t.id)) for t in topics]))
+        for topic in topics:
+            topic.save()
+            reversion.set_user(user)
+            reversion.set_comment(comment)
+
     # Topic with the oldest creation date will be the one merged into
     merged_topic = topics[0]
 
@@ -66,9 +79,9 @@ def merge_topics(topics, user):
     # New topic article
     combined_article = get_combined_article(topics)
     merged_topic.summary = (etree.tostring(combined_article)
-                            if combined_article else None)
+                            if combined_article is not None else None)
 
-    # Change foreign key references
+    # Change foreign key references & references in revisions
     for topic in topics:
         for cite in topic.summary_citations.all():
             cite.topic = merged_topic
@@ -79,6 +92,10 @@ def merge_topics(topics, user):
         for alias in topic.aliases.all():
             alias.topic = merged_topic
             alias.save()
+        for version in reversion.get_for_object(topic):
+            version.object = merged_topic
+            version.object_id_int = int(version.object.id)
+            version.save()
 
     # Delete all old topics but keep names as aliases
     topics.remove(merged_topic)
@@ -86,6 +103,11 @@ def merge_topics(topics, user):
         topic_to_remove.delete()
     for new_alias in alternate_names:
         Alias.objects.create(topic=merged_topic, name=new_alias, creator=user)
+
+    # Update topic affiliation
+    merged_topic.affiliated_projects.clear()
+    for project in merged_topic.get_project_affiliation():
+        merged_topic.affiliated_projects.add(project)
 
     # Give the merged topic a new slug & save
     merged_topic.preferred_name = preferred_name
