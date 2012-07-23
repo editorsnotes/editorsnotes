@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import patterns, url, include
 from django.contrib import admin
 from django.contrib.auth.forms import AuthenticationForm
 from django.conf import settings
