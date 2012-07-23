@@ -8,9 +8,15 @@ admin.autodiscover()
 urlpatterns = patterns('',
     (r'^accounts/login/$', 'django.contrib.auth.views.login'),
     (r'^accounts/profile/$', 'editorsnotes.main.views.user'),
-    url(r'^admin/main/project/(?P<project_id>\d+)/roster/$', 'editorsnotes.main.admin_views.project_roster', name='project_roster_view'),
-    url(r'^admin/main/project/(?P<project_id>\d+)/$', 'editorsnotes.main.admin_views.change_project', name='project_edit_view'),
-    url(r'^document/add/$', 'editorsnotes.main.admin_views.document_add'),
+)
+
+urlpatterns += patterns('editorsnotes.main.admin_views',
+    url(r'^admin/main/project/(?P<project_id>\d+)/roster/$', 'project_roster', name='project_roster_view'),
+    url(r'^admin/main/project/(?P<project_id>\d+)/$', 'change_project', name='project_edit_view'),
+    url(r'^document/add/$', 'document_add'),
+)
+
+urlpatterns += patterns('',
     (r'^admin/', include(admin.site.urls)),
     (r'^comments/', include('django.contrib.comments.urls')),
 
@@ -23,6 +29,7 @@ urlpatterns = patterns('',
      { 'document_root': settings.LOCAL_PATH + '/editorsnotes/static' }),
     (r'^proxy$', 'editorsnotes.main.views.proxy'),
 )
+
 urlpatterns += patterns('editorsnotes.main.views',
     url(r'^project/(?P<project_slug>[-_a-z0-9]+)/$', 'project', name='project_view'),
     url(r'^document/(?P<document_id>\d+)/$', 'document', name='document_view'),
@@ -32,6 +39,9 @@ urlpatterns += patterns('editorsnotes.main.views',
     url(r'^logout/$', 'user_logout', name='user_logout_view'),
     url(r'^footnote/(?P<footnote_id>\d+)/$', 'footnote', name='footnote_view'),
     url(r'^search/$', 'search', name='search_view'),
+)
+
+api_patterns = patterns('editorsnotes.main.api_views',
     url(r'^api/topics/$', 'api_topics', name='api_topics_view'),
     url(r'^api/topics/(?P<topic_ids>\d+(,\d+)*)/$', 'api_topic', name='api_topic_view'),
     url(r'^api/documents/$', 'api_documents', name='api_documents_view'),
@@ -50,6 +60,7 @@ static_patterns = patterns('django.views.generic.simple',
     url(r'^about/$', 'direct_to_template', {'template' : 'about.html'}),
     url(r'^help/$', 'direct_to_template', {'template' : 'help.html'}),
 )
+urlpatterns += api_patterns
 urlpatterns += index_patterns
 urlpatterns += static_patterns
 
