@@ -56,23 +56,26 @@ def user(request, username=None):
     o = {}
     if not username:
         user = request.user
+        o['own_profile'] = True
     else:
         user = get_object_or_404(User, username=username)
-    if user.get_profile().zotero_uid and user.get_profile().zotero_key:
-        o['zotero_status'] = True
-    else:
-        o['zotero_status'] = False
+        o['own_profile'] = False if user != request.user else True
+
     o['profile'] = UserProfile.get_for(user)
     o['log_entries'], ignored = UserProfile.get_activity_for(user, max_count=20)
+    o['affiliation'] = o['profile'].affiliation
+    o['project_role'] = (o['profile'].get_project_role(o['affiliation'])
+                         if o['affiliation'] else None)
 
-    affiliation = o['profile'].affiliation
-    if affiliation and (o['profile'].get_project_role(affiliation) == 'editor'
-                        or user.is_superuser):
-        if user.is_superuser:
-            o['clusters'] = TopicCluster.objects.all()
-        else:
-            o['clusters'] = TopicCluster.objects.filter(
-                topics__affiliated_projects=o['profile'].affiliation)
+    if ['own_profile']:
+        o['zotero_status'] = True if (o['profile'].zotero_key and
+                                      o['profile'].zotero_uid) else False
+        if (o['affiliation'] and o['project_role'] == 'editor') or user.is_superuser:
+            if user.is_superuser:
+                o['clusters'] = TopicCluster.objects.all()
+            else:
+                o['clusters'] = TopicCluster.objects.filter(
+                    topics__affiliated_projects=o['profile'].affiliation)
     return render_to_response(
         'user.html', o, context_instance=RequestContext(request))
 
