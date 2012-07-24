@@ -526,6 +526,8 @@ class Project(models.Model, URLAccessible, PermissionsMixin):
         return ('project_view', [self.slug])
     def as_text(self):
         return self.name
+    def has_description(self):
+        return self.description is not None
     def allow_view_for(self, user):
         if user.has_perm('main.%s.view_project' % self.slug) or user.is_superuser:
             return True
@@ -657,6 +659,14 @@ class UserProfile(models.Model, URLAccessible):
 # -------------------------------------------------------------------------------
 # Support models.
 # -------------------------------------------------------------------------------
+
+class FeaturedItem(CreationMetadata):
+    project = models.ForeignKey(Project)
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = generic.GenericForeignKey()
+    def __unicode__(self):
+        return '(%s)-- %s' % (self.project.slug, self.content_object.__repr__())
 
 class Alias(CreationMetadata):
     u"""

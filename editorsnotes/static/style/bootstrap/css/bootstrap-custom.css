@@ -11,6 +11,10 @@ a:focus, .btn:focus {
 span.quiet {
     color: #AAA;
 }
+span.model-label {
+    font-weight: bold;
+    color: #555;
+}
 .citation div, .citation p {
     display: inline;
 }
