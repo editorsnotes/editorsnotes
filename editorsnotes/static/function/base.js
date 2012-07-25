@@ -42,7 +42,8 @@ $(document).ready(function () {
         case 'topics':
           $.getJSON('/api/topics/', query, function(data) {
             response($.map(data, function(item, index) {
-              return { id: item.id, label: truncateChars(item.preferred_name), uri: item.uri };
+              var val = item.preferred_name;
+              return { id: item.id, value: val, label: truncateChars(val), uri: item.uri };
             }));
           });
           break;
@@ -50,7 +51,8 @@ $(document).ready(function () {
         case 'notes':
           $.getJSON('/api/notes/', query, function(data) {
             response($.map(data, function(item, index) {
-              return { id: item.id, label: truncateChars(item.title), uri: item.uri };
+              var val = item.title;
+              return { id: item.id, value: val, label: truncateChars(val), uri: item.uri };
             }));
           })
           break;
@@ -58,7 +60,8 @@ $(document).ready(function () {
         case 'documents':
           $.getJSON('/api/documents/', query, function(data) {
             response($.map(data, function(item, index) {
-              return { id: item.id, label: truncateChars(item.description), uri: item.uri };
+              var val = item.description;
+              return { id: item.id, value: val, label: truncateChars(val), uri: item.uri };
             }));
           })
           break;
@@ -70,7 +73,28 @@ $(document).ready(function () {
       if (ui.item && !$this.hasClass('autocomplete-no-redirect')) {
         location.href = ui.item.uri;
       } else if (ui.item) {
-        $this.attr('disabled', 'disabled');
+        var selectedItem = $('<div style="position: absolute; left: -9999px">').html(ui.item.value).appendTo('body'),
+          newWidth = selectedItem.innerWidth() + 5 ;
+
+        newWidth = newWidth > 700 ? 700 : newWidth;
+
+        if (!$this.data('originalWidth')) {
+          $this.data({
+            'originalWidth': $this.innerWidth(),
+            'selectSibling': $this.siblings('select')
+          });
+        }
+        selectedItem.remove();
+
+        $this
+          .attr('readonly', 'true')
+          .css('width', newWidth + 5 + 'px')
+          .blur();
+
+        if ($this.data('selectSibling').length > 0) {
+          $this.data('selectSibling').attr('disabled', 'disabled');
+        }
+
         $('<input type="hidden">').attr({
           'name': 'autocomplete-model',
           'value': $this.attr('search-target')
@@ -81,13 +105,22 @@ $(document).ready(function () {
         }).insertAfter($this);
 
         $('<i class="icon-remove-sign clear-search">')
+          .css({
+            'margin-left': '6px',
+            'cursor': 'pointer'
+          })
           .insertAfter($this)
           .click(function() {
-            var $this = $(this);
-            $this.prev('input.search-autocomplete')
-              .removeAttr('disabled')
+            var $this = $(this),
+              $searchBar = $this.prev('input.search-autocomplete');
+            $searchBar
+              .removeAttr('readonly')
+              .css('width', $searchBar.data('originalWidth') + 'px')
               .val('')
               .siblings('input[type="hidden"][name^="autocomplete-"]').remove();
+            if ($searchBar.data('selectSibling').length > 0) {
+              $searchBar.data('selectSibling').removeAttr('disabled');
+            }
             $this.remove();
           });
       }

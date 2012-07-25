@@ -155,6 +155,7 @@ def search(request):
 def project(request, project_slug):
     o = {}
     o['project'] = get_object_or_404(Project, slug=project_slug)
+    o['log_entries'], ignored = Project.get_activity_for(o['project'], max_count=10)
     try:
         o['can_change'] = o['project'].attempt('change', request.user)
     except PermissionError:

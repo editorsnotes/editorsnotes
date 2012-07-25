@@ -1,10 +1,11 @@
 from django.contrib import messages
 from django.contrib.auth.models import User, Group
+from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from editorsnotes.djotero.models import ZoteroLink
-from models import Project, PermissionError, Document
+from models import Project, PermissionError, Document, FeaturedItem
 from forms import ProjectUserFormSet, ProjectForm
 from collections import OrderedDict
 import json
@@ -92,6 +93,48 @@ def change_project(request, project_id):
     o['form'] = ProjectForm(instance=project)
     return render_to_response(
         'admin/project_change.html', o, context_instance=RequestContext(request))
+
+def change_featured_items(request, project_id):
+    o = {}
+    project = get_object_or_404(Project, id=project_id)
+    user = request.user
+
+    try:
+        project.attempt('change', user)
+    except PermissionError:
+        msg = 'You do not have permission to access this page'
+        return HttpResponseForbidden(content=msg)
+
+    o['featured_items'] = project.featureditem_set.all()
+    o['project'] = project
+
+    if request.method == 'POST':
+        redirect = request.GET.get('return_to', request.path)
+
+        added_model = request.POST.get('autocomplete-model', None)
+        added_id = request.POST.get('autocomplete-id', None)
+        deleted = request.POST.getlist('delete-item')
+
+        if added_model in ['notes', 'topics', 'documents'] and added_id:
+            ct = ContentType.objects.get(model=added_model[:-1])
+            obj = ct.model_class().objects.get(id=added_id)
+            user_affiliation = request.user.get_profile().affiliation
+            if not (user_affiliation in obj.affiliated_projects.all()
+                    or request.user.is_superuser):
+                messages.add_message(
+                    request, messages.ERROR,
+                    'Item %s is not affiliated with your project' % obj.as_text())
+                return HttpResponseRedirect(redirect)
+            FeaturedItem.objects.create(content_object=obj,
+                                        project=project,
+                                        creator=request.user)
+        if deleted:
+            FeaturedItem.objects.filter(project=project, id__in=deleted).delete()
+        messages.add_message(request, messages.SUCCESS, 'Featured items saved.')
+        return HttpResponseRedirect(redirect)
+
+    return render_to_response(
+        'admin/featured_items_change.html', o, context_instance=RequestContext(request))
 
 def document_add(request):
     description = request.POST.get('document-description')

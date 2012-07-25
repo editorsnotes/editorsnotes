@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% load display %}
+
+{% block js %}
+<script type="text/javascript">
+  $(document).ready(function() {
+    $('#autocomplete-type').change(function() {
+      var autocompleteModel = this.value,
+        $autocompleteField = $(this).siblings('input.search-autocomplete');
+      $autocompleteField.attr('search-target', autocompleteModel);
+    }).trigger('change');
+
+  });
+</script>
+{% endblock %}
+
+{% block content %}
+<form method="post">
+  {% csrf_token %}
+
+  <h3>Featured items:</h3>
+  {% for item in featured_items %}
+  <label class="checkbox">
+    <input type="checkbox"
+           name="delete-item"
+           value="{{ item.id }}" />{{ item.content_object|as_link }}
+  </label>
+  {% endfor %}
+  <span class="quiet">Check items to delete.</span>
+
+  <hr/>
+
+  {% if featured_items.count < 5 %}
+  <h5>Add an item</h5>
+  <select id="autocomplete-type" class="span2">
+    <option value="notes">Note</option>
+    <option value="documents">Document</option>
+    <option value="topics">Topic</option>
+  </select>
+  <input type="text" placeholder="Type to search" search-project-id={{ project.id }} class="span5 search-autocomplete autocomplete-no-redirect"></input>
+  {% else %}
+    <p>You can only designate up to five featured items. Remove at least one item to add another.</p>
+  {% endif %}
+
+  <div>
+    <button type="submit" class="btn btn-primary">Save</button>
+  </div>
+
+  </form>
+
+
+
+{% endblock %}
