@@ -4,15 +4,15 @@
 {% block title %}: {{ topic.preferred_name }}{% endblock %}
 
 {% block js %}
-<script type="text/javascript" src="/media/function/jquery/jquery.isotope.min.js"></script>
-<script type="text/javascript" src="/media/function/models/topic.js"></script>
-<script type="text/javascript" src="/media/function/facets.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/jquery/jquery.isotope.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/models/topic.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/facets.js"></script>
 {% endblock %}
 
 {% block css %}
-<link rel="stylesheet" href="/media/style/disqus.css" type="text/css"/>
-<link rel="stylesheet" href="/media/style/topic.css" type="text/css"/>
-<link rel="stylesheet" href="/media/style/facets.css" type="text/css" />
+<link rel="stylesheet" href="{{ STATIC_URL }}style/disqus.css" type="text/css"/>
+<link rel="stylesheet" href="{{ STATIC_URL }}style/topic.css" type="text/css"/>
+<link rel="stylesheet" href="{{ STATIC_URL }}style/facets.css" type="text/css" />
 {% endblock %}
 
 {% block content %}

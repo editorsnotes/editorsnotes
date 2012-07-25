@@ -149,7 +149,7 @@ $(document).ready(function(){
                 '<div id="modal-edit-row">' +
                   '<a id="document-edit-close" class="btn btn-danger">Cancel</a>' +
                   '<span id="modal-loading">Loading... ' +
-                  '<img src="/media/style/icons/ajax-loader.gif">' +
+                  '<img src="/static/style/icons/ajax-loader.gif">' +
                   '</span>' +
                   '<a id="document-save" class="btn btn-primary pull-right">Save</a>' +
                 '</div>' +

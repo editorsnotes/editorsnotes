@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
 {% block js %}
-    <script type="text/javascript; e4x=1" src="/media/function/citeproc-js/xmle4x.js"></script> 
-    <script type="text/javascript" src="/media/function/citeproc-js/xmldom.js"></script>
-    <script type="text/javascript" src="/media/function/citeproc-js/citeproc.js"></script>
-    <script type="text/javascript" src="/media/function/citeproc-js/simple.js"></script>
-    <script type="text/javascript" src="/media/function/json2.js"></script>
-    <script type="text/javascript" src="/media/function/models/zotero-import.js"></script>
+    <script type="text/javascript; e4x=1" src="{{ STATIC_URL }}function/citeproc-js/xmle4x.js"></script> 
+    <script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/xmldom.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/citeproc.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/simple.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}function/json2.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}function/models/zotero-import.js"></script>
     <script type="text/javascript">
       var relatedTopic = '{{ related_topic }}';
       var relatedNote = '{{ related_note }}';

@@ -127,7 +127,7 @@ $(document).ready(function () {
           + '<li class="wym_tools_footnote">'
           + '<a name="Footnote" title="Footnote" href="#"'
           + ' style="background-image:'
-          + ' url(/media/function/wymeditor/skins/custom/footprint.png)">'
+          + ' url(/static/function/wymeditor/skins/custom/footprint.png)">'
           + 'Footnote'
           + '</a></li>';
         $(wym._box).find(wym._options.toolsSelector + 

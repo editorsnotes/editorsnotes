@@ -80,7 +80,7 @@ $(document).ready(function(){
   $('#post-items-submit').click(function(){
     $(this).hide();
     loader = $(this).next();
-    loader.html('<img class="loader" src="/media/style/icons/ajax-loader.gif">').show();
+    loader.html('<img class="loader" src="/static/style/icons/ajax-loader.gif">').show();
     var selectedItems = $('#items-to-post .zotero-item-selected input')
     var itemsArray = new Array
     $.each(selectedItems, function(key, item) {
@@ -100,7 +100,7 @@ $(document).ready(function(){
 
 // Ajax functions
   var loadLibraries = function (libraryContainer, loaderContainer) {
-    loaderContainer.html('Connecting to Zotero... <img class="loader" src="/media/style/icons/ajax-loader.gif">').show();
+    loaderContainer.html('Connecting to Zotero... <img class="loader" src="/static/style/icons/ajax-loader.gif">').show();
     $.getJSON('libraries/', function(data) {
       var i = 1
       $.each(data.libraries, function (key, value) {
@@ -123,7 +123,7 @@ $(document).ready(function(){
   };
 
   var loadCollections = function (libraryURL, topLevel, collectionContainer, loaderContainer) {
-    loaderContainer.html('Loading collections... <img class="loader" src="/media/style/icons/ajax-loader.gif">').show();
+    loaderContainer.html('Loading collections... <img class="loader" src="/static/style/icons/ajax-loader.gif">').show();
     $.getJSON('collections/', {'loc' : libraryURL, 'top' : topLevel }, function(data) {
       $.each(data.collections, function (key, value) {
         var collection = $('<li>')
@@ -149,7 +149,7 @@ $(document).ready(function(){
   };
 
   var loadItems = function(sourceLocation, opts, itemsContainer, loaderContainer) {
-    loaderContainer.html('Loading items... <img class="loader" src="/media/style/icons/ajax-loader.gif">').show();
+    loaderContainer.html('Loading items... <img class="loader" src="/static/style/icons/ajax-loader.gif">').show();
     var itemList = itemsContainer.find('#item-list');
     var buildQueryOptions = function (options) {
       var newOptions = {'start' : 0,
