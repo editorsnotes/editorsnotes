@@ -528,6 +528,35 @@ class Project(models.Model, URLAccessible, PermissionsMixin):
         return self.name
     def has_description(self):
         return self.description is not None
+    @staticmethod
+    def get_activity_for(project, max_count=50):
+        roster = [u.user for u in project.userprofile_set.select_related('user')]
+        object_urls = set()
+        checked_object_ids = { 
+            'topic': [], 'note': [], 'document': [], 'transcript': [] }
+        activity = []
+        for entry in LogEntry.objects\
+                .select_related('content_type__name')\
+                .filter(content_type__app_label='main',  
+                        content_type__model__in=checked_object_ids.keys(), 
+                        user__in=roster):
+            if entry.object_id in checked_object_ids[entry.content_type.name]:
+                continue
+            checked_object_ids[entry.content_type.name].append(entry.object_id)
+            if entry.is_deletion():
+                continue
+            try:
+                obj = entry.get_edited_object()
+            except ObjectDoesNotExist:
+                continue
+            object_url = obj.get_absolute_url().split('#')[0]
+            if object_url in object_urls:
+                continue
+            object_urls.add(object_url)
+            activity.append({ 'what': obj, 'when': entry.action_time })
+            if len(activity) == max_count:
+                break
+        return activity, checked_object_ids
     def allow_view_for(self, user):
         if user.has_perm('main.%s.view_project' % self.slug) or user.is_superuser:
             return True
