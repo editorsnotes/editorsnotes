@@ -79,8 +79,8 @@ def deploy():
     install_site()
     symlink_current_release()
     migrate()
-    restart_webserver()
     collect_static()
+    restart_webserver()
     sleep(2)
     try:
         type(env.gnome)
