@@ -10,7 +10,7 @@ class ZoteroLinkAdmin(admin.ModelAdmin):
     }
     class Media:
         css = {
-            'all' : ('/media/style/zotero-admin-inline.css',)
+            'all' : ('/static/style/zotero-admin-inline.css',)
         }
         js = ('function/jquery/jquery-1.7.1.min.js',
               'function/models/zotero-admin-inline.js',

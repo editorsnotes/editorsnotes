@@ -5,7 +5,7 @@
 {% load highlight display typogrify %}
 
 {% block js %}
-<script type="text/javascript" src="/media/function/facets.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/facets.js"></script>
 <script type="text/javascript">
   $(document).ready(function() {
       var facets = $('#results').facet({
@@ -19,7 +19,7 @@
 {% endblock %}
 
 {% block css %}
-<link rel="stylesheet" href="/media/style/facets.css" type="text/css" />
+<link rel="stylesheet" href="{{ STATIC_URL }}style/facets.css" type="text/css" />
 <style type="text/css">
   .highlighted {
     background: #faa732;

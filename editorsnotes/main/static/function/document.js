@@ -1,5 +1,5 @@
 Seadragon.Config.proxyUrl = '/proxy?url='
-Seadragon.Config.imagePath = '/media/function/seadragon/img/'
+Seadragon.Config.imagePath = '/static/function/seadragon/img/'
 $(document).ready(function() {
 
   // Parse URL params.

@@ -112,7 +112,7 @@
                   {% for candidate in related_topic %}
                     <span class="related-topic-candidate" value="{{ candidate.1 }}">{{ candidate.0 }}</span>{% if not forloop.last %} or {% endif %}
                   {% endfor %}
-                  <a href='#_' class="related-topic-remove" style="position: absolute; display: none"><img src="/media/style/icons/cross.png"></a>
+                  <a href='#_' class="related-topic-remove" style="position: absolute; display: none"><img src="{{ STATIC_URL }}style/icons/cross.png"></a>
                 </li>
                 {% endfor %}
               </ul>

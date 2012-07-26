@@ -39,13 +39,13 @@ def pro():
 
 def test():
     "Run the test suite locally."
-    local("cd %(project_name)s; python manage.py test" % env)
+    local("python manage.py test" % env)
     
 def test_remote():
     "Run the test suite remotely."
     require('hosts', provided_by=[dev])
     require('path')
-    run('cd %(path)s/releases/current/%(project_name)s;  ../../../bin/python manage.py test' % env)
+    run('cd %(path)s/releases/current;  ../../bin/python manage.py test' % env)
     
 def setup():
     """
@@ -79,6 +79,7 @@ def deploy():
     install_site()
     symlink_current_release()
     migrate()
+    collect_static()
     restart_webserver()
     sleep(2)
     try:
@@ -135,7 +136,7 @@ def upload_tar_from_git():
 def upload_local_settings():
     "Upload the appropriate local settings file."
     require('release', provided_by=[deploy, setup])
-    put('%(project_name)s/settings-%(host)s.py' % env, 
+    put('deploy/settings-%(host)s.py' % env, 
         '%(path)s/releases/%(release)s/%(project_name)s/settings_local.py' % env)
 
 def upload_deploy_info():
@@ -177,7 +178,7 @@ def symlink_system_packages():
 def install_site():
     "Add the virtualhost file to apache."
     require('release', provided_by=[deploy, setup])
-    put('vhost-%(host)s.conf' % env,
+    put('deploy/vhost-%(host)s.conf' % env,
         '%(path)s/vhost-%(host)s.conf.tmp' % env)
     sudo('cd %(path)s; mv -f vhost-%(host)s.conf.tmp %(vhosts_path)s/vhost-%(host)s.conf' % env, pty=True)
 
@@ -192,10 +193,17 @@ def migrate():
     "Update the database"
     require('hosts', provided_by=[dev])
     require('path')
-    with cd('%(path)s/releases/current/%(project_name)s' % env):
-        run('../../../bin/python manage.py syncdb --noinput')
+    with cd('%(path)s/releases/current' % env):
+        run('../../bin/python manage.py syncdb --noinput')
         for app in [ 'main', 'djotero', 'refine', 'reversion' ]:
-            run('../../../bin/python manage.py migrate --noinput %s' % app)
+            run('../../bin/python manage.py migrate --noinput %s' % app)
+
+def collect_static():
+    "Collect static files"
+    require('hosts', provided_by=[dev])
+    require('path')
+    with cd('%(path)s/releases/current' % env):
+        run('../../bin/python manage.py collectstatic --noinput')
     
 def restart_webserver():
     "Restart the web server."

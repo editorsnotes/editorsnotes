@@ -32,6 +32,55 @@ def _sort_citations(instance):
     cites['all'].sort(key=lambda c: c.ordering)
     return cites
 
+# Proxy for cross-site AJAX requests. For development only.
+def proxy(request):
+    url = request.GET.get('url')
+    if url is None:
+        return HttpResponseBadRequest()
+    if not url.startswith('http://cache.zoom.it/'):
+        return HttpResponseForbidden()
+    return HttpResponse(urlopen(url).read(), mimetype='application/xml')
+
+
+# ------------------------------------------------------------------------------
+# Auth
+# ------------------------------------------------------------------------------
+
+def user_logout(request):
+    logout(request)
+    return render_to_response(
+        'logout.html', context_instance=RequestContext(request))
+
+@login_required
+def user(request, username=None):
+    o = {}
+    if not username:
+        user = request.user
+    else:
+        user = get_object_or_404(User, username=username)
+    if user.get_profile().zotero_uid and user.get_profile().zotero_key:
+        o['zotero_status'] = True
+    else:
+        o['zotero_status'] = False
+    o['profile'] = UserProfile.get_for(user)
+    o['log_entries'], ignored = UserProfile.get_activity_for(user, max_count=20)
+
+    affiliation = o['profile'].affiliation
+    if affiliation and (o['profile'].get_project_role(affiliation) == 'editor'
+                        or user.is_superuser):
+        if user.is_superuser:
+            o['clusters'] = TopicCluster.objects.all()
+        else:
+            o['clusters'] = TopicCluster.objects.filter(
+                topics__affiliated_projects=o['profile'].affiliation)
+    return render_to_response(
+        'user.html', o, context_instance=RequestContext(request))
+
+
+# ------------------------------------------------------------------------------
+# Basic navigation
+# ------------------------------------------------------------------------------
+
 @login_required
 def index(request):
     o = {}
@@ -53,6 +102,52 @@ def browse(request):
     return render_to_response(
         'browse.html', o, context_instance=RequestContext(request))
 
+reel_numbers = re.compile(r'(\S+):(\S+)')
+ignored_punctuation = '!#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
+
+@login_required
+def search(request):
+    query = ''
+    results = EmptySearchQuerySet()
+
+    if request.GET.get('q'):
+        query = request.GET.get('q')
+        match = reel_numbers.search(query)
+        if match:
+            # so we can match reel numbers exactly
+            query = reel_numbers.sub(r'"\1 \2"', query)
+        def filter(c):
+            if c in ignored_punctuation: return ' '
+            return c
+        query = ''.join([filter(c) for c in query])
+        if len(query) > 0:
+            results = SearchQuerySet().auto_query(query).load_all()
+        if match:
+            # restore the original form of the query so highlighting works
+            query = query.replace('"%s %s"' % match.group(1,2), match.group(0))
+
+    # paginator = Paginator(results, 20)
+    
+    # try:
+    #     page = paginator.page(int(request.GET.get('page', 1)))
+    # except InvalidPage:
+    #     raise Http404('No such page of results!')
+    
+    o = {
+        # 'page': page,
+        # 'paginator': paginator,
+        'results': results,
+        'query': query,
+    }
+    
+    return render_to_response(
+        'search.html', o, context_instance=RequestContext(request))
+
+
+# ------------------------------------------------------------------------------
+# Individual instances of models
+# ------------------------------------------------------------------------------
+
 @login_required
 def project(request, project_slug):
     o = {}
@@ -65,6 +160,109 @@ def project(request, project_slug):
         o['project'])
     return render_to_response(
         'project.html', o, context_instance=RequestContext(request))
+
+@login_required
+def topic(request, topic_slug):
+    o = {}
+    o['topic'] = get_object_or_404(Topic, slug=topic_slug)
+    o['contact'] = { 'name': settings.ADMINS[0][0], 
+                     'email': settings.ADMINS[0][1] }
+    o['related_topics'] = o['topic'].related_topics.all()
+    o['summary_cites'] = _sort_citations(o['topic'])
+
+    notes = o['topic'].related_objects(Note)
+    note_topics = [ [ ta.topic for ta in n.topics.exclude(topic=o['topic']).select_related('topic') ] for n in notes ]
+    note_sections = NoteSection.objects.filter(note__in=[n.id for n in notes])
+
+    o['notes'] = zip(notes, note_topics)
+
+    o['documents'] = set(chain(
+        o['topic'].related_objects(Document),
+        Document.objects.filter(notesection__in=note_sections)))
+
+    o['thread'] = { 'id': 'topic-%s' % o['topic'].id, 'title': o['topic'].preferred_name }
+    o['alpha'] = (request.user.groups.filter(name='Alpha').count() == 1)
+
+    return render_to_response(
+        'topic.html', o, context_instance=RequestContext(request))
+
+@login_required
+def note(request, note_id):
+    o = {}
+    o['note'] = get_object_or_404(Note, id=note_id)
+    if request.method == 'POST':
+        form = main_forms.NoteSectionForm(request.POST)
+        user = request.user
+        if form.is_valid():
+
+            # Quick fix with checking if a document field is blank: wymeditor by
+            # default posts '<br/>'
+            if not (request.POST.get('document') or
+                    len(request.POST.get('content')) > 6):
+                messages.add_message(
+                    request, messages.ERROR,
+                    'Enter a value for one or both of the fields "Content" and "Description"')
+                return HttpResponseRedirect(request.path)
+
+            new_section = NoteSection.objects.create(
+                creator=user, last_updater=user, note=o['note'])
+            if len(request.POST.get('content')) > 6:
+                new_section.content = request.POST.get('content')
+            if request.POST.get('document'):
+                new_section.document = get_object_or_404(
+                    Document, id=request.POST.get('document'))
+            new_section.save()
+
+            messages.add_message(
+                request,
+                messages.SUCCESS,
+                'Added section to %s' % o['note'])
+            return HttpResponseRedirect(request.path)
+    user_profile = request.user.get_profile()
+    o['affiliated'] = len([p for p in o['note'].get_project_affiliation() if
+                           user_profile.get_project_role(p) is not None]) > 0
+    o['add_section_form'] = main_forms.NoteSectionForm()
+    o['history'] = get_unique_for_object(o['note'])
+    o['topics'] = [ ta.topic for ta in o['note'].topics.all() ]
+    o['cites'] = _sort_citations(o['note'])
+    return render_to_response(
+        'note.html', o, context_instance=RequestContext(request))
+
+@login_required
+def footnote(request, footnote_id):
+    o = {}
+    o['footnote'] = get_object_or_404(Footnote, id=footnote_id)
+    o['thread'] = { 'id': 'footnote-%s' % o['footnote'].id, 
+                    'title': o['footnote'].footnoted_text() }
+    return render_to_response(
+        'footnote.html', o, context_instance=RequestContext(request))
+
+@login_required
+def document(request, document_id):
+    o = {}
+    o['document'] = get_object_or_404(Document, id=document_id)
+    o['topics'] = (
+        [ ta.topic for ta in o['document'].topics.all() ] +
+        [ c.content_object for c in o['document'].citations.filter(
+                content_type=ContentType.objects.get_for_model(Topic)) ])
+    o['scans'] = o['document'].scans.all()
+    o['domain'] = Site.objects.get_current().domain
+    notes = [ c.content_object for c in o['document'].citations.filter(
+            content_type=ContentType.objects.get_for_model(Note)) ]
+    o['notes'] = zip(notes, 
+                     [ [ ta.topic for ta in n.topics.all() ] for n in notes ],
+                     [ _sort_citations(n) for n in notes ])
+    if o['document'].zotero_link():
+        o['zotero_data'] = as_readable(o['document'].zotero_link().zotero_data)
+        o['zotero_url'] = o['document'].zotero_link().zotero_url
+        o['zotero_date_information'] = o['document'].zotero_link().date_information
+    return render_to_response(
+        'document.html', o, context_instance=RequestContext(request))
+
+
+# ------------------------------------------------------------------------------
+# Aggregations of models
+# ------------------------------------------------------------------------------
 
 @login_required
 def all_topics(request, project_slug=None):
@@ -200,250 +398,3 @@ def all_notes(request, project_slug=None):
     return render_to_response(
         template, o, context_instance=RequestContext(request)) 
 
-@login_required
-def topic(request, topic_slug):
-    o = {}
-    o['topic'] = get_object_or_404(Topic, slug=topic_slug)
-    o['contact'] = { 'name': settings.ADMINS[0][0], 
-                     'email': settings.ADMINS[0][1] }
-    o['related_topics'] = o['topic'].related_topics.all()
-    o['summary_cites'] = _sort_citations(o['topic'])
-
-    notes = o['topic'].related_objects(Note)
-    note_topics = [ [ ta.topic for ta in n.topics.exclude(topic=o['topic']).select_related('topic') ] for n in notes ]
-    note_sections = NoteSection.objects.filter(note__in=[n.id for n in notes])
-
-    o['notes'] = zip(notes, note_topics)
-
-    o['documents'] = set(chain(
-        o['topic'].related_objects(Document),
-        Document.objects.filter(notesection__in=note_sections)))
-
-    o['thread'] = { 'id': 'topic-%s' % o['topic'].id, 'title': o['topic'].preferred_name }
-    o['alpha'] = (request.user.groups.filter(name='Alpha').count() == 1)
-
-    return render_to_response(
-        'topic.html', o, context_instance=RequestContext(request))
-
-@login_required
-def note(request, note_id):
-    o = {}
-    o['note'] = get_object_or_404(Note, id=note_id)
-    if request.method == 'POST':
-        form = main_forms.NoteSectionForm(request.POST)
-        user = request.user
-        if form.is_valid():
-
-            # Quick fix with checking if a document field is blank: wymeditor by
-            # default posts '<br/>'
-            if not (request.POST.get('document') or
-                    len(request.POST.get('content')) > 6):
-                messages.add_message(
-                    request, messages.ERROR,
-                    'Enter a value for one or both of the fields "Content" and "Description"')
-                return HttpResponseRedirect(request.path)
-
-            new_section = NoteSection.objects.create(
-                creator=user, last_updater=user, note=o['note'])
-            if len(request.POST.get('content')) > 6:
-                new_section.content = request.POST.get('content')
-            if request.POST.get('document'):
-                new_section.document = get_object_or_404(
-                    Document, id=request.POST.get('document'))
-            new_section.save()
-
-            messages.add_message(
-                request,
-                messages.SUCCESS,
-                'Added section to %s' % o['note'])
-            return HttpResponseRedirect(request.path)
-    user_profile = request.user.get_profile()
-    o['affiliated'] = len([p for p in o['note'].get_project_affiliation() if
-                           user_profile.get_project_role(p) is not None]) > 0
-    o['add_section_form'] = main_forms.NoteSectionForm()
-    o['history'] = get_unique_for_object(o['note'])
-    o['topics'] = [ ta.topic for ta in o['note'].topics.all() ]
-    o['cites'] = _sort_citations(o['note'])
-    return render_to_response(
-        'note.html', o, context_instance=RequestContext(request))
-
-@login_required
-def footnote(request, footnote_id):
-    o = {}
-    o['footnote'] = get_object_or_404(Footnote, id=footnote_id)
-    o['thread'] = { 'id': 'footnote-%s' % o['footnote'].id, 
-                    'title': o['footnote'].footnoted_text() }
-    return render_to_response(
-        'footnote.html', o, context_instance=RequestContext(request))
-
-@login_required
-def document(request, document_id):
-    o = {}
-    o['document'] = get_object_or_404(Document, id=document_id)
-    o['topics'] = (
-        [ ta.topic for ta in o['document'].topics.all() ] +
-        [ c.content_object for c in o['document'].citations.filter(
-                content_type=ContentType.objects.get_for_model(Topic)) ])
-    o['scans'] = o['document'].scans.all()
-    o['domain'] = Site.objects.get_current().domain
-    notes = [ c.content_object for c in o['document'].citations.filter(
-            content_type=ContentType.objects.get_for_model(Note)) ]
-    o['notes'] = zip(notes, 
-                     [ [ ta.topic for ta in n.topics.all() ] for n in notes ],
-                     [ _sort_citations(n) for n in notes ])
-    if o['document'].zotero_link():
-        o['zotero_data'] = as_readable(o['document'].zotero_link().zotero_data)
-        o['zotero_url'] = o['document'].zotero_link().zotero_url
-        o['zotero_date_information'] = o['document'].zotero_link().date_information
-    return render_to_response(
-        'document.html', o, context_instance=RequestContext(request))
-
-@login_required
-def user(request, username=None):
-    o = {}
-    if not username:
-        user = request.user
-    else:
-        user = get_object_or_404(User, username=username)
-    if user.get_profile().zotero_uid and user.get_profile().zotero_key:
-        o['zotero_status'] = True
-    else:
-        o['zotero_status'] = False
-    o['profile'] = UserProfile.get_for(user)
-    o['log_entries'], ignored = UserProfile.get_activity_for(user, max_count=20)
-
-    affiliation = o['profile'].affiliation
-    if affiliation and (o['profile'].get_project_role(affiliation) == 'editor'
-                        or user.is_superuser):
-        if user.is_superuser:
-            o['clusters'] = TopicCluster.objects.all()
-        else:
-            o['clusters'] = TopicCluster.objects.filter(
-                topics__affiliated_projects=o['profile'].affiliation)
-    return render_to_response(
-        'user.html', o, context_instance=RequestContext(request))
-
-def user_logout(request):
-    logout(request)
-    return render_to_response(
-        'logout.html', context_instance=RequestContext(request))
-
-reel_numbers = re.compile(r'(\S+):(\S+)')
-ignored_punctuation = '!#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
-
-@login_required
-def search(request):
-    query = ''
-    results = EmptySearchQuerySet()
-
-    if request.GET.get('q'):
-        query = request.GET.get('q')
-        match = reel_numbers.search(query)
-        if match:
-            # so we can match reel numbers exactly
-            query = reel_numbers.sub(r'"\1 \2"', query)
-        def filter(c):
-            if c in ignored_punctuation: return ' '
-            return c
-        query = ''.join([filter(c) for c in query])
-        if len(query) > 0:
-            results = SearchQuerySet().auto_query(query).load_all()
-        if match:
-            # restore the original form of the query so highlighting works
-            query = query.replace('"%s %s"' % match.group(1,2), match.group(0))
-
-    # paginator = Paginator(results, 20)
-    
-    # try:
-    #     page = paginator.page(int(request.GET.get('page', 1)))
-    # except InvalidPage:
-    #     raise Http404('No such page of results!')
-    
-    o = {
-        # 'page': page,
-        # 'paginator': paginator,
-        'results': results,
-        'query': query,
-    }
-    
-    return render_to_response(
-        'search.html', o, context_instance=RequestContext(request))
-
-def topic_to_dict(topic):
-    return { 'preferred_name': topic.preferred_name,
-             'id': topic.id,
-             'uri': 'http://%s%s' % (Site.objects.get_current().domain, 
-                                     topic.get_absolute_url()) } 
-
-def api_topics(request):
-    query = ''
-    results = EmptySearchQuerySet()
-
-    if request.GET.get('q'):
-        query = ' AND '.join([ 'names:%s*' % term for term 
-                               in request.GET.get('q').split() 
-                               if len(term) > 1 ])
-        results = SearchQuerySet().models(Topic).narrow(query).load_all()
-    
-    topics = [ topic_to_dict(r.object) for r in results ]
-    return HttpResponse(json.dumps(topics), mimetype='text/plain')
-
-def api_topic(request, topic_ids):
-    topics_by_id = Topic.objects.in_bulk(topic_ids.split(','))
-    topics = [ topic_to_dict(t) for t in topics_by_id.values() ]
-    return HttpResponse(json.dumps(topics), mimetype='text/plain')
-
-def document_to_dict(document):
-    return { 'description': document.as_text(),
-             'id': document.id,
-             'uri': 'http://%s%s' % (Site.objects.get_current().domain, 
-                                     document.get_absolute_url()) } 
-
-def api_documents(request):
-    query = ''
-    results = EmptySearchQuerySet()
-
-    if request.GET.get('q'):
-        query = ' AND '.join([ 'title:%s*' % term for term 
-                               in request.GET.get('q').split() 
-                               if len(term) > 1 ])
-        results = SearchQuerySet().models(Document).narrow(query).load_all()
-    
-    documents = [ document_to_dict(r.object) for r in results ]
-    return HttpResponse(json.dumps(documents), mimetype='text/plain')
-
-def api_document(request, document_id):
-    document = get_object_or_404(Document, id=document_id)
-    return HttpResponse(json.dumps(document_to_dict(document)), mimetype='text/plain')
-
-def transcript_to_dict(transcript):
-    return { 'description': transcript.as_text(),
-             'id': transcript.id,
-             'uri': 'http://%s%s' % (Site.objects.get_current().domain, 
-                                     transcript.get_absolute_url()) } 
-
-def api_transcripts(request):
-    query = ''
-    results = EmptySearchQuerySet()
-
-    if request.GET.get('q'):
-        query = ' AND '.join([ 'title:%s' % term for term 
-                               in request.GET.get('q').split() 
-                               if len(term) > 1 ])
-        results = SearchQuerySet().models(Transcript).narrow(query).load_all()
-    
-    transcripts = [ transcript_to_dict(r.object) for r in results ]
-    return HttpResponse(json.dumps(transcripts), mimetype='text/plain')
-
-def api_transcript(request, transcript_id):
-    transcript = get_object_or_404(Transcript, id=transcript_id)
-    return HttpResponse(json.dumps(transcript_to_dict(transcript)), mimetype='text/plain')
-
-# Proxy for cross-site AJAX requests. For development only.
-def proxy(request):
-    url = request.GET.get('url')
-    if url is None:
-        return HttpResponseBadRequest()
-    if not url.startswith('http://cache.zoom.it/'):
-        return HttpResponseForbidden()
-    return HttpResponse(urlopen(url).read(), mimetype='application/xml')
