@@ -1,93 +1,117 @@
 from django.contrib.contenttypes.generic import GenericForeignKey
 from django.db import transaction
 from django.db.models import get_models, Model
-from editorsnotes.main.models import Topic
+from editorsnotes.main.models import Topic, Alias
+from lxml import etree
+import reversion
+import re
 
-#http://djangosnippets.org/snippets/2283/
+# importing the following so that reversion sees registered models
+from editorsnotes.main import admin
+
+def get_preferred_topic_name(topics):
+    """
+    Returns a tuple of (Preferred name, [rest of names])
+    """
+    topics = sorted(topics, key=lambda t: t.created)
+
+    # Basic check for LOC personal name heading format. If none of the names
+    # match this, the oldest one is used.
+    PREFERRED_NAME_FMT = re.compile('.*?\d{4}-(?:\d{4})?.?$')
+
+    preferred_name = ''
+    rest_of_names = [t.preferred_name for t in topics]
+
+    for topic in topics:
+        if not preferred_name and re.match(
+            PREFERRED_NAME_FMT, topic.preferred_name):
+            preferred_name = topic.preferred_name
+    if not preferred_name:
+        preferred_name = topics[0].preferred_name
+    rest_of_names.remove(preferred_name)
+
+    return preferred_name, rest_of_names
+
+def get_combined_article(topics):
+    """
+    Returns combined topic articles, separated by <hr />
+    """
+    article = ''
+    combined = False
+
+    for topic in topics:
+        if topic.has_summary():
+            article += '<hr />' if article else ''
+            combined = True if article else False
+            article += etree.tostring(topic.summary)
+
+    # If multiple articles were combined, to be valid xhtml they must have a
+    # single root node
+    article = '<div>%s</div>' % article if combined else article
+
+    return etree.fromstring(article) if article else None
+
 @transaction.commit_on_success
-def merge_model_objects(primary_object, alias_objects, keep_old=False):
+def merge_topics(topics, user):
     """
-    Use this function to merge model objects (i.e. Users, Organizations, Polls,
-    etc.) and migrate all of the related fields from the alias objects to the
-    primary object.
-    
-    Usage:
-    from django.contrib.auth.models import User
-    primary_user = User.objects.get(email='good_email@example.com')
-    duplicate_user = User.objects.get(email='good_email+duplicate@example.com')
-    merge_model_objects(primary_user, duplicate_user)
+    Combine multiple topics into one. First argument is either a list or a
+    QuerySet, second is a User. Accepts between 2 and 5 topics.
     """
-    if not isinstance(alias_objects, list):
-        alias_objects = [alias_objects]
-    
-    # check that all aliases are the same class as primary one and that
-    # they are subclass of model
-    primary_class = primary_object.__class__
-    
-    if not issubclass(primary_class, Model):
-        raise TypeError('Only django.db.models.Model subclasses can be merged')
-    
-    for alias_object in alias_objects:
-        if not isinstance(alias_object, primary_class):
-            raise TypeError('Only models of same class can be merged')
-    
-    # Get a list of all GenericForeignKeys in all models
-    # TODO: this is a bit of a hack, since the generics framework should provide a similar
-    # method to the ForeignKey field for accessing the generic related fields.
-    generic_fields = []
-    for model in get_models():
-        for field_name, field in filter(lambda x: isinstance(x[1], GenericForeignKey), model.__dict__.iteritems()):
-            generic_fields.append(field)
-            
-    blank_local_fields = set([field.attname for field in primary_object._meta.local_fields if getattr(primary_object, field.attname) in [None, '']])
-    
-    # Loop through all alias objects and migrate their data to the primary object.
-    for alias_object in alias_objects:
-        # Migrate all foreign key references from alias object to primary object.
-        for related_object in alias_object._meta.get_all_related_objects():
-            # The variable name on the alias_object model.
-            alias_varname = related_object.get_accessor_name()
-            # The variable name on the related model.
-            obj_varname = related_object.field.name
-            related_objects = getattr(alias_object, alias_varname)
-            for obj in related_objects.all():
-                setattr(obj, obj_varname, primary_object)
-                obj.save()
+    if not 2 <= len(topics) <= 5:
+        return
+    topics = sorted(topics, key=lambda t: t.created)
 
-        # Migrate all many to many references from alias object to primary object.
-        for related_many_object in alias_object._meta.get_all_related_many_to_many_objects():
-            alias_varname = related_many_object.get_accessor_name()
-            obj_varname = related_many_object.field.name
-            
-            if alias_varname is not None:
-                # standard case
-                related_many_objects = getattr(alias_object, alias_varname).all()
-            else:
-                # special case, symmetrical relation, no reverse accessor
-                related_many_objects = getattr(alias_object, obj_varname).all()
-            for obj in related_many_objects.all():
-                getattr(obj, obj_varname).remove(alias_object)
-                getattr(obj, obj_varname).add(primary_object)
+    # Create revisions for each topic before merging
+    with reversion.create_revision():
+        comment = 'Merged topics: %s' % (' and '.join(
+            ['%s [id: %s]' % (t.preferred_name, str(t.id)) for t in topics]))
+        for topic in topics:
+            topic.save()
+            reversion.set_user(user)
+            reversion.set_comment(comment)
 
-        # Migrate all generic foreign key references from alias object to primary object.
-        for field in generic_fields:
-            filter_kwargs = {}
-            filter_kwargs[field.fk_field] = alias_object._get_pk_val()
-            filter_kwargs[field.ct_field] = field.get_content_type(alias_object)
-            for generic_related_object in field.model.objects.filter(**filter_kwargs):
-                setattr(generic_related_object, field.name, primary_object)
-                generic_related_object.save()
-                
-        # Try to fill all missing values in primary object by values of duplicates
-        filled_up = set()
-        for field_name in blank_local_fields:
-            val = getattr(alias_object, field_name) 
-            if val not in [None, '']:
-                setattr(primary_object, field_name, val)
-                filled_up.add(field_name)
-        blank_local_fields -= filled_up
-            
-        if not keep_old:
-            alias_object.delete()
-    primary_object.save()
-    return primary_object
+    # Topic with the oldest creation date will be the one merged into
+    merged_topic = topics[0]
+
+    # Get preferred & alternate names for the new topic, to be saved later.
+    preferred_name, alternate_names = get_preferred_topic_name(topics)
+
+    # New topic article
+    combined_article = get_combined_article(topics)
+    merged_topic.summary = (etree.tostring(combined_article)
+                            if combined_article is not None else None)
+
+    # Change foreign key references & references in revisions
+    for topic in topics:
+        for cite in topic.summary_citations.all():
+            cite.topic = merged_topic
+            cite.save()
+        for ta in topic.assignments.all():
+            ta.topic = merged_topic
+            ta.save()
+        for alias in topic.aliases.all():
+            alias.topic = merged_topic
+            alias.save()
+        for version in reversion.get_for_object(topic):
+            version.object = merged_topic
+            version.object_id_int = int(version.object.id)
+            version.save()
+
+    # Delete all old topics but keep names as aliases
+    topics.remove(merged_topic)
+    for topic_to_remove in topics:
+        topic_to_remove.delete()
+    for new_alias in alternate_names:
+        Alias.objects.create(topic=merged_topic, name=new_alias, creator=user)
+
+    # Update topic affiliation
+    merged_topic.affiliated_projects.clear()
+    for project in merged_topic.get_project_affiliation():
+        merged_topic.affiliated_projects.add(project)
+
+    # Give the merged topic a new slug & save
+    merged_topic.preferred_name = preferred_name
+    merged_topic.slug = Topic.make_slug(topic.preferred_name)
+    merged_topic.save()
+
+    return merged_topic

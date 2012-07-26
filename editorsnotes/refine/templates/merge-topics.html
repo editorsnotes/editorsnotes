@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% load display %}
+
+{% block css %}
+<style type="text/css">
+  /* selecting candidates */
+  .merge-candidate {
+    padding: 8px;
+    margin-bottom: 8px;
+    border: 1px solid #aaa;
+  }
+  .merge-candidate.viewing-details {
+    position: relative;
+    z-index: 1;
+    border-right: 1px solid #fafafa;
+    background: #fafafa;
+    width: 371px;
+  }
+  .candidate-actions {
+    margin-top: 4px;
+  }
+  .candidate-actions > * {
+    display: inline-block;
+  }
+  .candidate-detail {
+    border: 1px solid #aaa;
+    background: #fafafa;
+    padding: 0px 8px;
+    position: relative;
+    left: -12px;
+    z-index: 0;
+  }
+  #cluster-actions > a {
+    margin: 1em 0 1em 0;
+  }
+
+  /* viewing candidate detail */
+  dd .related-object * {
+    display: inline;
+  }
+  .related-object {
+    text-indent: -18px;
+    padding-left: 18px;
+  }
+</style>
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript">
+  $(document).ready(function() {
+
+    jQuery.ajaxSettings.traditional = true;
+
+    var strayDot = $('<div>').css({
+      'height': '1px',
+      'width': '1px',
+      'background': '#aaa',
+      'z-index': '1'
+    }).appendTo('body');
+
+    // Clear inputs on page load
+    $('input:checked').prop('checked', false);
+
+    // Show topic details along right side of page
+    $('.view-candidate-details').click(function() {
+      var $this = $(this),
+        $thisCandidate = $this.closest('.merge-candidate'),
+        $thisCandidateDetail;
+
+      $('.view-candidate-details').show();
+      $this.hide();
+
+      $thisCandidate
+        .addClass('viewing-details')
+        .siblings()
+        .removeClass('viewing-details');
+
+      $thisCandidateDetail = $('.candidate-detail')
+        .hide()
+        .filter('#' + $thisCandidate.attr('id') + '-detail')
+        .show();
+
+      var detailBottom = $thisCandidateDetail.position()['top'] +
+        $thisCandidateDetail.innerHeight();
+      var candidateBottom = $thisCandidate.position()['top'] + 
+        $thisCandidate.innerHeight();
+
+      // Resize detail box if it doesn't reach below its corresponding selector
+      if(candidateBottom > detailBottom) {
+        $thisCandidateDetail.css({
+            'min-height': $thisCandidateDetail.innerHeight() + candidateBottom - detailBottom
+        });
+      }
+
+      strayDot.position({
+        'my': 'right bottom',
+        'at': 'right bottom',
+        'of': $thisCandidate,
+        'offset': '.5 0'
+      });
+    });
+
+    // Allow merge when at least two topics selected
+    $('.mark-for-merge').click(function() {
+
+      var $checked = $('.mark-for-merge:checked'),
+        $continueButton = $('#merge-topics');
+
+      if ($checked.length >= 2) {
+        $continueButton.removeClass('disabled').addClass('btn-primary');
+      } else {
+        $continueButton.addClass('disabled').removeClass('btn-primary');
+      }
+    });
+
+    // Continue button redirect
+    $('#merge-topics').click(function() {
+      if ($(this).hasClass('disabled')) {
+        return;
+      }
+
+      var checked = $('.mark-for-merge:checked').map(function() {
+        return this.value;
+      }).get();
+
+      var url = window.location.pathname + '?' + $.param({
+        'continue' : 1,
+        'topic': checked
+      });
+
+      window.location.href = url;
+
+    });
+  });
+</script>
+{% endblock %}
+
+{% block content %}
+
+{% with cluster.topics.all as candidates %}
+
+<div>
+  <a href="{% url show_topic_clusters_view %}" class="btn">
+    <i class="icon-list"></i>
+    Return to cluster list
+  </a>
+
+  {% if next_cluster_url %}
+  <a href="{{ next_cluster_url }}" class="btn pull-right">
+    Skip this cluster
+    <i class="icon-chevron-right"></i>
+  </a>
+  {% endif %}
+
+</div>
+
+
+<hr/>
+
+<div id="merge-candidates" class="row">
+
+  <div id="candidate-select" class="span5">
+      {% for candidate in candidates %}
+      <div id="candidate-{{ forloop.counter }}" class="merge-candidate">
+        <h4>{{ candidate }}</h4>
+        <div class="candidate-actions">
+          <label class="checkbox">
+            <input value={{ candidate.id }}
+                   type="checkbox"
+                   class="mark-for-merge" />Mark for merge
+          </label>
+          <a href="#" class="view-candidate-details btn pull-right">View details</a>
+        </div>
+      </div>
+      {% endfor %}
+
+      <div id="cluster-actions">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete_cluster" />
+          <button id="merge-topics" type="button" class="btn disabled">Continue</button>
+          <button id="delete-cluster" type="submit" class="btn btn-danger pull-right">Delete cluster</button>
+          <p style="text-align: justify;">Mark items to be merged after reviewing their details. Select 'Continue' to preview the resulting merged topic before completing the process.</p>
+          <p style="text-align: justify;">If none of these items should be combined, delete the cluster.</p>
+        </form>
+      </div>
+  </div>
+
+  <div id="candidate-details" class="span7">
+  {% for candidate in candidates %}
+    <div id="candidate-{{ forloop.counter }}-detail"
+         class="candidate-detail"
+         style="display: none;">
+      <dl>
+
+        <dt>Name</dt>
+        <dd>
+        {{ candidate|as_link }}
+        </dd>
+
+        <dt>Aliases</dt>
+        <dd>
+        {% with candidate.aliases.all as aliases %}
+          {% if aliases %}
+            {% for alias in aliases %}
+            {{ alias }}
+            {% endfor %}
+          {% else %}
+            <span class="quiet">None</span>
+          {% endif %}
+        {% endwith %}
+        </dd>
+
+        <dt>Article</dt>
+        <dd>
+        {% if candidate.has_summary %}
+          {{ candidate.summary|as_html|truncatewords:150 }}
+        {% else %}
+          <span class="quiet">None</span></dd>
+        {% endif %}
+        </dd>
+
+
+        <dt>Related objects</dt>
+        <dd>
+        {% with candidate.related_objects as objects %}
+          {% if objects %}
+            {% for object in objects %}
+            <div class="related-object">{{ object|object_name }}: {{ object|as_link }}</div>
+            {% endfor %}
+          {% else %}
+            <span class="quiet">None</span>
+          {% endif %}
+        {% endwith %}
+        </dd>
+
+      </dl>
+    </div>
+  {% endfor %}
+</div>
+
+{% endwith %}
+
+{% endblock %}

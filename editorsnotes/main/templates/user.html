@@ -7,7 +7,21 @@
 
 {% block css %}
 <style type="text/css">
-#test-message p {color: red};
+  #test-message p {color: red;}
+  .activity-log-entry > div * {
+    display: inline;
+  }
+  .activity-log-entry {
+    line-height: 14px;
+    margin-bottom: .6em;
+  }
+  .activity-log-entry * {
+    line-height: inherit;
+  }
+  .model-label {
+    font-weight: bold;
+    color: #555;
+  }
 </style>
 {% endblock %}
 
@@ -15,11 +29,15 @@
 {% block title %}: {{ profile.display_name }}{% endblock %}
 
 {% block content %}
-    <header>
+  <div class="row">
+    <header class="span12">
       <h2>{{ profile.display_name }}</h2>
       <div id="loggedin" class="quiet append-bottom">
         <span class="quiet">Last logged in {{ profile.user.last_login|timeago }}</span>
-        <br/>
+      </div>
+
+      {% comment %}
+      <div>
         {% if zotero_status %}
           <span class="quiet">You have entered Zotero access information.
         {% else %}
@@ -29,16 +47,37 @@
       </div>
       <div id="zotero-information">
       </div>
+      {% endcomment %}
+
+      <hr/>
     </header>
 
-    <section id="user_activity" class="span-24 last"> 
+    <section id="alerts" class="span6">
+      <h3>Alerts</h3>
+      {% if clusters %}
+      <div class="well">
+        <p>
+        {{ clusters.count }} clusters of topics to be reviewed.
+        </p>
+        <a class="btn" href="{% url show_topic_clusters_view %}">View</a>
+      </div>
+      {% endif %}
+    </section>
+
+
+    <section id="user_activity" class="span6"> 
       <h3>Recent edits</h3>
-      <ul class="activity-log">
+      <ul class="activity-log unstyled">
         {% for entry in log_entries %}
         <li class="activity-log-entry">
           {% filter typogrify %}
-          {{ entry.what|as_link }}
-          <span class="quiet">{{ entry.when|timeago }}</span>
+          <div>
+            <span class="model-label">{{ entry.what|object_name }}: </span>
+            {{ entry.what|as_link }}
+          </div>
+          <div>
+            <span class="quiet">{{ entry.when|date:"SHORT_DATETIME_FORMAT" }}</span>
+          </div>
           {% endfilter %}          
         </li>
         {% empty %}
@@ -47,6 +86,9 @@
       </ul>
     </section>
 
+  </div>
+
+  {% comment %}
   <div id="dialog-form" title="Edit Zotero access information">
 	  <p>Log in to <a href="http://www.zotero.org" target="_blank">Zotero</a> and browse to the <a href="https://www.zotero.org/settings/keys" target="_blank">"Feeds API"</a> section within user settings. Create a new key, with these settings recommended: "Allow library access" and "Read only" access to All Groups. For more information, see the Zotero section on this site's help page.</p>
 	  <form action="../zotero_info?return_to={{ request.get_full_path }}" method="post"> {% csrf_token %}
@@ -62,4 +104,6 @@
 	  </fieldset>
 	  </form>
   </div>
+  {% endcomment %}
+
 {% endblock %}
