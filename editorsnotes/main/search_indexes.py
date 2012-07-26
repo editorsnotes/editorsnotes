@@ -12,13 +12,19 @@ class DocumentIndex(RealTimeSearchIndex):
     text = CharField(document=True, use_template=True)
     project_id = MultiValueField()
     related_topic_id = MultiValueField()
+    representations = MultiValueField()
+
+    # Zotero fields
     creators = MultiValueField()
     archive = CharField()
     itemType = CharField()
+    publicationTitle = CharField()
     def prepare_project_id(self, obj):
         return [p.id for p in obj.get_project_affiliation()]
     def prepare_related_topic_id(self, obj):
         return [t.id for t in obj.get_all_related_topics()]
+    def prepare_representations(self, obj):
+        return [r for r in obj.get_all_representations()]
     def prepare(self, obj):
         self.prepared_data = super(DocumentIndex, self).prepare(obj)
 

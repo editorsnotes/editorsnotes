@@ -12,6 +12,7 @@ from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequ
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
+from itertools import chain
 from reversion import get_unique_for_object
 from urllib import urlopen
 from models import *
@@ -98,27 +99,27 @@ def all_documents(request, project_slug=None):
         template = 'filtered-documents.html'
         o['filtered'] = True
 
-    valid_facets = [
+    # Narrow search query according to GET parameters
+    qs = SearchQuerySet().models(Document)
+
+    query = []
+    params = [p for p in request.GET.keys() if p[-2:] == '[]']
+    for param in params:
+        this_query = [ '%s:"%s"' % (param[:-2], val)
+                      for val in request.GET.getlist(param) ]
+        query += [' AND '.join(this_query)]
+    qs = qs.narrow(' AND '.join(query)) if query else qs
+
+    # Facet results
+    valid_facets = (
         'project_id',
         'related_topic_id',
         'archive',
         'publicationTitle',
         'itemType',
-        'creators'
-    ]
-
-
-    # Narrow search query according to GET parameters
-    qs = SearchQuerySet().models(Document)
-    params = set.intersection(set(valid_facets), set(request.GET))
-    query = []
-    for param in params:
-        query_filter = [ '%s:"%s"' % (param, val) for val
-                        in request.GET.get(param).split('|') ]
-        query += [ ' AND '.join(query_filter)]
-    qs = qs.narrow(' AND '.join(query)) if query else qs
-
-    # Facet results
+        'creators',
+        'representations'
+    )
     for f in valid_facets:
         qs = qs.facet(f)
 
@@ -155,7 +156,7 @@ def all_documents(request, project_slug=None):
             o['facets'][facet] = [ (f, f, count)
                                   for f, count in sorted_facets if f ]
 
-    o['documents'] = qs 
+    o['documents'] = qs
     o['query'] = query
     return render_to_response(
         template, o, context_instance=RequestContext(request))
@@ -209,10 +210,14 @@ def topic(request, topic_slug):
     o['summary_cites'] = _sort_citations(o['topic'])
 
     notes = o['topic'].related_objects(Note)
-    note_topics = [ [ ta.topic for ta in n.topics.exclude(topic=o['topic']) ] for n in notes ]
+    note_topics = [ [ ta.topic for ta in n.topics.exclude(topic=o['topic']).select_related('topic') ] for n in notes ]
+    note_sections = NoteSection.objects.filter(note__in=[n.id for n in notes])
+
     o['notes'] = zip(notes, note_topics)
 
-    o['documents'] = o['topic'].related_objects(Document)
+    o['documents'] = set(chain(
+        o['topic'].related_objects(Document),
+        Document.objects.filter(notesection__in=note_sections)))
 
     o['thread'] = { 'id': 'topic-%s' % o['topic'].id, 'title': o['topic'].preferred_name }
     o['alpha'] = (request.user.groups.filter(name='Alpha').count() == 1)

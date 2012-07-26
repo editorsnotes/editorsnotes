@@ -29,11 +29,11 @@ class FacetNode(template.Node):
         if len(facet_inputs) > 5:
             col_length = len(facet_inputs) / 2
 
-            html += '<ul class="unstyled span6">'
+            html += '<ul class="unstyled span5">'
             html += '\n'.join(facet_inputs[:col_length])
             html += '</ul>'
 
-            html += '<ul class="unstyled span6">'
+            html += '<ul class="unstyled span5">'
             html += '\n'.join(facet_inputs[col_length:])
             html += '</ul>'
 
@@ -42,7 +42,3 @@ class FacetNode(template.Node):
             html += '\n'.join(facet_inputs)
             html += '</ul>'
         return html
-
-#        try:
-#        except template.VariableDoesNotExist:
-#            return

@@ -1,16 +1,13 @@
-{% extends "base.html" %}
-{% load typogrify display %}
-
-{% block title %}: All Documents{% endblock %}
-
-{% block css %}
-<style type="text/css">
+#facets,
 #filters {
-  margin-top: .75em;
+  margin-bottom: .75em;
 }
+
 #filters.loaded h3 img {
   display: none;
 }
+
+#available-facets li,
 #available-filters li {
   margin: 4px;
   padding-top: 3px;
@@ -18,19 +15,28 @@
   display: block;
   text-align: left;
 }
+
+.document-facet i,
 .document-filter i {
   opacity: .7;
 }
-#filter-form div[class*="-filter"] {
+
+#facet-inputs div[class*="filter"],
+#filter-form div[class*="filter"] {
   display: none;
 }
+
+#available-facets,
 #available-filters {
   padding-right: 10px;
   border-right: 1px solid #ccc;
 }
+
+#facet-inputs, #facet-inputs div.span10,
 #filter-form, #filter-form div.span10 {
   margin-left: 6px;
 }
+
 #sort-options {
   font-size: 120%;
   font-weight: bold;
@@ -63,23 +69,3 @@
 .timeago-label:last-child {
   display: none
 }
-</style>
-{% endblock %}
-
-{% block js %}
-<script type="text/javascript" src="/media/function/models/all-documents.js">
-</script>
-{% endblock %}
-
-{% block content %}
-<header>
-<h2>All Documents</h2>
-</header>
-
-
-<section id="all-documents">
-  {% include "filtered-documents.html" %}
-</section>
-{% endblock %}
-
-

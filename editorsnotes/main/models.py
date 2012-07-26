@@ -135,7 +135,7 @@ class DocumentManager(models.Manager):
     # Include whether or not documents have scans/transcripts in default query.
     def get_query_set(self):
         return super(DocumentManager, self).get_query_set()\
-            .select_related('_transcript')\
+            .select_related('_transcript', '_zotero_link')\
             .extra(select = { 'link_count': '''SELECT COUNT(*) 
 FROM main_documentlink WHERE main_documentlink.document_id = main_document.id''',
                               'scan_count': '''SELECT COUNT(*) 
@@ -196,12 +196,30 @@ class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific)
             return self._zotero_link
         except:
             return None
+    def get_all_representations(self):
+        r = []
+        if self.has_transcript():
+            r.append('Transcript')
+        if self.has_scans():
+            r.append('Scans')
+        if hasattr(self, 'link_count') and self.link_count:
+            r.append('External Link')
+        return r
     def get_all_related_topics(self):
         topics = []
+
+        # Explicitly stated topic assignments
         topics += [ta.topic for ta in self.topics.all()]
+
+        # Topic assignments via Citation objects
         topics += [c.content_object for c in self.citations.filter(
             content_type=ContentType.objects.get_for_model(Topic))]
-        return topics
+
+        # Topic assignments via NoteSection objects
+        for ns in self.notesection_set.all():
+            topics += [ t for t in ns.get_all_related_topics() ]
+
+        return set(topics)
     def get_metadata(self):
         metadata = {}
         for md in self.metadata.all():
@@ -227,11 +245,13 @@ class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific)
         if self.zotero_link():
             data_attributes = ''.join(
                 [ ' data-%s="%s"' % (k, escape(v)) 
-                  for k, v in self.zotero_link().get_zotero_fields() if v != "" and k not in ['tags', 'extra'] ])
+                  for k, v in self.zotero_link().get_zotero_fields() if v and k not in ['tags', 'extra'] ])
         else:
             data_attributes = ''
         if self.edtf_date:
             data_attributes += ' data-edtf-date="%s"' % self.edtf_date
+        data_attributes += ' data-representations="%s"' % (
+            self.get_all_representations()) if self.get_all_representations() else ''
         return mark_safe(
             '<div id="document-%s" class="document%s"%s>%s</div>' % (
                 self.id,
@@ -447,9 +467,14 @@ class Topic(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
                     e.message_dict['preferred_name'].append(u'Topic with a very similar Preferred name already exists.')
             raise e
     def related_objects(self, model=None):
+        u"""
+        If provided with a model, returns a queryset for that model. Otherwise,
+        simply return a list of objects
+        """
         if model:
-            return [ ta.content_object for ta in self.assignments.filter(
-                    content_type=ContentType.objects.get_for_model(model)) ]
+            return model.objects.filter(
+                id__in=[ ta.object_id for ta in self.assignments.filter(
+                    content_type=ContentType.objects.get_for_model(model)) ])
         else:
             return sorted([ta.content_object for ta in self.assignments.all()],
                           key=lambda o: o.__repr__())
@@ -481,8 +506,15 @@ class NoteSection(LastUpdateMetadata):
     note = models.ForeignKey(Note, related_name='sections')
     document = models.ForeignKey(Document, blank=True, null=True)
     content = fields.XHTMLField(blank=True, null=True)
+    topics = generic.GenericRelation('TopicAssignment')
     def has_content(self):
         return self.content is not None
+    def get_all_related_topics(self):
+        # Note sections can have their own topic assignments, but also inherit
+        # the topic assignments of the parent note
+        return set( [ta.topic for ta in self.note.topics.all()] +
+                    [ta.topic for ta in self.topics.all()] )
+
 
 class Project(models.Model, URLAccessible, PermissionsMixin):
     name = models.CharField(max_length='80')
