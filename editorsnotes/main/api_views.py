@@ -18,6 +18,8 @@ def api_topics(request):
         query = ' AND '.join([ 'names:%s*' % term for term 
                                in request.GET.get('q').split() 
                                if len(term) > 1 ])
+        if request.GET.get('project_id'):
+            query += ' AND project_id:%s' % request.GET.get('project_id')
         results = SearchQuerySet().models(Topic).narrow(query).load_all()
     
     topics = [ topic_to_dict(r.object) for r in results ]
@@ -42,6 +44,8 @@ def api_documents(request):
         query = ' AND '.join([ 'title:%s*' % term for term 
                                in request.GET.get('q').split() 
                                if len(term) > 1 ])
+        if request.GET.get('project_id'):
+            query += ' AND project_id:%s' % request.GET.get('project_id')
         results = SearchQuerySet().models(Document).narrow(query).load_all()
     
     documents = [ document_to_dict(r.object) for r in results ]
@@ -50,6 +54,27 @@ def api_documents(request):
 def api_document(request, document_id):
     document = get_object_or_404(Document, id=document_id)
     return HttpResponse(json.dumps(document_to_dict(document)), mimetype='text/plain')
+
+def note_to_dict(note):
+    return { 'title': note.title,
+             'id': note.id,
+             'uri': 'http://%s%s' % (Site.objects.get_current().domain,
+                                     note.get_absolute_url()) }
+
+def api_notes(request):
+    query = ''
+    results = EmptySearchQuerySet()
+
+    if request.GET.get('q'):
+        query = ' AND '.join([ 'title:%s*' % term for term 
+                               in request.GET.get('q').split() 
+                               if len(term) > 1 ])
+        if request.GET.get('project_id'):
+            query += ' AND project_id:%s' % request.GET.get('project_id')
+        results = SearchQuerySet().models(Note).narrow(query).load_all()
+
+    notes = [ note_to_dict(r.object) for r in results ]
+    return HttpResponse(json.dumps(notes), mimetype='text/plain')
 
 def transcript_to_dict(transcript):
     return { 'description': transcript.as_text(),
