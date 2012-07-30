@@ -87,6 +87,7 @@ def user(request, username=None):
 @login_required
 def index(request):
     o = {}
+    o['featured_items'] = FeaturedItem.objects.all()
     return render_to_response(
         'index.html', o, context_instance=RequestContext(request))
 

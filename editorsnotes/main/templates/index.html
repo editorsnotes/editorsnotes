@@ -4,6 +4,62 @@
 
 {% block title %}{% endblock %}
 
+{% block css %}
+<style type="text/css">
+  .well {
+    background-color: #f9f9f9;
+  }
+  a {
+    color: #107887;
+  }
+  p.message {
+    font-size: 14px;
+    line-height: 20px;
+    text-align: justify;
+  }
+  #intro-buttons {
+    margin-top: 10px;
+    padding-left: 175px;
+  }
+  #intro-buttons > .btn {
+    padding: 10px;
+    margin-right: 30px;
+    width: 75px;
+  }
+  #features li {
+    display: inline-block;
+    border-radius: 3px;
+    padding: 5px;
+    background: #eee;
+    font-weight: bold;
+    text-align: center;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-...
+<div class="row">
+    <p class="message">
+    Editors' Notes is an <a href="http://github.com/rybesh/editorsnotes">open-source</a>, web-based tool for recording, organizing, preserving, and opening access to research notes, built with the needs of documentary editing projects, archives, library special collections in mind.
+    </p>
+
+    <div id="examples">
+      <h4>How projects are using Editors' Notes</h4>
+      <ul>
+        <li>
+          <a href="{% url project_view 'sanger' %}">The Margaret Sanger Papers</a> are researching <a href="{% url topic_view 'india-birth-control-movement-in' %}#notes">the birth control movement in India</a>.
+        </li>
+        <li>
+        <a href="{% url project_view 'ecssba' %}">The Elizabeth Cady Stanton & Susan B. Anthony Papers Project</a> are collecting sources about <a href="{% url topic_view 'women-already-voters-test-cases-during-reconstruction' %}">women testing using direct action to test voting laws during reconstruction</a>.
+        </li>
+        <li>
+          <a href="{% url project_view 'labadie' %}">The Labadie Collection</a> is sharing items in its collection mentioning <a href="{% url note_view 341 %}">Emma Goldman's visits to Detroit</a>
+        </li>
+        <li>
+        <a href="{% url project_view 'emma' %}">The Emma Goldman Papers Project</a> are researching the origins of the <a href="{% url note_view 134 %}">1919 deportation of strikers in Bisbee, Arizona</a>.
+        </li>
+      </ul>
+    </div>
+
+</div>
 {% endblock %}
