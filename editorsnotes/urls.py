@@ -13,6 +13,7 @@ urlpatterns = patterns('',
 urlpatterns += patterns('editorsnotes.main.admin_views',
     url(r'^admin/main/project/(?P<project_id>\d+)/roster/$', 'project_roster', name='project_roster_view'),
     url(r'^admin/main/project/(?P<project_id>\d+)/$', 'change_project', name='project_edit_view'),
+    url(r'^admin/main/project/(?P<project_id>\d+)/featured_items/$', 'change_featured_items', name='change_featured_items_view'),
     url(r'^document/add/$', 'document_add'),
 )
 
@@ -46,6 +47,7 @@ api_patterns = patterns('editorsnotes.main.api_views',
     url(r'^api/topics/(?P<topic_ids>\d+(,\d+)*)/$', 'api_topic', name='api_topic_view'),
     url(r'^api/documents/$', 'api_documents', name='api_documents_view'),
     url(r'^api/documents/(?P<document_id>\d+)/$', 'api_document', name='api_document_view'),
+    url(r'^api/notes/$', 'api_notes', name='api_notes_view'),
     url(r'^api/transcripts/$', 'api_transcripts', name='api_transcripts_view'),
     url(r'^api/transcripts/(?P<transcript_id>\d+)/$', 'api_transcript', name='api_transcript_view'),
 )

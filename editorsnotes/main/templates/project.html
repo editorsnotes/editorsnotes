@@ -4,28 +4,84 @@
 
 {% block content %}
 <h1>{{ project.name }}</h1>
-{% if project.image %}
-  <img src="{{ project.image.url }}" />
-{% endif %}
-{{ project.description|as_html|typogrify }}
-
-
+<hr/>
 
 {% if project_role or can_change %}
-  <hr/>
+<div class="well">
   {% if project_role %}
-    <p> You are a{% if project_role == 'editor' %}n{% endif %} {{ project_role }} of this project.</p>
+  <p>
+  You are a member of this project. As a{% if project_role == 'editor' %}n{% endif %} {{ project_role }}, you can perform the following actions:
+  </p>
   {% endif %}
-
+  <div>
   {% if can_change %}
-    <a class="btn" href="{% url project_roster_view project_id=project.id %}">Edit roster</a>
-    <a class="btn" href="{% url project_edit_view project_id=project.id %}?return_to={{ request.path }}">Edit description</a>
+    <a class="btn" href="{% url project_roster_view project_id=project.id %}">
+      <i class="icon-user"></i>
+      Edit roster
+    </a>
+    <a class="btn" href="{% url change_featured_items_view project_id=project.id %}">
+      <i class="icon-star"></i>
+      Select featured items
+    </a>
+    <a class="btn" href="{% url project_edit_view project_id=project.id %}?return_to={{ request.path }}">
+      <i class="icon-edit"></i>
+      Edit project description
+    </a>
   {% else %}
     {% if project_role %}
       <a class="btn" href="{% url project_roster_view project_id=project.id %}">View roster</a>
     {% endif %}
   {% endif %}
-
+  </div>
+</div>
 {% endif %}
+
+<div class="row">
+  <div class="span6">
+    {% if project.has_description %}
+      {% if project.image %}
+        <img align="left" style="margin: 0 10px 10px 0;" src="{{ project.image.url }}" />
+      {% endif %}
+      {{ project.description|as_html|typogrify }}
+    {% else %}
+      no project description
+    {% endif %}
+  </div>
+  <div class="span6">
+    {% with project.featureditem_set.all as featured_items %}
+      {% if featured_items %}
+        <h3>&#9733; Featured items</h3>
+        {% for item in featured_items %}
+        <ul class="unstyled model-item-list">
+          <li><span class="model-label">{{ item.content_object|object_name}}:</span> {{ item.content_object|as_link }}</li>
+        </ul>
+        {% endfor %}
+        <hr/>
+      {% else %}
+      {% endif %}
+
+    {% endwith %}
+
+    <h3>Recently edited items</h3>
+    <ul class="activity-log unstyled">
+      {% for entry in log_entries %}
+      <li class="activity-log-entry">
+        {% filter typogrify %}
+        <div>
+          <span class="model-label">{{ entry.what|object_name }}: </span>
+          {{ entry.what|as_link }}
+        </div>
+        <div>
+          <span class="quiet">{{ entry.when|date:"SHORT_DATETIME_FORMAT" }}</span>
+        </div>
+        {% endfilter %}          
+      </li>
+      {% empty %}
+      <li>{{ profile.display_name }} hasn't made any edits yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
 
 {% endblock %}

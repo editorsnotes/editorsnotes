@@ -32,6 +32,9 @@
               <li><a href="/about/">About</a></li>
               <li><a href="#">Help</a></li>
             </ul>
+
+
+            {% if user.is_authenticated %}
             <ul class="nav pull-right">
               <li class="dropdown">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown">
@@ -45,8 +48,7 @@
                   <li>{{ profile.affiliation|as_link }}</li>
                   {% endif %}
                   {% endwith %}
-                  <li><a href="#">Recent edits</a></li>
-                  <li><a href="#">Log out</a></li>
+                  <li><a href="{% url user_logout_view %}">Log out</a></li>
                 </ul>
               </li>
               <li>
@@ -57,26 +59,21 @@
                   </a>
                   <ul class="dropdown-menu">
                     {% block extra_edit_actions %}{% endblock %}
-                    <li><a href="#">Add note</a></li>
-                    <li><a href="#">Add document</a></li>
-                    <li><a href="#">Add topic</a></li>
-                  </ul>
-                </div>
-              </li>
-              <li>&nbsp;</li>
-              <li>
-                <div class="btn-group">
-                  <a class="btn dropdown-toggle" data-toggle="dropdown" href="#" style="padding: 4px 5px; margin-bottom: 7px;">
-                    <b class="icon-inbox"></b>
-                    <b class="caret caret-dark"></b>
-                  </a>
-                  <ul class="dropdown-menu">
-                    <li><a href="#">New query</a></li>
-                    <li><a href="#">Tasks</a></li>
+                    <li><a href="{% url admin:main_note_add %}">Add note</a></li>
+                    <li><a href="{% url admin:main_document_add %}">Add document</a></li>
+                    <li><a href="{% url admin:main_topic_add %}">Add topic</a></li>
                   </ul>
                 </div>
               </li>
             </ul>
+            {% else %}
+            <ul class="nav pull-right">
+              <li><a href="/accounts/login/">Log in</a></li>
+            </ul>
+            {% endif %}
+
+
+
           </div>
       </div>
     </div>

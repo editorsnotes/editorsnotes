@@ -11,6 +11,24 @@ a:focus, .btn:focus {
 span.quiet {
     color: #AAA;
 }
+span.model-label {
+    font-weight: bold;
+    color: #555;
+}
+ul.model-item-list > li * {
+    display: inline;
+}
+  .activity-log-entry > div * {
+    display: inline;
+  }
+  .activity-log-entry {
+    line-height: 14px;
+    margin-bottom: .6em;
+  }
+  .activity-log-entry * {
+    line-height: inherit;
+  }
+
 .citation div, .citation p {
     display: inline;
 }
