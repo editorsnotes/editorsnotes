@@ -22,6 +22,7 @@ settings-*.py
 searchindex
 share
 src
+/static
 uploads
 topic-list.txt
 document-list.txt

@@ -8,7 +8,7 @@ $(function() {
   });
   
   $("#test-zotero-information").live('click', function(){
-    var loader = $('<img src="/media/style/icons/ajax-loader.gif">');
+    var loader = $('<img src="/static/style/icons/ajax-loader.gif">');
     var button = $(this).replaceWith(loader);
     $.ajax({
       url: '/document/upload/libraries/',

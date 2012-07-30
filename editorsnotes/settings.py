@@ -17,7 +17,8 @@ USE_L10N = False
 USE_I18N = False
 
 MEDIA_URL = '/media/'
-ADMIN_MEDIA_PREFIX = '/django_admin_media/'
+STATIC_URL = '/static/'
+
 
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
@@ -30,6 +31,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.i18n',
     'django.core.context_processors.media',
     'django.core.context_processors.request',
+    'django.core.context_processors.static',
     'django.contrib.messages.context_processors.messages',
 )
 
@@ -53,15 +55,22 @@ CACHES = {
 
 import os.path
 
+path = os.path.dirname(__file__)
+
 TEMPLATE_DIRS = (
-    os.path.abspath(os.path.join(os.path.dirname(__file__), 'templates'))
+    os.path.abspath(os.path.join(path, 'templates')),
 )
+STATICFILES_DIRS = (
+    os.path.abspath(os.path.join(path, 'static')),
+)
+
 
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
+    'django.contrib.staticfiles',
     'django.contrib.admin',
     'django.contrib.admindocs',
     'reversion',

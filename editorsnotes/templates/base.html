@@ -2,18 +2,18 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
   <head>
     <title>Editors' Notes{% if project %}: {{ project }}{% else %}{% endif %}{% block title %}{% endblock %}</title>
-    <link rel="stylesheet" href="/media/style/custom-theme/jquery-ui-1.8.10.custom.css" type="text/css"/>
-    <link rel="stylesheet" href="/media/style/bootstrap/css/bootstrap.css" type="text/css"/>
-    <link rel="stylesheet" href="/media/style/bootstrap/css/bootstrap-custom.css" type="text/css"/>
-    <!--[if lt IE 8]><link rel="stylesheet" href="/media/style/ie.css" type="text/css" media="screen, projection"/><![endif]-->
+    <link rel="stylesheet" href="{{ STATIC_URL }}style/custom-theme/jquery-ui-1.8.10.custom.css" type="text/css"/>
+    <link rel="stylesheet" href="{{ STATIC_URL }}style/bootstrap/css/bootstrap.css" type="text/css"/>
+    <link rel="stylesheet" href="{{ STATIC_URL }}style/bootstrap/css/bootstrap-custom.css" type="text/css"/>
+    <!--[if lt IE 8]><link rel="stylesheet" href="{{ STATIC_URL }}style/ie.css" type="text/css" media="screen, projection"/><![endif]-->
     {% block css %}{% endblock %}
-    <script type="text/javascript" src="/media/function/jquery/jquery-1.7.1.min.js"></script>
-    <script type="text/javascript" src="/media/function/jquery/jquery-ui-1.8.18.custom.min.js"></script>
-    <script type="text/javascript" src="/media/function/underscore-min.js"></script>
-    <script type="text/javascript" src="/media/function/jquery/jquery.timeago.js"></script>
-    <script type="text/javascript" src="/media/function/jquery/jquery.ba-bbq.min.js"></script>
-    <script type="text/javascript" src="/media/function/models/base.js"></script>
-    <script type="text/javascript" src="/media/function/bootstrap.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}function/jquery/jquery-1.7.1.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}function/jquery/jquery-ui-1.8.18.custom.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}function/underscore-min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}function/jquery/jquery.timeago.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}function/jquery/jquery.ba-bbq.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}function/base.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}function/bootstrap.min.js"></script>
     {% block js %}
     {% endblock %}
   </head>
