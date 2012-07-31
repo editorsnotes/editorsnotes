@@ -5,61 +5,131 @@
 {% block title %}{% endblock %}
 
 {% block css %}
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
 <style type="text/css">
-  .well {
-    background-color: #f9f9f9;
-  }
-  a {
+
+  #main a {
     color: #107887;
   }
+
   p.message {
-    font-size: 14px;
-    line-height: 20px;
-    text-align: justify;
-  }
-  #intro-buttons {
-    margin-top: 10px;
-    padding-left: 175px;
-  }
-  #intro-buttons > .btn {
-    padding: 10px;
-    margin-right: 30px;
-    width: 75px;
-  }
-  #features li {
-    display: inline-block;
-    border-radius: 3px;
-    padding: 5px;
-    background: #eee;
-    font-weight: bold;
+    font-family: 'Open Sans', sans-serif !important;
+    font-size: 22px;
+    line-height: 32px;
+    margin: .75em 45px 1.75em;
     text-align: center;
   }
+
+  #examples li {
+    margin-top: .25em;
+  }
+
+  #features-toggle {
+    list-style-type: none;
+    margin: 0px;
+    padding: 0 0 8px 0;
+  }
+  #features-toggle li {
+    display: inline-block;
+    margin-left: 11px;
+    width: 224px;
+  }
+  #features-toggle li > a {
+    display: inline-block;
+    width: 225px;
+    padding: 10px 0px;
+
+    border-radius: 2px;
+    background: #e9e9c9;
+
+    font-family: 'Open Sans', sans-serif !important;
+    color: black;
+    text-align: center;
+    text-decoration: none;
+    letter-spacing: 1px;
+    font-size: 14px;
+  }
+  #features-toggle li > a:hover, #features-toggle li > a.selected {
+    background: #7eb6be;
+  }
+  #features p {
+    text-align: justify;
+  }
 </style>
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript">
+  $(document).ready(function() {
+    $('#features-toggle a').click(function(event) {
+      var $this = $(this);
+      $this.parents('ul').find('.selected').removeClass('selected');
+      $this.addClass('selected');
+      $('#description').children().hide()
+        .filter($this.attr('href')).show();
+      return false;
+    });
+  });
+</script>
 {% endblock %}
 
 {% block content %}
 <div class="row">
     <p class="message">
-    Editors' Notes is an <a href="http://github.com/rybesh/editorsnotes">open-source</a>, web-based tool for recording, organizing, preserving, and opening access to research notes, built with the needs of documentary editing projects, archives, library special collections in mind.
+    Editors' Notes is an <a href="http://github.com/rybesh/editorsnotes">open-source</a>, web-based tool for recording, organizing, preserving, and opening access to research notes, built with the needs of documentary editing projects, archives, and library special collections in mind.
     </p>
 
     <div id="examples">
-      <h4>How projects are using Editors' Notes</h4>
-      <ul>
+      <h4>A few ways projects are using Editors' Notes:</h4>
+      <ul class="unstyled">
         <li>
           <a href="{% url project_view 'sanger' %}">The Margaret Sanger Papers</a> are researching <a href="{% url topic_view 'india-birth-control-movement-in' %}#notes">the birth control movement in India</a>.
         </li>
         <li>
-        <a href="{% url project_view 'ecssba' %}">The Elizabeth Cady Stanton & Susan B. Anthony Papers Project</a> are collecting sources about <a href="{% url topic_view 'women-already-voters-test-cases-during-reconstruction' %}">women testing using direct action to test voting laws during reconstruction</a>.
+        <a href="{% url project_view 'ecssba' %}">The Elizabeth Cady Stanton & Susan B. Anthony Papers Project</a> are collecting sources about <a href="{% url topic_view 'women-already-voters-test-cases-during-reconstruction' %}">women using direct action to test voting laws during reconstruction</a>.
         </li>
         <li>
-          <a href="{% url project_view 'labadie' %}">The Labadie Collection</a> is sharing items in its collection mentioning <a href="{% url note_view 341 %}">Emma Goldman's visits to Detroit</a>
+          <a href="{% url project_view 'labadie' %}">The Labadie Collection</a> is sharing items in its collection that mention <a href="{% url note_view 341 %}">Emma Goldman's visits to Detroit</a>.
         </li>
         <li>
         <a href="{% url project_view 'emma' %}">The Emma Goldman Papers Project</a> are researching the origins of the <a href="{% url note_view 134 %}">1919 deportation of strikers in Bisbee, Arizona</a>.
         </li>
       </ul>
     </div>
+
+    <hr/>
+
+    <div id="features">
+
+    <ul id="features-toggle">
+      <li><a href="#collaboration">Project collaboration</a></li>
+      <li><a href="#notes">Flexible note taking</a></li>
+      <li><a href="#zotero">Integration with Zotero</a></li>
+      <li><a href="#annotation">Document annotation</a></li>
+    </ul>
+
+    <div id="description">
+      <div id="collaboration">
+        <p>
+        </p>
+      </div>
+      <div id="notes">
+        <p>
+        </p>
+      </div>
+      <div id="zotero">
+        <p>
+        </p>
+      </div>
+      <div id="annotation">
+        <p>
+        </p>
+      </div>
+    </div>
+      <p>
+      Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. Nam liber tempor cum soluta nobis eleifend option congue nihil imperdiet doming id quod mazim placerat facer possim assum. Typi non habent claritatem insitam; est usus legentis in iis qui facit eorum claritatem. Investigationes demonstraverunt lectores legere me lius quod ii legunt saepius. Claritas est etiam processus dynamicus, qui sequitur mutationem consuetudium lectorum. Mirum est notare quam littera gothica, quam nunc putamus parum claram, anteposuerit litterarum formas humanitatis per seacula quarta decima et quinta decima. Eodem modo typi, qui nunc nobis videntur parum clari, fiant sollemnes in futurum.
+      </p>
+
 
 </div>
 {% endblock %}
