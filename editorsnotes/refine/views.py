@@ -30,7 +30,7 @@ def show_topic_clusters(request):
         clusters = TopicCluster.objects.all()
     else:
         clusters = TopicCluster.objects.filter(
-            topics__afilliated_projects=affiliation)
+            topics__affiliated_projects=affiliation)
 
     o['total_clusters'] = clusters.count()
     o['start'] = start + 1
