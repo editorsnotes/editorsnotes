@@ -14,11 +14,6 @@
 <script type="text/javascript">
   $(document).ready(function() {
     var zoteroContainer = $('.zotero-container').append(buildZoteroForm());
-    zoteroContainer.on('input', function() {
-      // remember this:
-      // http://stackoverflow.com/questions/11276429/jquery-code-triggered-twice-for-bindkeyup-change-when-pressing-key
-      $('#generate-citation').trigger('click', true);
-    });
     $('.xhtml-textarea').wymeditor(zoteroWymSettings);
     $('#document-save').click(function() {
       $zoteroTable = $('table.zotero-information');
