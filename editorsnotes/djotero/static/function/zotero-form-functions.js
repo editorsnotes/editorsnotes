@@ -29,13 +29,16 @@
     var zoteroData,
       $table = $('<table class="zotero-information"><tbody>'),
       $tbody = $table.find('tbody'),
+      $loader = $('<div class="loading"><img src="/static/style/icons/ajax-loader.gif"/>&nbsp;<span>Loading...</span></div>').hide();
       templates = initTemplates();
 
     if (!zoteroString) {
       var itemTypeSelect = $(templates.itemTypeSelect);
+      itemTypeSelect.prepend($loader);
       itemTypeSelect.find('select[name="item-type-select"]').change(function() {
         var selectedItemType = $(this).val();
         if (selectedItemType.length) {
+          $loader.show();
           $.ajax({
             url: '/api/document/template/',
             data: {
@@ -43,6 +46,7 @@
               'templateFor': 'item'
             },
             success: function(data) {
+              $loader.hide();
               var $zoteroTable = buildZoteroForm(data).insertAfter(itemTypeSelect);
               itemTypeSelect.remove();
             }
@@ -51,6 +55,8 @@
       });
       return itemTypeSelect;
     }
+
+    $table.prepend($loader);
 
     if (typeof(zoteroString) == 'string') {
       zoteroData = JSON.parse(zoteroString)
@@ -66,6 +72,26 @@
         case 'creators':
           var $creators = $(templates.creatorsTemplate(zoteroData)).appendTo($tbody);
 
+          var selectedItemType = $table.find('[data-zotero-key="itemType"] input').val();
+          if (!$table.data('creatorsCache')) {
+            $table.data('creatorsCache', {});
+          }
+
+          if (!$table.data('creatorsCache')[selectedItemType]) {
+            $loader.show();
+            $.ajax({
+              url: '/api/document/template/',
+              data: {
+                'itemType': selectedItemType,
+                'templateFor': 'creators'
+              },
+              success: function(data) {
+                $loader.hide();
+                $table.data('creatorsCache')[selectedItemType] = data;
+              }
+            });
+          }
+
           // Binding for getting creator types
           $creators.find('.creator-select').each(function() {
             $(this).click(function() {
@@ -78,6 +104,7 @@
                 replaceCreatorTypes;
 
               selectedItemType = $zoteroTable.find('[data-zotero-key="itemType"] input').val();
+
               replaceCreatorTypes = function(c) {
                 $creatorSelect.removeClass('not-queried').children().remove();
                 $.each(c, function() {
@@ -85,28 +112,7 @@
                   $creatorSelect.append($opt);
                 });
               };
-
-              if (!$zoteroTable.data('creatorsCache')) {
-                $zoteroTable.data('creatorsCache', {});
-              }
-
-              if (!$zoteroTable.data('creatorsCache')[selectedItemType]) {
-                //$loader.show();
-                $.ajax({
-                  url: '/api/document/template/',
-                  data: {
-                    'itemType': selectedItemType,
-                    'templateFor': 'creators'
-                  },
-                  success: function(data) {
-                    //$loader.hide();
-                    replaceCreatorTypes(data);
-                    $zoteroTable.data('creatorsCache')[selectedItemType] = data;
-                  }
-                });
-              } else {
-                replaceCreatorTypes($zoteroTable.data('creatorsCache')[selectedItemType]);
-              }
+              replaceCreatorTypes($zoteroTable.data('creatorsCache')[selectedItemType]);
             });
           });
 
@@ -115,7 +121,7 @@
             $(this).click(function() {
               var $oldCreator = $(this).parents('tr'),
                 $newCreator = $oldCreator.clone(true, true).insertAfter($oldCreator);
-              $newCreator.find('textarea').val('');
+              $newCreator.find('textarea').val('').trigger('change');
             });
           });
 

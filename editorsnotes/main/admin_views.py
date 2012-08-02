@@ -1,61 +1,108 @@
 from django.contrib import messages
+from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
+from django.views.decorators.csrf import csrf_protect
 from editorsnotes.djotero.models import ZoteroLink
+from editorsnotes.djotero.utils import validate_zotero_data
 from models import Project, PermissionError, Document, FeaturedItem
+import forms as main_forms
 from forms import ProjectUserFormSet, ProjectForm
 from collections import OrderedDict
 import json
+
+################################################################################
+# Note, topic, document admin
+################################################################################
+
+def document_add(request):
+    if request.method == 'POST':
+        form = main_forms.DocumentForm(request.POST)
+        if form.is_valid():
+            d = form.save(commit=False)
+            d.creator = request.user
+            d.last_updater = request.user
+            d.save()
+            form.save_zotero_data()
+            if request.is_ajax():
+                return HttpResponse(json.dumps(
+                    {'document': d.as_text(),
+                     'id': d.id} ))
+            messages.add_message(request, messages.SUCCESS, 'Document added')
+            return HttpResponseRedirect(d.get_absolute_url())
+
+    else:
+        o = {}
+        o['form'] = main_forms.DocumentForm()
+        return render_to_response(
+            'admin/document_add.html', o, context_instance=RequestContext(request))
+
+def document_change(request, document_id):
+    document = get_object_or_404(Document, id=document_id)
+
+    if request.method == 'POST':
+        form = main_forms.DocumentForm(request.POST, instance=document)
+        if form.is_valid():
+            d = form.save(commit=False)
+            d.last_updater = request.user
+            d.save()
+            form.save_zotero_data()
+            messages.add_message(request, messages.SUCCESS, 'Document changed')
+            return HttpResponseRedirect(d.get_absolute_url())
+        else:
+            #TODO seriously
+            pass
+
+    else:
+        o = {}
+        o['form'] = main_forms.DocumentForm(instance=document)
+        return render_to_response(
+            'admin/document_change.html', o, context_instance=RequestContext(request))
+
+
+################################################################################
+# Project management
+################################################################################
 
 def project_roster(request, project_id):
     o = {}
     project = get_object_or_404(Project, id=project_id)
     user = request.user
 
-    try:
-        project.attempt('view', user)
-    except PermissionError:
-        msg = 'You do not have permission to view the roster of %s' % (
-            project.name)
-        return HttpResponseForbidden(content=msg)
+    # Test user permissions
+    if not project.attempt('view', user):
+        return HttpResponseForbidden(
+            content='You do not have permission to view the roster of %s' % project.name)
+    o['can_change'] = project.attempt('change', user)
 
-    try:
-        project.attempt('change', user)
-        can_change = True
-    except PermissionError:
-        can_change = False
-    o['can_change'] = can_change
-
+    # Save project roster
     if request.method == 'POST':
-        if not can_change:
-            messages.add_message(
-                request,
-                messages.ERROR,
-                'Cannot edit project roster')
+        if not o['can_change']:
+            messages.add_message(request, messages.ERROR,
+                                 'Cannot edit project roster')
         else:
             formset = ProjectUserFormSet(request.POST)
             if formset.is_valid():
                 for form in formset:
                     form.project = project
                 formset.save()
-                messages.add_message(
-                    request,
-                    messages.SUCCESS,
-                    'Roster for %s saved.' % (project.name))
+                messages.add_message(request, messages.SUCCESS,
+                                     'Roster for %s saved.' % (project.name))
                 return HttpResponseRedirect(request.path)
             else:
                 #TODO
                 pass
 
-    project_roster = User.objects.filter(
-        userprofile__affiliation=project).order_by('-is_active', '-last_login')
+    # Render project form, disabling inputs if user can't change them
+    project_roster = User.objects.filter(userprofile__affiliation=project)\
+            .order_by('-is_active', '-last_login')
     o['formset'] = ProjectUserFormSet(queryset=project_roster)
     for form in o['formset']:
         u = form.instance
-        if not can_change:
+        if not o['can_change']:
             for field in form.fields:
                 f = form.fields[field]
                 f.widget.attrs['disabled'] = 'disabled'
@@ -72,12 +119,9 @@ def change_project(request, project_id):
     project = get_object_or_404(Project, id=project_id)
     user = request. user
 
-    try:
-        project.attempt('change', user)
-    except PermissionError:
-        msg = 'You do not have permission to edit the details of %s' % (
-            project.name)
-        return HttpResponseForbidden(content=msg)
+    if not project.attempt('change', user):
+        return HttpResponseForbidden(
+            content='You do not have permission to edit the details of %s' % project.name)
 
     if request.method == 'POST':
         form = ProjectForm(request.POST, request.FILES, instance=project)
@@ -136,22 +180,3 @@ def change_featured_items(request, project_id):
     return render_to_response(
         'admin/featured_items_change.html', o, context_instance=RequestContext(request))
 
-def document_add(request):
-    description = request.POST.get('document-description')
-    d = Document.objects.create(creator=request.user,
-                                last_updater=request.user,
-                                description=description)
-
-    zotero_fields = json.loads( request.POST.get('zotero-string') )['fields']
-    if zotero_fields and zotero_fields:
-        zotero_data = OrderedDict()
-        for field in zotero_fields:
-            key, val = field.items()[0]
-            zotero_data[key] = val
-        if len([val for val in zotero_data.values()
-                if isinstance(val, basestring) and val]) > 1:
-            ZoteroLink.objects.create(doc=d,
-                                      zotero_data=json.dumps(zotero_data))
-
-    return HttpResponse(json.dumps({'document': d.as_text(),
-                                    'id': d.id}))

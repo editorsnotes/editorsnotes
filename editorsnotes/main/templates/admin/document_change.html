@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block js %}
+<script type="text/javascript" src="{{ STATIC_URL }}function/wymeditor/jquery.wymeditor.pack.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/handlebars-1.0.0.beta.6.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/zotero-localization.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/zotero-form-functions.js"></script>
+
+<script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/xmle4x.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/xmldom.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/citeproc.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/simple.js"></script>
+
+<script type="text/javascript">
+  $(document).ready(function() {
+    $('.zotero-container').append(buildZoteroForm($('#id_zotero_string').val()))
+    $('.xhtml-textarea').wymeditor(zoteroWymSettings);
+    $('#document-save').click(function() {
+      $zoteroTable = $('table.zotero-information');
+      if ($zoteroTable.length) {
+        $('#id_zotero_string').val(JSON.stringify( zoteroFormToObject($zoteroTable, true) ));
+      }
+      return true;
+    });
+  });
+</script>
+{% endblock %}
+
+{% block content %}
+  <form method="post">{% csrf_token %}
+    {{ form.as_p }}
+    <div class="zotero-container">
+      <label class="zotero-label">Zotero information:</label>
+    </div>
+    <button type="submit" id="document-save" class="btn btn-primary">Save</button>
+  </form>
+{% include "handlebars.html" %}
+{% endblock %}
