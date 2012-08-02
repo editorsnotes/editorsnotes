@@ -10,6 +10,16 @@ NS = {'xhtml': 'http://www.w3.org/1999/xhtml',
 
 ZOTERO_BASE_URL = 'https://api.zotero.org'
 
+def validate_zotero_data(zotero_dict):
+    item_type = zotero_dict.has_key('itemType') and len(zotero_dict['itemType'])
+    populated_fields = [ v for v in zotero_dict.values()
+                               if isinstance(v, basestring) and v ]
+
+    if all([item_type, len(populated_fields) > 1]):
+        return True
+    else:
+        return False
+
 # Zotero API calls
 def get_libraries(zotero_uid, zotero_key):
     url = '/users/%s/groups?key=%s' % (zotero_uid, zotero_key)
