@@ -233,10 +233,10 @@
       $($documentwym._iframe).css('height', '92px');
       var generateCiteLink = $('' +
           '<a style="width: 100px;" id="generate-citation" href="#_">Generate citation</a>')
-        generateCiteLink.click(function() {
+        generateCiteLink.click(function(event, auto) {
           var zoteroForm = $('table.zotero-information'),
             zoteroString;
-          if (!zoteroForm.length) {
+          if (!zoteroForm.length && auto == undefined) {
             alert('Fill in zotero information to generate citation');
             return true;
           }
@@ -246,6 +246,9 @@
             data: {'zotero-json': zoteroString},
             success: function(data) {
               var formattedRef = runCite( JSON.stringify(data) );
+              if (formattedRef.match(/reference with no printed form/)) {
+                formattedRef = '';
+              }
               $documentwym.html(formattedRef);
             }
           });
