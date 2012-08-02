@@ -69,10 +69,7 @@ class PermissionsMixin(object):
         if getattr(obj, 'allow_%s_for' % action)(user):
             return True
         else:
-            if msg is None:
-                msg = u'%s doesn\'t have permission to %s %s' % (
-                    user.username, action.lower(), repr(obj) )
-            raise PermissionError(msg)
+            return False
 
 class ProjectSpecific(models.Model, PermissionsMixin):
     affiliated_projects = models.ManyToManyField('Project', blank=True,
