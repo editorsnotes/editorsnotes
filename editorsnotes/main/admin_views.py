@@ -8,7 +8,7 @@ from django.template import RequestContext
 from django.views.decorators.csrf import csrf_protect
 from editorsnotes.djotero.models import ZoteroLink
 from editorsnotes.djotero.utils import validate_zotero_data
-from models import Project, PermissionError, Document, FeaturedItem
+from models import Project, PermissionError, Document, FeaturedItem, DocumentLink
 import forms as main_forms
 from forms import ProjectUserFormSet, ProjectForm
 from collections import OrderedDict
@@ -19,14 +19,37 @@ import json
 ################################################################################
 
 def document_add(request):
+    o = {}
     if request.method == 'POST':
-        form = main_forms.DocumentForm(request.POST)
-        if form.is_valid():
-            d = form.save(commit=False)
+        o['form'] = main_forms.DocumentForm(request.POST)
+        o['links_formset'] = main_forms.DocumentLinkFormset(
+            request.POST, prefix='links')
+        o['scans_formset'] = main_forms.ScanFormset(
+            request.POST, request.FILES, prefix='scans')
+        if all([o['form'].is_valid(),
+                o['links_formset'].is_valid(),
+                o['scans_formset'].is_valid()]):
+            d = o['form'].save(commit=False)
             d.creator = request.user
             d.last_updater = request.user
             d.save()
-            form.save_zotero_data()
+
+            o['form'].save_zotero_data()
+
+            for form in o['links_formset']:
+                if not form.has_changed():
+                    continue
+                link = form.save(commit=False)
+                link.document = d
+                link.creator = request.user
+                link.save()
+            for form in o['scans_formset']:
+                if not form.has_changed():
+                    continue
+                scan = form.save(commit=False)
+                scan.creator = request.user
+                scan.document = d
+                scan.save()
             if request.is_ajax():
                 return HttpResponse(json.dumps(
                     {'document': d.as_text(),
@@ -35,32 +58,58 @@ def document_add(request):
             return HttpResponseRedirect(d.get_absolute_url())
 
     else:
-        o = {}
         o['form'] = main_forms.DocumentForm()
-        return render_to_response(
-            'admin/document_add.html', o, context_instance=RequestContext(request))
+        o['links_formset'] = main_forms.DocumentLinkFormset(prefix='links')
+        o['scans_formset'] = main_forms.ScanFormset(prefix='scans')
+
+    return render_to_response(
+        'admin/document_add.html', o, context_instance=RequestContext(request))
 
 def document_change(request, document_id):
     document = get_object_or_404(Document, id=document_id)
+    o = {}
 
     if request.method == 'POST':
-        form = main_forms.DocumentForm(request.POST, instance=document)
-        if form.is_valid():
-            d = form.save(commit=False)
+        o['form'] = main_forms.DocumentForm(request.POST, instance=document)
+        o['links_formset'] = main_forms.DocumentLinkFormset(
+            request.POST, instance=document, prefix='links')
+        o['scans_formset'] = main_forms.ScanFormset(
+            request.POST, request.FILES, instance=document, prefix='scans')
+        if all([o['form'].is_valid(),
+                o['links_formset'].is_valid(),
+                o['scans_formset'].is_valid()]):
+
+            d = o['form'].save(commit=False)
             d.last_updater = request.user
             d.save()
-            form.save_zotero_data()
+            o['form'].save_zotero_data()
+
+            formsets = ([f for f in o['links_formset']] +
+                        [f for f in o['scans_formset']])
+            for form in formsets:
+                if not form.has_changed() or not form.is_valid():
+                    # We already know the form is valid, but have to call it in
+                    # able to access form.cleaned_data
+                    continue
+                if form.cleaned_data['DELETE']:
+                    if form.instance:
+                        form.instance.delete()
+                else:
+                    obj = form.save(commit=False)
+                    obj.creator = request.user
+                    obj.save()
             messages.add_message(request, messages.SUCCESS, 'Document changed')
             return HttpResponseRedirect(d.get_absolute_url())
-        else:
-            #TODO seriously
-            pass
 
     else:
-        o = {}
         o['form'] = main_forms.DocumentForm(instance=document)
-        return render_to_response(
-            'admin/document_change.html', o, context_instance=RequestContext(request))
+        o['links_formset'] = main_forms.DocumentLinkFormset(
+            instance=document, prefix='links')
+        o['scans_formset'] = main_forms.ScanFormset(
+            instance=document, prefix='scans')
+
+    return render_to_response(
+        'admin/document_change.html', o, context_instance=RequestContext(request))
 
 
 ################################################################################

@@ -79,6 +79,7 @@ ul .document-link p {
     padding-top: 6px;
     border-top: 1px solid #ddd;
 }
+
 .zotero-entry textarea {
     height: 1.4em;
     margin-bottom: 5px;
@@ -95,19 +96,17 @@ ul .document-link p {
 .zotero-entry select {
     width: 100px;
 }
-.zotero-entry th {
-    text-align: right;
-    vertical-align: top;
-    padding-top: 8px;
+.zotero-creator label {
+    padding: 0px !important;
 }
-.zotero-creator th {
-    padding-top: 1px;
+.zotero-information .zotero-entry-delete {
+    margin-top: 1.5em;
 }
-.zotero-creator th select {
-    margin-bottom: 0px;
+.zotero-information .zotero-entry-delete input {
+    margin-top: 8px;
 }
-.zotero-entry :first-child {
-    padding-right: 3px;
+.zotero-information .controls label {
+    padding-top: 6px;
 }
 
 

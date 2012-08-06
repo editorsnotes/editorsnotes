@@ -1,8 +1,10 @@
 from django import forms
-from django.forms.models import modelformset_factory, ModelForm
+from django.forms.models import inlineformset_factory, modelformset_factory, ModelForm
 from django.contrib.auth.models import User, Group
 from fields import XHTMLWidget
+import models as main_models
 from models import Project, NoteSection, Document
+from editorsnotes.djotero.widgets import ZoteroWidget
 from editorsnotes.djotero.models import ZoteroLink
 from editorsnotes.djotero.utils import validate_zotero_data
 from collections import OrderedDict
@@ -57,7 +59,19 @@ class NoteSectionForm(ModelForm):
 class DocumentForm(ModelForm):
     zotero_string = forms.CharField(
         required=False,
-        widget=forms.widgets.HiddenInput())
+        widget=ZoteroWidget())
+    class Media:
+        js = (
+            "function/wymeditor/jquery.wymeditor.pack.js",
+            "function/zotero-localization.js",
+            "function/zotero-form-functions.js",
+            "function/citeproc-js/xmle4x.js",
+            "function/citeproc-js/xmldom.js",
+            "function/citeproc-js/citeproc.js",
+            "function/citeproc-js/simple.js",
+            "function/admin-document.js"
+        )
+
     class Meta:
         model = Document
         fields = ('description', 'edtf_date',)
@@ -74,26 +88,13 @@ class DocumentForm(ModelForm):
                 document.zotero_link().zotero_data
                 if document.zotero_link() else '')
 
-    def clean_zotero_string(self):
-        data = self.cleaned_data['zotero_string']
-        if data == '':
-            return data
-
-        if not json.loads(data).has_key('fields'):
-            raise forms.ValidationError('Zotero string not in correct format')
-        zotero_fields = json.loads(data)['fields']
-        zotero_data = OrderedDict()
-        for field in zotero_fields:
-            key, val = field.items()[0]
-            zotero_data[key] = val
-        if not validate_zotero_data(zotero_data):
-            raise forms.ValidationError('Zotero string invalid')
-
-        return json.dumps(zotero_data)
-
     def save_zotero_data(self):
         document = self.instance
-        if self.cleaned_data['zotero_string']:
+        if self.data.get('zotero-data-DELETE', '') == 'DELETE':
+            if document.zotero_link():
+                z = document.zotero_link()
+                z.delete()
+        if self.changed_data is not None and 'zotero_string' in self.changed_data:
             if document.zotero_link():
                 z = document.zotero_link()
                 z.zotero_data = self.cleaned_data['zotero_string']
@@ -104,3 +105,21 @@ class DocumentForm(ModelForm):
             return z
         else:
             return None
+
+class DocumentLinkForm(ModelForm):
+    class Meta:
+        model = main_models.DocumentLink
+        widgets = {
+            'description': forms.widgets.Textarea(
+                attrs={ 'cols': 80, 'rows': 2 })
+        }
+
+DocumentLinkFormset = inlineformset_factory(
+    main_models.Document, main_models.DocumentLink, form=DocumentLinkForm, extra=1)
+
+class ScanForm(ModelForm):
+    class Meta:
+        model = main_models.Scan
+
+ScanFormset = inlineformset_factory(
+    main_models.Document, main_models.Scan, form=ScanForm, extra=3)
