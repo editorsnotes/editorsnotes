@@ -1,0 +1,151 @@
+<style type="text/css">
+
+  legend {
+    margin-bottom: 8px;
+  }
+
+  fieldset {
+    margin-bottom: 1em;
+  }
+
+  .form-horizontal .control-label {
+    width: 120px;
+  }
+  .form-horizontal .controls {
+    margin-left: 132px;
+  }
+  .form-horizontal .control-group {
+    margin-bottom: 8px;
+  }
+
+  .zotero-information .control-group {
+    margin-bottom: 0px !important;
+  }
+
+</style>
+
+  <form enctype="multipart/form-data" method="post" class="form-horizontal">{% csrf_token %}
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-error">
+      {{ form.non_field_errors }}
+    </div>
+    {% endif %}
+
+    <fieldset>
+      <legend>Description</legend>
+
+      {% if form.description.errors %}
+        <div class="alert alert-error">
+          {{ form.description.errors }}
+        </div>
+      {% endif %}
+      {{ form.description }}
+    </fieldset>
+
+    <fieldset>
+      <legend class="collapsable">Zotero metadata</legend>
+      <div class="collapse-content">
+        <div class ="zotero-container">
+        </div>
+        {{ form.zotero_string }}
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend
+        class="collapsable{% if links_formset.management_form.INITIAL_FORMS.value or links_formset.errors or links_formset.non_field_errors %}{% else %} collapse-on-show{% endif %}">
+        External links
+      </legend>
+        
+      <div class="collapse-content">
+        {{ links_formset.management_form }}
+
+        {% for form in links_formset %}
+          {% if form.errors %} <div class="alert alert-error"> {{ form.errors }} </div> {% endif %}
+          {{ form.document }}
+          {{ form.id }}
+
+          <div class="control-group">
+            <label class="control-label" for="{{ form.url.auto_id }}">URL</label>
+            <div class="controls">
+              {{ form.url }}
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label class="control-label" for="{{ form.description.auto_id }}">Description</label>
+            <div class="controls">
+              {{ form.description }}
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label class="control-label" for="{{ form.DELETE.auto_id }}">Delete?</label>
+            <div class="controls">
+              {{ form.DELETE }}
+            </div>
+          </div>
+
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend
+        class="collapsable{% if scans.management_form.INITIAL_FORMS.value or scans.errors or scans.non_field_errors %}{% else %} collapse-on-show{% endif %}">
+        Scans
+      </legend>
+      <div class="collapse-content">
+
+        {{ scans_formset.management_form }}
+
+        {% for form in scans_formset %}
+          {{ form.document }}
+          {{ form.id }}
+
+          <div class="control-group">
+            <label class="control-label" for="{{ form.image.auto_id }}">Image</label>
+            <div class="controls">
+              {{ form.image }}
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label class="control-label" for="{{ form.ordering.auto_id }}">Ordering</label>
+            <div class="controls">
+              {{ form.ordering }}
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label class="control-label" for="{{ form.ordering.auto_id }}">Delete?</label>
+            <div class="controls">
+              {{ form.DELETE }}
+            </div>
+          </div>
+
+          <br/>
+
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend class="collapsable collapse-on-show">Transcript</legend>
+      <div class="collapse-content">
+        blah blah blah
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend class="collapsable collapse-on-show">Related topics</legend>
+      <div class="collapse-content">
+        blah blah blah
+      </div>
+    </fieldset>
+
+    <button type="submit" id="document-save" class="btn btn-primary">Save</button>
+  </form>
+  
+  {% include "handlebars.html" %}
