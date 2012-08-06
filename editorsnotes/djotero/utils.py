@@ -1,8 +1,9 @@
-import re
-import json
+from django.core.cache import cache
 from collections import OrderedDict
 from urllib2 import urlopen, HTTPError
 from lxml import etree
+import re
+import json
 
 NS = {'xhtml': 'http://www.w3.org/1999/xhtml',
       'zot' : "http://zotero.org/ns/api",
@@ -76,23 +77,20 @@ def get_items(zotero_key, loc, opts):
     return latest
 
 def get_item_template(item_type):
-    url = '%s/items/new?itemType=%s' % (ZOTERO_BASE_URL, item_type)
-    page = urlopen(url)
-    if page.code == 200:
+    if not cache.get('item_template_%s' % item_type):
+        url = '%s/items/new?itemType=%s' % (ZOTERO_BASE_URL, item_type)
+        page = urlopen(url)
         new_item = page.read()
-        return new_item
-    else:
-        #TODO: make this more descriptive (duh)
-        raise Exception
+        cache.set('item_template_%s' % item_type, new_item, 60 * 24 * 7)
+    return cache.get('item_template_%s' % item_type)
 
 def get_creator_types(item_type):
-    url = '%s/itemTypeCreatorTypes?itemType=%s' % (ZOTERO_BASE_URL, item_type)
-    page = urlopen(url)
-    if page.code == 200:
-        new_item = page.read()
-        return new_item
-    else:
-        raise Exception
+    if not cache.get('creators_%s' % item_type):
+        url = '%s/itemTypeCreatorTypes?itemType=%s' % (ZOTERO_BASE_URL, item_type)
+        page = urlopen(url)
+        creators = page.read()
+        cache.set('creators_%s' % item_type, creators, 60 * 24 * 7)
+    return cache.get('creators_%s' % item_type)
 
 # Helper functions
 def as_csl(zotero_json_string, citeproc_identifier):
