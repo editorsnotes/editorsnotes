@@ -7,37 +7,54 @@
 {% block css %}
 <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
 <style type="text/css">
-
   #main a {
     color: #107887;
   }
 
   p.message {
     font-family: 'Open Sans', sans-serif !important;
-    font-size: 22px;
-    line-height: 32px;
-    margin: .75em 45px 1.75em;
-    text-align: center;
+    font-size: 24px;
+    line-height: 36px;
+    text-align: justify;
+    max-width: 864px;
+    margin: 4px auto 0px;
+  }
+
+  #examples {
+    line-height: 18px;
+    font-size: 16px;
+    margin-top: 30px;
+  }
+
+  #examples h4 {
+    font-size: 16px;
   }
 
   #examples li {
-    margin-top: .25em;
+    margin-top: 18px;
+  }
+
+  #features {
+    margin-top: 15px;
+    border-top: 1px solid #eee;
+    padding-top: 18px;
   }
 
   #features-toggle {
     list-style-type: none;
-    margin: 0px;
-    padding: 0 0 8px 0;
+    margin: 0 0 0 0;
+    padding: 0;
+    float: left;
   }
   #features-toggle li {
-    display: inline-block;
-    margin-left: 11px;
+    display: block;
+    margin-bottom: 18px;
     width: 224px;
   }
   #features-toggle li > a {
     display: inline-block;
-    width: 225px;
-    padding: 10px 0px;
+    width: 270px;
+    padding: 18px 0px;
 
     border-radius: 2px;
     background: #ddd;
@@ -47,14 +64,23 @@
     text-align: center;
     text-decoration: none;
     letter-spacing: 1px;
-    font-size: 14px;
+    font-size: 18px;
   }
   #features-toggle li > a:hover,
   #features-toggle li > a.selected {
     background: #7eb6be;
   }
-  #features p {
-    text-align: justify;
+  #description {
+    margin-left: 306px;
+  }
+  #description p {
+    font-size: 16px;
+    line-height: 27px;
+    max-width: 270px; 
+    padding-right: 18px;
+  }
+  .screencast {
+    float: right;
   }
 </style>
 {% endblock %}
@@ -88,7 +114,7 @@
           <a href="{% url project_view 'sanger' %}">The Margaret Sanger Papers</a> are researching <a href="{% url topic_view 'india-birth-control-movement-in' %}#notes">the birth control movement in India</a>.
         </li>
         <li>
-        <a href="{% url project_view 'ecssba' %}">The Elizabeth Cady Stanton & Susan B. Anthony Papers Project</a> are collecting sources about <a href="{% url topic_view 'women-already-voters-test-cases-during-reconstruction' %}">women using direct action to test voting laws during reconstruction</a>.
+        <a href="{% url project_view 'ecssba' %}">The Elizabeth Cady Stanton &amp; Susan B. Anthony Papers Project</a> are collecting sources about <a href="{% url topic_view 'women-already-voters-test-cases-during-reconstruction' %}">women using direct action to test voting laws during reconstruction</a>.
         </li>
         <li>
           <a href="{% url project_view 'labadie' %}">The Labadie Collection</a> is sharing items in its collection that mention <a href="{% url note_view 341 %}">Emma Goldman's visits to Detroit</a>.
@@ -99,36 +125,35 @@
       </ul>
     </div>
 
-    <hr/>
-
     <div id="features">
 
     <ul id="features-toggle">
       <li><a href="#collaboration">Project collaboration</a></li>
-      <li><a href="#notes">Flexible note taking</a></li>
+      <li><a href="#notes">Flexible note-taking</a></li>
       <li><a href="#zotero">Integration with Zotero</a></li>
       <li><a href="#annotation">Document annotation</a></li>
     </ul>
 
     <div id="description">
       <div id="collaboration">
+        <iframe class="screencast" src="http://player.vimeo.com/video/31422401?title=0&amp;byline=0&amp;portrait=0&amp;color=00a3b5" width="360" height="270" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>
         <p>
-        Vim inermis adipisci an, qui cu feugiat mentitum imperdiet. In has cetero molestiae. In eam sumo laudem essent, his et vero quaerendum, vel ei vidit clita omittam. Ut clita everti sea, ad mel meliore legendos postulant. Ea mel vivendum referrentur, sit verear epicuri ea. Mazim omnium appellantur mei no, corpora adipisci necessitatibus ex mei.
+          Teams of editors, archivists, and librarians can use Editors' Notes to manage their research and note-taking. Project administrators can assign research tasks to other team members, and they can control who has permission to edit the project's notes.
         </p>
       </div>
       <div id="notes">
         <p>
-        Ne quodsi insolens postulant duo, mei menandri iracundia at. Cum ut mundi eligendi noluisse, ex verear argumentum sea, ne discere gloriatur pri. Libris labitur imperdiet usu ea, cu malis iusto similique vix, his ex illud possit. Pro ex solum audire, et eripuit indoctum vis.
+          Reseachers can create and organize their notes as they wish. Notes can be organized around documentary sources or thematically organized around topics—or both. To find notes, users can browse by topic, search the full text of notes, and filter results using bibliographic metadata.
         </p>
       </div>
       <div id="zotero">
         <p>
-        Utamur platonem tractatos te eum, nam eu perfecto deseruisse percipitur. Et sit primis posidonium, ei nec altera nostro vivendum, altera ceteros platonem ei nec. Nam ut vivendo offendit ullamcorper, mea no cibo volutpat, eos in summo quodsi voluptua. Ex eos rebum maiestatis. Cu vero utinam saperet ius.
+          Editors' Notes is integrated with the <a href="http://www.zotero.org/">Zotero</a> citation management software. Researchers can use Zotero to collect documents and then use Editors' Notes to take notes on those documents. Document descriptions can be edited in Editors' Notes and saved back to Zotero.
         </p>
       </div>
       <div id="annotation">
         <p>
-        Vero disputationi cum ne. Nec cu wisi deserunt. Ne eum nonumes gubergren accommodare. Atqui voluptatibus at eum, id corpora ullamcorper cum. An stet habeo detracto qui, ne pro prima eligendi, mei cu magna propriae suscipit.
+          Researchers can annotate specific passages in document transcripts. Annotations, like other notes, can include bibliographic metadata and topic keywords and are fully searchable. In addition to creating annotated transcripts, researchers can upload scanned images of documents, which can be viewed in a zoomable interface.
         </p>
       </div>
     </div>

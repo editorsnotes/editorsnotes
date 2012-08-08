@@ -21,12 +21,12 @@
   <body>
     <div class="navbar">
       <div class="navbar-inner">
-          <div class="container">
-            <ul class="nav">
-              <li><a class="brand" href="/">Editors' Notes</a></li>
-              <li class="divider-vertical"></li>
-              <form class="navbar-search" action="/search/" method="get">
-                <input type="text" class="search-query search-autocomplete" name="q" search-target="topics" placeholder="Search">
+        <div class="container">
+          <ul class="nav">
+            <li><a class="brand" href="/">Editors' Notes</a></li>
+            <li class="divider-vertical"></li>
+            <form class="navbar-search" action="/search/" method="get">
+              <input type="text" class="search-query search-autocomplete" name="q" search-target="topics" placeholder="Search">
               </form> 
               <li><a href="/browse/">Browse</a></li>
               <li><a href="/about/">About</a></li>
@@ -75,26 +75,21 @@
 
 
           </div>
+        </div>
       </div>
-    </div>
 
-    {% if messages %}
-    <div id="message-list" class="container">
-      {% for message in messages %}
+      {% if messages %}
+      <div id="message-list" class="container">
+        {% for message in messages %}
         <div class="alert {% if message.tags %} alert-{{ message.tags }}{% endif %}">
           {{ message|safe }}
         </div>
-      {% endfor %}
-    </div>
-    {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
 
-    <div id="main" class="container">
-      {% block content %}{% endblock %}
-    </div>
-    <!--
-    <footer>
-      <span class="version">version <a class="subtle" href="https://github.com/rybesh/editorsnotes/commit/{% include "version.txt" %}">{% include "version.txt" %}</a>deployed {% include "time-deployed.txt" %}</span>
-    </footer>
-    !-->
-  </body>
+      <div id="main" class="container">
+        {% block content %}{% endblock %}
+      </div>
+    </body>
 </html>
