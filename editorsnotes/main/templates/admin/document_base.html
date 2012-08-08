@@ -31,6 +31,10 @@
     margin-top: 1.5em;
   }
 
+  .left-margin {
+    margin-left: 20px;
+  }
+
 </style>
 
   <form enctype="multipart/form-data" method="post" class="form-horizontal">{% csrf_token %}
@@ -62,30 +66,24 @@
     </fieldset>
 
     <fieldset id="document-related-topics">
-      <legend 
-        class="collapsable{% if topics_formset.management_form.INITIAL_FORMS.value or topics_formset.errors or topics_formset.non_field_errors %}{% else %} collapse-on-show{% endif %}">
-        Related topics
-      </legend>
-
+      <legend class="collapsable">Related topics</legend>
       <div class="collapse-content">
         {{ topics_formset.management_form }}
 
-        {% for form in topics_formset %}
-          <div class="control-group">
-            {{ form.id }}
-            {{ form.topic }}
-            {{ form.DELETE }}
-          </div>
-        {% endfor %}
+        <div class="left-margin">
+          {% for form in topics_formset %}
+            <div class="control-group">
+              {{ form.id }}
+              {{ form.topic }}
+              {{ form.DELETE }}
+            </div>
+          {% endfor %}
+        </div>
       </div>
     </fieldset>
 
     <fieldset>
-      <legend
-        class="collapsable{% if links_formset.management_form.INITIAL_FORMS.value or links_formset.errors or links_formset.non_field_errors %}{% else %} collapse-on-show{% endif %}">
-        External links
-      </legend>
-        
+      <legend class="collapsable">External links</legend>
       <div class="collapse-content">
         {{ links_formset.management_form }}
 
@@ -120,10 +118,7 @@
     </fieldset>
 
     <fieldset>
-      <legend
-        class="collapsable{% if scans.management_form.INITIAL_FORMS.value or scans.errors or scans.non_field_errors %}{% else %} collapse-on-show{% endif %}">
-        Scans
-      </legend>
+      <legend class="collapsable">Scans</legend>
       <div class="collapse-content">
 
         {{ scans_formset.management_form }}
@@ -160,9 +155,24 @@
     </fieldset>
 
     <fieldset>
-      <legend class="collapsable collapse-on-show">Transcript</legend>
+      <legend class="collapsable">Transcript</legend>
       <div class="collapse-content">
-        blah blah blah
+        <div class="left-margin">
+          {% with form.instance as d %}
+            {% if not form.instance %}
+              Save document before adding a transcript.
+            {% else %}
+              {% if d.has_transcript %}
+                <label>A transcript for this document exists.</label>
+                <a class="btn" href="{% url admin:main_transcript_change d.transcript.id %}">Edit transcript</a>
+              {% else %}
+                <label>No transcript for this document exists.</label>
+                <a class="btn" href="{% url admin:main_transcript_add %}?document={{ d.id }}">Add transcript</a>
+              {% endif %}
+            {% endif %}
+          {% endwith %}
+        </div>
+        <hr/>
       </div>
     </fieldset>
 

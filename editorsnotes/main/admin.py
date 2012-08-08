@@ -208,8 +208,8 @@ class DocumentAdmin(VersionAdmin):
               'function/jquery/jquery-ui-1.8.18.custom.min.js',
               'function/wymeditor/jquery.wymeditor.pack.js',
               'function/jquery/jquery.timeago.js',
-              'function/models/admin.js',
-              'function/models/zotero-admin-inline.js',
+              'function/admin.js',
+              'function/zotero-admin-inline.js',
               'function/citeproc-js/xmle4x.js',
               'function/citeproc-js/xmldom.js',
               'function/citeproc-js/citeproc.js',
@@ -249,7 +249,7 @@ class TranscriptAdmin(VersionAdmin):
               'function/wymeditor/jquery.wymeditor.pack.js',
               'function/jquery/jquery.timeago.js',
               'function/jquery/jquery.ellipsis.js',
-              'function/models/admin-transcript.js')
+              'function/admin-transcript.js')
 
 class FootnoteAdmin(VersionAdmin):
     formfield_overrides = { 
@@ -263,7 +263,7 @@ class FootnoteAdmin(VersionAdmin):
               'function/jquery/jquery-ui-1.8.18.custom.min.js',
               'function/wymeditor/jquery.wymeditor.pack.js',
               'function/jquery/jquery.timeago.js',
-              'function/models/admin.js')
+              'function/admin.js')
 
 class UserProfileAdmin(UserAdmin):
     inlines = (UserProfileInline,)
