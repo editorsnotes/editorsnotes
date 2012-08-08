@@ -33,7 +33,12 @@
         <span class="quiet">Related topics:</span> 
         <ul class="topic-list unstyled">
           {% for topic in topics %}
-          <li><a href="{{ topic.get_absolute_url }}">{{ topic.preferred_name }}</a>{% if not forloop.last %} | {% endif %}</li>
+          <li>
+            <a href="{{ topic.get_absolute_url }}">
+              {{ topic.preferred_name }}
+            </a>
+            {% if not forloop.last %} | {% endif %}
+          </li>
           {% endfor %}
         </ul>
         {% endif %}
@@ -42,11 +47,19 @@
 
       <ul id="tabs" class="nav nav-tabs">
         <li class="active"><a href="#info-tab">Info</a></li>
+
         {% if document.has_parts %}
         <li><a href="#parts-tab">Parts</a></li>
         {% endif %}
+
+        {% if scans %}
         <li><a href="#scans-tab">Scans</a></li>
+        {% endif %}
+
+        {% if document.transcript %}
         <li><a href="#transcript-tab">Transcript</a></li>
+        {% endif %}
+
         <li><a href="#notes-tab">Related Notes <span class="alt">&amp;</span> Queries</a></li>
       </ul>
 
@@ -60,6 +73,17 @@
             {% endif %}
           </div>
           <a class="btn edit-button" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
+
+          <div>
+
+            {% if document.has_links %}
+            {% for link in document.links.all %}
+            {{ link }}
+            {% endfor %}
+            {% endif %}
+
+          </div>
+
         </section>
 
         {% if document.has_parts %}
@@ -75,38 +99,32 @@
         </section>
         {% endif %}
 
+        {% if scans %}
         <section id="scans-tab" class="tab-pane">
-          {% if scans %}
           <div id="scanlist-container">
-          <ul id="scan-list">
-            {% for scan in scans %}
-            <li><a class="scan btn" href="http://{{ domain }}{{ scan.image.url }}">{{ forloop.counter }}</a></li>
-            {% endfor %}
-          </ul>
+            <ul id="scan-list">
+              {% for scan in scans %}
+              <li>
+                <a class="scan btn"
+                  href="http://{{ domain }}{{ scan.image.url }}">
+                  {{ forloop.counter }}
+                </a>
+              </li>
+              {% endfor %}
+            </ul>
           </div>
+
           <br/>
+
           <div id="scan-viewer" style="height: 500px;"></div>
           <div id="progress-notify">
             <span id="progress-message">Loading scanned document...</span>
             <div id="progressbar"></div>
           </div>
-          {% else %}
-          <div>
-            {% if document.has_links %}
-            This document has not been scanned, but it (or information about how to find it) is available online elsewhere:
-              <ul>
-              {% for link in document.links.all %}
-              <li><a href="{{ link.url }}">{{ link.url }}</a></li>
-              {% endfor %}
-              </ul>
-            {% else %}
-            <p>This document has not been scanned.</p>
-            {% endif %}
-          </div>
-          {% endif %}
-          <a class="btn edit-button" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
         </section>
+        {% endif %}
 
+        {% if document.transcript %}
         <section id="transcript-tab" class="tab-pane">
           {% if document.transcript %}
           <article id="transcript-{{ document.transcript.id }}" class="transcript">
@@ -133,6 +151,7 @@
           <a class="btn edit-button" href="{% url admin:main_transcript_add %}?document={{ document.id }}&amp;return_to={{ document.get_absolute_url }}">Edit</a>
           {% endif %}
         </section>
+        {% endif %}
 
         <section id="notes-tab" class="tab-pane">
           {% if notes %}

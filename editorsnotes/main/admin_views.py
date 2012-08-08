@@ -10,6 +10,7 @@ from editorsnotes.djotero.models import ZoteroLink
 from editorsnotes.djotero.utils import validate_zotero_data
 from models import Project, PermissionError, Document, FeaturedItem, DocumentLink
 import forms as main_forms
+import models as main_models
 from forms import ProjectUserFormSet, ProjectForm
 from collections import OrderedDict
 import json
@@ -22,45 +23,67 @@ def document_add(request):
     o = {}
     if request.method == 'POST':
         o['form'] = main_forms.DocumentForm(request.POST)
-        o['links_formset'] = main_forms.DocumentLinkFormset(
+        o['links_fs'] = main_forms.DocumentLinkFormset(
             request.POST, prefix='links')
-        o['scans_formset'] = main_forms.ScanFormset(
+        o['scans_fs'] = main_forms.ScanFormset(
             request.POST, request.FILES, prefix='scans')
-        if all([o['form'].is_valid(),
-                o['links_formset'].is_valid(),
-                o['scans_formset'].is_valid()]):
-            d = o['form'].save(commit=False)
-            d.creator = request.user
-            d.last_updater = request.user
-            d.save()
+        o['topics_fs'] = main_forms.TopicAssignmentFormset(
+            request.POST, prefix='ta')
+
+        formsets_are_valid = map(lambda fs: fs.is_valid(),
+                                 [o['links_fs'], o['scans_fs'], o['topics_fs']])
+
+        if o['form'].is_valid() and all(formsets_are_valid):
+            document = o['form'].save(commit=False)
+            document.creator = request.user
+            document.last_updater = request.user
+            document.save()
 
             o['form'].save_zotero_data()
 
-            for form in o['links_formset']:
-                if not form.has_changed():
+            for form in [f for fs in [o['links_fs'], o['scans_fs']] for f in fs]:
+                if (not form.has_changed() or
+                    not form.is_valid() or
+                    form.cleaned_data['DELETE']):
                     continue
-                link = form.save(commit=False)
-                link.document = d
-                link.creator = request.user
-                link.save()
-            for form in o['scans_formset']:
-                if not form.has_changed():
+                obj = form.save(commit=False)
+                obj.document = document
+                obj.creator = request.user
+                obj.save()
+
+            for form in o['topics_fs']:
+                if not form.has_changed() or not form.is_valid():
                     continue
-                scan = form.save(commit=False)
-                scan.creator = request.user
-                scan.document = d
-                scan.save()
+                if form.cleaned_data['DELETE']:
+                    if form.instance and form.instance.id:
+                        form.instance.delete()
+                elif form.cleaned_data['topic']:
+                    # Don't save this topic assignment if it already exists or
+                    # if another assignment with the same topic/document exists
+                    if (form.instance and form.instance.id):
+                        continue
+                    if form.cleaned_data['topic'] in document.topics.all():
+                        continue
+                    ta = form.save(commit=False)
+                    ta.creator = request.user
+                    ta.topic = form.cleaned_data['topic']
+                    ta.content_object = document
+                    ta.save()
+
             if request.is_ajax():
                 return HttpResponse(json.dumps(
-                    {'document': d.as_text(),
-                     'id': d.id} ))
-            messages.add_message(request, messages.SUCCESS, 'Document added')
-            return HttpResponseRedirect(d.get_absolute_url())
+                    {'document': document.as_text(),
+                     'id': document.id} ))
+
+            messages.add_message(request, messages.SUCCESS,
+                                 'Document %s added' % document.as_text())
+            return HttpResponseRedirect(document.get_absolute_url())
 
     else:
         o['form'] = main_forms.DocumentForm()
         o['links_formset'] = main_forms.DocumentLinkFormset(prefix='links')
         o['scans_formset'] = main_forms.ScanFormset(prefix='scans')
+        o['topics_formset'] = main_forms.TopicAssignmentFormset(prefix='ta')
 
     return render_to_response(
         'admin/document_add.html', o, context_instance=RequestContext(request))
@@ -71,22 +94,24 @@ def document_change(request, document_id):
 
     if request.method == 'POST':
         o['form'] = main_forms.DocumentForm(request.POST, instance=document)
-        o['links_formset'] = main_forms.DocumentLinkFormset(
+        o['links_fs'] = main_forms.DocumentLinkFormset(
             request.POST, instance=document, prefix='links')
-        o['scans_formset'] = main_forms.ScanFormset(
+        o['scans_fs'] = main_forms.ScanFormset(
             request.POST, request.FILES, instance=document, prefix='scans')
-        if all([o['form'].is_valid(),
-                o['links_formset'].is_valid(),
-                o['scans_formset'].is_valid()]):
+        o['topics_fs'] = main_forms.TopicAssignmentFormset(
+            request.POST, instance=document, prefix='ta')
 
-            d = o['form'].save(commit=False)
-            d.last_updater = request.user
-            d.save()
+        formsets_are_valid = map(lambda fs: fs.is_valid(),
+                                 [o['links_fs'], o['scans_fs'], o['topics_fs']])
+
+        if o['form'].is_valid() and all(formsets_are_valid):
+            document = o['form'].save(commit=False)
+            document.last_updater = request.user
+            document.save()
+
             o['form'].save_zotero_data()
 
-            formsets = ([f for f in o['links_formset']] +
-                        [f for f in o['scans_formset']])
-            for form in formsets:
+            for form in [f for fs in [o['links_fs'], o['scans_fs']] for f in fs]:
                 if not form.has_changed() or not form.is_valid():
                     # We already know the form is valid, but have to call it in
                     # able to access form.cleaned_data
@@ -96,10 +121,31 @@ def document_change(request, document_id):
                         form.instance.delete()
                 else:
                     obj = form.save(commit=False)
-                    obj.creator = request.user
+                    if not (form.instance and form.instance.id is not None):
+                        # new item
+                        obj.creator = request.user
+                        obj.document = document
                     obj.save()
+
+            for form in o['topics_fs']:
+                if not form.has_changed() or not form.is_valid():
+                    continue
+                if form.cleaned_data['DELETE']:
+                    if form.instance and form.instance.id:
+                        form.instance.delete()
+                elif form.cleaned_data['topic']:
+                    if (form.instance and form.instance.id):
+                        continue
+                    if form.cleaned_data['topic'] in document.topics.all():
+                        continue
+                    ta = form.save(commit=False)
+                    ta.creator = request.user
+                    ta.topic = form.cleaned_data['topic']
+                    ta.content_object = document
+                    ta.save()
+
             messages.add_message(request, messages.SUCCESS, 'Document changed')
-            return HttpResponseRedirect(d.get_absolute_url())
+            return HttpResponseRedirect(document.get_absolute_url())
 
     else:
         o['form'] = main_forms.DocumentForm(instance=document)
@@ -107,6 +153,8 @@ def document_change(request, document_id):
             instance=document, prefix='links')
         o['scans_formset'] = main_forms.ScanFormset(
             instance=document, prefix='scans')
+        o['topics_formset'] = main_forms.TopicAssignmentFormset(
+            instance=document, prefix='ta')
 
     return render_to_response(
         'admin/document_change.html', o, context_instance=RequestContext(request))

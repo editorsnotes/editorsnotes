@@ -1,6 +1,9 @@
 from django import forms
+from django.contrib.contenttypes.generic import generic_inlineformset_factory
 from django.forms.models import inlineformset_factory, modelformset_factory, ModelForm
 from django.contrib.auth.models import User, Group
+from django.shortcuts import get_object_or_404
+from django.utils.safestring import mark_safe
 from fields import XHTMLWidget
 import models as main_models
 from models import Project, NoteSection, Document
@@ -57,9 +60,7 @@ class NoteSectionForm(ModelForm):
                 attrs={ 'class': 'autocomplete-documents'}) }
 
 class DocumentForm(ModelForm):
-    zotero_string = forms.CharField(
-        required=False,
-        widget=ZoteroWidget())
+    zotero_string = forms.CharField(required=False, widget=ZoteroWidget())
     class Media:
         js = (
             "function/wymeditor/jquery.wymeditor.pack.js",
@@ -123,3 +124,26 @@ class ScanForm(ModelForm):
 
 ScanFormset = inlineformset_factory(
     main_models.Document, main_models.Scan, form=ScanForm, extra=3)
+
+class TopicAssignmentWidget(forms.widgets.HiddenInput):
+    def render(self, name, value, attrs=None):
+        hidden_input = super(TopicAssignmentWidget, self).render(name, value, attrs=None)
+        if value:
+            topic = get_object_or_404(main_models.Topic, id=value)
+            extra_content = topic.preferred_name
+        else:
+            extra_content = ('<label>Add topic:</label>' +
+                             '<input type="text" class="topic-autocomplete" placeholder="Type to search" />')
+        return mark_safe(extra_content + hidden_input)
+
+
+
+class TopicAssignmentForm(ModelForm):
+    class Meta:
+        model = main_models.TopicAssignment
+        widgets = {
+            'topic': TopicAssignmentWidget()
+        }
+
+TopicAssignmentFormset = generic_inlineformset_factory(
+    main_models.TopicAssignment, form=TopicAssignmentForm, extra=1)

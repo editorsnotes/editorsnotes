@@ -22,6 +22,15 @@
     margin-bottom: 0px !important;
   }
 
+  #document-related-topics .control-group:last-child input[type="checkbox"],
+  #document-related-topics .control-group:last-child i {
+    display: none;
+  }
+
+  #document-related-topics .control-group:last-child {
+    margin-top: 1.5em;
+  }
+
 </style>
 
   <form enctype="multipart/form-data" method="post" class="form-horizontal">{% csrf_token %}
@@ -49,6 +58,25 @@
         <div class ="zotero-container">
         </div>
         {{ form.zotero_string }}
+      </div>
+    </fieldset>
+
+    <fieldset id="document-related-topics">
+      <legend 
+        class="collapsable{% if topics_formset.management_form.INITIAL_FORMS.value or topics_formset.errors or topics_formset.non_field_errors %}{% else %} collapse-on-show{% endif %}">
+        Related topics
+      </legend>
+
+      <div class="collapse-content">
+        {{ topics_formset.management_form }}
+
+        {% for form in topics_formset %}
+          <div class="control-group">
+            {{ form.id }}
+            {{ form.topic }}
+            {{ form.DELETE }}
+          </div>
+        {% endfor %}
       </div>
     </fieldset>
 
@@ -133,13 +161,6 @@
 
     <fieldset>
       <legend class="collapsable collapse-on-show">Transcript</legend>
-      <div class="collapse-content">
-        blah blah blah
-      </div>
-    </fieldset>
-
-    <fieldset>
-      <legend class="collapsable collapse-on-show">Related topics</legend>
       <div class="collapse-content">
         blah blah blah
       </div>
