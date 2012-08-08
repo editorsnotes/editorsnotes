@@ -126,7 +126,7 @@ class ZoteroWidget(Widget):
                             creator['firstName'])
                     field += CREATOR_ADD_REMOVE
                     html += wrap_control_group(
-                        'creator', creator_select, field,
+                        'creators', creator_select, field,
                         classes=['zotero-creator'])
 
             elif key == 'tags':
