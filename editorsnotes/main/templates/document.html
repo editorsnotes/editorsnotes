@@ -72,17 +72,26 @@
             <p>This document has no connected Zotero data.</p>
             {% endif %}
           </div>
-          <a class="btn edit-button" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
 
           <div>
-
             {% if document.has_links %}
-            {% for link in document.links.all %}
-            {{ link }}
-            {% endfor %}
+            <h4>External link{% if document.links.count > 1 %}s{% endif %}</h4>
+            <ul class="unstyled">
+              {% for link in document.links.all %}
+              <li>
+                <a style="text-decoration: underline;" href="{{ link }}">{{ link }}</a>
+                <div>
+                  {{ link.description }}
+                </div>
+              </li>
+              {% endfor %}
+            </ul>
             {% endif %}
-
           </div>
+
+          <hr />
+
+          <a class="btn edit-button" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
 
         </section>
 
