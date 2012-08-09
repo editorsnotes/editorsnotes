@@ -5,6 +5,23 @@
 
 {% block css %}
 <style type="text/css">
+  #transcript-content {
+    position: relative;
+  }
+  a.footnote:hover {
+    color: red;
+    text-decoration: none;
+  }
+  a.footnote:before {
+    content: ' \25CF';
+    font-size: 10px;
+    color: red;
+    position: absolute;
+    left: -12px;
+  }
+  sup {
+    color: red;
+  }
   #footnotediv {
     background-color: white;
     border: 1px solid #CDBBB5;

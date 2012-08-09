@@ -10,7 +10,7 @@ $(document).ready(function() {
         r = /([^&=]+)=?([^&]*)/g,
         d = function (s) { return decodeURIComponent(s.replace(a, " ")); },
         q = window.location.search.substring(1);
-    while (e = r.exec(q)) {
+    while ((e = r.exec(q))) {
       url_params[d(e[1])] = d(e[2]);
     }
   })();
@@ -83,24 +83,9 @@ $(document).ready(function() {
       var footnotes = $('a.footnote');
       footnotes.attr('title', 'Click to read footnote');
       footnotes.click(footnote.show);
-      var markers = $(document.createElement('ul'));
-      markers.attr('id', 'footnote-markers').appendTo($('#transcript-content'));
       var i = 1;
       footnotes.each(function() {
         var a = $(this);
-        var marker = $(document.createElement('li'));
-        marker.appendTo(markers);
-        marker.position({
-          my: 'center top',
-          at: 'left top',
-          of: a,
-          collision: 'none',
-          using: function(position) {
-            position.top -= 4;
-            position.left = -10;
-            $(this).css(position);
-          }
-        });
         var punc = '';
         if (a[0].nextSibling && a[0].nextSibling.nodeType == 3) { // text node
           var text = $(a[0].nextSibling).text();
