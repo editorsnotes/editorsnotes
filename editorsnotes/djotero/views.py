@@ -165,12 +165,15 @@ def zotero_template(request):
     if not request.is_ajax():
         return HttpResponseBadRequest()
     item_type = request.GET.get('itemType')
-    item_template = utils.get_item_template(item_type)
-    form = ZoteroForm(data={'zotero_data': item_template})
+    if item_type:
+        item_template = utils.get_item_template(item_type)
+        form = ZoteroForm(data={'zotero_data': item_template})
+    else:
+        form = ZoteroForm()
     return HttpResponse(form.as_p())
 
 def get_blank_item(request):
-    if not request.is_ajax() or not request.GET.get('itemType', False):
+    if not request.is_ajax():
         return HttpResponseBadRequest()
     item_type = request.GET.get('itemType')
     blank_item = utils.get_item_template(item_type)

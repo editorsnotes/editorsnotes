@@ -1,3 +1,4 @@
+$(document).ready(function() {
 
   var zoteroFormToObject = function($form, sorted) {
     // Given a form rendered with buildZoteroForm above, create two different
@@ -52,7 +53,7 @@
     return zoteroObject
   };
 
-  var zoteroWymSettings = {
+  $('.document-description-edit .xhtml-textarea').wymeditor({
     skin: 'custom',
     toolsItems: [
       {'name': 'Bold', 'title': 'Strong', 'css': 'wym_tools_strong'}, 
@@ -69,7 +70,7 @@
       var generateCiteLink = $('' +
           '<a style="width: 100px;" id="generate-citation" href="#_">Generate citation</a>')
         generateCiteLink.click(function(event, auto) {
-          var zoteroForm = $('div.zotero-information'),
+          var zoteroForm = $('.zotero-information-edit'),
             zoteroString;
           if (!zoteroForm.length && auto == undefined) {
             alert('Fill in zotero information to generate citation');
@@ -90,5 +91,52 @@
         });
       $(this._box).find(this._options.toolsSelector + this._options.toolsListSelector)
         .append(generateCiteLink);
-      }
     }
+  });
+
+  // Bindings
+  $('.zotero-information-edit')
+    // Get form on creator type change
+    .on('change', 'select[name="item-type-select"]', function() {
+      var $itemTypeSelect = $(this),
+        $zoteroContainer = $itemTypeSelect.parents('.zotero-information-edit'),
+        itemType = $itemTypeSelect.val();
+      if (itemType.length) {
+        $.ajax({
+          url: '/api/document/template/',
+          data: {'itemType': itemType},
+          success: function(data) {
+            $zoteroContainer.data('itemTypeSelect', $itemTypeSelect.parents('.control-group'));
+
+            $zoteroContainer
+              .html($(data).closest('.zotero-information-edit').html())
+              .find('.zotero-entry-delete').remove();
+          }
+        });
+      }
+    })
+
+    // Update creators' hidden inputs as they're changed
+    .on('input', '.zotero-creator', function() {
+      var $this = $(this),
+        $creatorAttrs = $this.find('.creator-attr'),
+        creatorObject = {};
+      $creatorAttrs.each(function() {
+        creatorObject[$(this).data('creator-key')] = this.value;
+      });
+      $this.find('input[type="hidden"]').val(JSON.stringify(creatorObject));
+    })
+
+    // Buttons for adding/removing creators
+    .on('click', '.zotero-creator .add-creator', function() {
+      var $oldCreator = $(this).parents('.zotero-creator'),
+        $newCreator = $oldCreator.clone(true, true).insertAfter($oldCreator);
+      $newCreator.find('textarea').val('').trigger('input');
+    })
+    .on('click', '.zotero-creator .remove-creator', function() {
+      var $thisRow = $(this).parents('.zotero-creator');
+      if ($thisRow.siblings('.zotero-creator').length) {
+        $thisRow.remove();
+      }
+    });
+});

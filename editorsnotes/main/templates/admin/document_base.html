@@ -18,16 +18,16 @@
     margin-bottom: 8px;
   }
 
-  .zotero-information .control-group {
+  .zotero-information-edit .control-group {
     margin-bottom: 0px !important;
   }
 
-  #document-related-topics .control-group:last-child input[type="checkbox"],
-  #document-related-topics .control-group:last-child i {
+  #document-related-topics-edit .control-group:last-child input[type="checkbox"],
+  #document-related-topics-edit .control-group:last-child i {
     display: none;
   }
 
-  #document-related-topics .control-group:last-child {
+  #document-related-topics-edit .control-group:last-child {
     margin-top: 1.5em;
   }
 
@@ -47,13 +47,14 @@
 
     <fieldset>
       <legend>Description</legend>
-
-      {% if form.description.errors %}
-        <div class="alert alert-error">
-          {{ form.description.errors }}
-        </div>
-      {% endif %}
-      {{ form.description }}
+      <div class="document-description-edit">
+        {% if form.description.errors %}
+          <div class="alert alert-error">
+            {{ form.description.errors }}
+          </div>
+        {% endif %}
+        {{ form.description }}
+      </div>
     </fieldset>
 
     <fieldset>
@@ -65,7 +66,7 @@
       </div>
     </fieldset>
 
-    <fieldset id="document-related-topics">
+    <fieldset id="document-related-topics-edit">
       <legend class="collapsable">Related topics</legend>
       <div class="collapse-content">
         {{ topics_formset.management_form }}

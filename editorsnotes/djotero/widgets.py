@@ -43,7 +43,7 @@ class ZoteroWidget(Widget):
                             '</div>')
             return mark_safe(control_html)
 
-        html = u'<div class="zotero-information">'
+        html = u'<div class="zotero-information-edit">'
 
         ITEM_TYPES = ''.join([ '<option value="%s">%s</option>' % (key, val)
                                for key, val in type_map['readable'].items() ])
@@ -55,7 +55,7 @@ class ZoteroWidget(Widget):
                               '<i class="remove-creator icon-minus-sign"></i>')
 
         if not value:
-            html += ('<div id="item-type-select-dialog control-group">' +
+            html += ('<div id="item-type-select-dialog" class="control-group">' +
                      '<label class="control-label">Item Type</label>' +
                      '<div class="controls">%s</div>' % ITEM_TYPE_SELECT)
             return mark_safe(html)

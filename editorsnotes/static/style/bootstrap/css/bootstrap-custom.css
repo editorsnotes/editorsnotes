@@ -61,9 +61,14 @@ ul .document-link p {
     width: 500px;
     margin-right: 5px;
 }
+
+
+/****************************
+ * Inline document editing
+ ****************************/
 #document-inline-edit {
     padding: 10px;
-    height: 550px;
+    height: 525px;
 }
 #document-inline-edit #document-description {
     height: 167px;
@@ -71,7 +76,7 @@ ul .document-link p {
     margin-bottom: 1px;
 }
 #document-inline-edit #document-zotero-information {
-    height: 348px;
+    height: 312px;
     overflow-y: auto;
 }
 #document-inline-edit #modal-edit-row {
@@ -79,7 +84,20 @@ ul .document-link p {
     padding-top: 6px;
     border-top: 1px solid #ddd;
 }
+#document-inline-edit .control-group {
+    margin-bottom: 3px;
+}
+#document-inline-edit .control-group > label {
+    width: 105px;
+}
+#document-inline-edit .control-group > .controls {
+    margin-left: 120px;
+}
 
+
+/****************************
+ * Zotero form sizes
+ ****************************/
 .zotero-entry textarea {
     height: 1.4em;
     margin-bottom: 5px;
@@ -109,6 +127,10 @@ ul .document-link p {
     padding-top: 6px;
 }
 
+
+/****************************
+ * Note sections
+ ****************************/
 
 .note-section {
     /* Spacing between note sections */

@@ -10,6 +10,7 @@
 <script type="text/javascript" src="{{ STATIC_URL }}function/handlebars-1.0.0.beta.6.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}function/zotero-localization.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}function/zotero-form-modal.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/zotero-form-functions.js"></script>
 
 <script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/xmle4x.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/xmldom.js"></script>
@@ -87,6 +88,27 @@
           <input type="submit" class="btn" value="Add to note">
         </form>
       </div>
+
+      {% if affiliated %}
+      <div id="document-inline-edit" class="modal hide">
+        <h3>Add a document</h3>
+        <div class="document-description-edit">
+          <textarea class="xhtml-textarea"></textarea>
+        </div>
+        <div id="document-zotero-information">
+          <div class="zotero-information-edit form-horizontal">
+          </div>
+        </div>
+        <div id="modal-edit-row">
+          <a id="document-edit-close" class="btn btn-daner">Cancel</a>
+          <span id="modal-loading">Loading...'
+            <img src="/static/style/icons/ajax-loader.gif" />
+          </span>
+          <a id="document-save" class="btn btn-primary pull-right">Save</a>
+        </div>
+      </div>
+      {% endif %}
+
       </section>
 
       <section id="history-tab" class="tab-pane">
