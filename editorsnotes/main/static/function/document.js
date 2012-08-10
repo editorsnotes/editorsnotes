@@ -81,80 +81,43 @@ $(document).ready(function() {
       if (footnote.done) { return; }
       footnote.done = true;
       var footnotes = $('a.footnote');
-      footnotes.attr('title', 'Click to read footnote');
-      footnotes.click(footnote.show);
+      footnotes.click(function (event) { event.preventDefault(); });
       var i = 1;
       footnotes.each(function() {
-        var a = $(this);
-        var punc = '';
+        var a = $(this),
+            noteid = 'note-' + a.attr('href').split('/')[2],
+            punc = '',
+            text,
+            number;
         if (a[0].nextSibling && a[0].nextSibling.nodeType == 3) { // text node
-          var text = $(a[0].nextSibling).text();
+          text = $(a[0].nextSibling).text();
           if (text.length > 0 && (text[0] == ',' || text[0] == '.')) {
             punc = text[0];
             $(a[0].nextSibling).replaceWith(
               $(document.createTextNode(text.slice(1))));
           }
         }
-        var number = $(document.createElement('span'));
+        number = $(document.createElement('span'));
         number.addClass('footnote-number');
-        number.html(punc + '<small><sup title="Click to read footnote">' + i + '</sup></small>');
+        number.html(punc + '<small><sup>' + i + '</sup></small>');
         a.after(number);
-        number.hover(function() { a.toggleClass('hover-footnote'); },
-                     function() { a.toggleClass('hover-footnote'); } );
-        a.hover(function() { number.toggleClass('hover-footnote'); },
-                function() { number.toggleClass('hover-footnote'); } );
-        number.click(function() { a.click(); });
-        a.data('footnote-number', i);
+        number.hover(function() { a.hover(); });
+        a.popover({
+          placement: function (pop, a) {
+            var a_offset = $(a).offset(),
+                a_width = $(a).width(),
+                a_x, a_y;
+            a_x = a_offset.left - $('body').scrollLeft() + (a_width / 2); 
+            if (a_x < 300) { return 'right'; }
+            if (a_x > $(window).width() - 300) { return 'left'; }
+            a_y = a_offset.top - $('body').scrollTop();
+            return (a_y > $(window).height() / 2) ? 'top' : 'bottom';
+          },
+          title: i + '. ' + a.text(),
+          content: $('#' + noteid).html()
+        });
         i += 1;
       });
-    },
-    resize: function(event, ui) {
-      var title = $('#ui-dialog-title-footnote-display');
-      if (ui) {
-        if (ui.size.width < footnote.width) {
-          title.ellipsis(ui.size.width - 50);
-        }
-      } else {
-        title.ellipsis(footnote.width - 50);
-      }
-    },
-    using: function(position) {
-      position.left = ((($(window).width() - $(this).width()) / 2) 
-                       + $(window).scrollLeft());
-      $(this).css(position);
-    },
-    close: function() {
-      $('a.active-footnote').removeClass('active-footnote');
-    },
-    show: function(event) {
-      event.preventDefault();
-      if (! footnote.display) {
-        footnote.display = $(document.createElement('div'));
-        footnote.display.attr('id', 'footnote-display');
-        $(document.body).append(footnote.display);
-        footnote.display.dialog({ 
-          autoOpen: false, 
-          draggable: true,
-          resizable: true,
-          close: footnote.close
-        });
-      }
-      $('a.active-footnote').removeClass('active-footnote');
-      var link = $(this);
-      link.addClass('active-footnote');
-      footnote.display.html($('#note-' + link.attr('href').split('/')[2]).html());
-      var linktext = link.text();
-      //if (! linktext.match(/^[A-Z"']/)) {
-      //  linktext = '&hellip; ' + linktext;
-      //}
-      footnote.display.dialog('option', 'title', link.data('footnote-number') + '. ' + linktext);
-      footnote.display.dialog('option', 'width', footnote.width);
-      footnote.display.dialog('option', 'position', {
-        my: 'top', at: 'bottom', of: link, offset: '0 5', collision: 'none', 
-        using: footnote.using });
-      footnote.display.dialog('open');
-      footnote.display.bind('dialogresize', footnote.resize);
-      footnote.resize();
     }
   }
 
