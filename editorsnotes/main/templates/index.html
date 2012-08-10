@@ -83,6 +83,7 @@
     float: right;
     width: 360px;
     height: 270px;
+    border: 1px solid #eee;
   }
 </style>
 {% endblock %}
@@ -105,7 +106,7 @@
       return false;
     }).filter(':first').trigger('click');
 
-    $('#carousel').carousel({ interval: false });
+    $('#carousel').carousel('pause');
     $('#carousel').on('slid', function() {
       var number = $('#carousel .active').index('#carousel .item'),
           $toggle = $('#features-toggle a[data-carousel-number="' + number + '"]');
@@ -150,7 +151,7 @@
       <li><a href="#annotation" data-carousel-number="8">Document annotation</a></li>
     </ul>
 
-    <div id="carousel" class="carousel slide" data-interval="false">
+    <div id="carousel" class="carousel slide">
       <div class="carousel-inner">
         <!-- 0 -->
         <div class="item active">
