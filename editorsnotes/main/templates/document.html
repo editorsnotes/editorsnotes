@@ -5,6 +5,23 @@
 
 {% block css %}
 <style type="text/css">
+  #transcript-content {
+    position: relative;
+  }
+  a.footnote:hover {
+    color: red;
+    text-decoration: none;
+  }
+  a.footnote:before {
+    content: ' \25CF';
+    font-size: 10px;
+    color: red;
+    position: absolute;
+    left: -12px;
+  }
+  .footnote-number sup {
+    color: red;
+  }
   #footnotediv {
     background-color: white;
     border: 1px solid #CDBBB5;
@@ -14,6 +31,13 @@
   }
   #footnotediv p {
     margin: 0;
+  }
+  .popover-inner {
+    width: auto;
+    max-width: 600px;
+  }
+  .arrow {
+    display: none;
   }
 </style>
 {% endblock %}
@@ -115,9 +139,21 @@
             </div>
             <div id="transcript-notes">
               {% for note in document.transcript.footnotes.all %}
-              <div id="note-{{ note.id }}" class="transcript-note">
+              <div id="note-{{ note.id }}" class="transcript-note hide"> 
+<!-- modal" data-backdrop="false">
+<div class="modal-header">
+  <button type="button" class="close" data-dismiss="modal">x</button>
+  <h3>title</h3>
+</div>
+<div class="modal-body">
+-->
                 {{ note.content|as_html|typogrify }}
+<!--
+              </div>
+              <div class="modal-footer">
                 <a href="{{ note.get_absolute_url }}">More information about this footnote</a>
+              </div>
+-->
               </div>
               {% endfor %}
             </div>
