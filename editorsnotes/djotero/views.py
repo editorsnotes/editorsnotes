@@ -6,6 +6,7 @@ from django.template import RequestContext
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from editorsnotes.main.models import Document, Topic, TopicAssignment, Note, Citation
 from editorsnotes.main.templatetags.display import as_link
+from forms import ZoteroForm
 from models import ZoteroLink, CachedArchive
 from widgets import ZoteroWidget
 import utils
@@ -46,8 +47,8 @@ def libraries(request):
     return HttpResponse(json.dumps(libraries), mimetype='application/json')
 
 def collections(request):
-    #if not request.is_ajax():
-    #    return HttpResponseBadRequest()
+    if not request.is_ajax():
+        return HttpResponseBadRequest()
     loc = request.GET.get('loc', '')
     top_level = request.GET.get('top', 0)
     zotero_key = request.user.get_profile().zotero_key
@@ -55,8 +56,8 @@ def collections(request):
     return HttpResponse(json.dumps(collections), mimetype='application/json')
     
 def items(request):
-    #if not request.is_ajax():
-    #    return HttpResponseBadRequest()
+    if not request.is_ajax():
+        return HttpResponseBadRequest()
     loc = request.GET.get('loc', '')
     opts = json.loads(request.GET.get('opts', '{}'))
     zotero_key = request.user.get_profile().zotero_key
@@ -164,33 +165,15 @@ def zotero_template(request):
     if not request.is_ajax():
         return HttpResponseBadRequest()
     item_type = request.GET.get('itemType')
-    template_for = request.GET.get('templateFor')
-
-    if not item_type:
-        return HttpResponseBadRequest(
-            content='Provide an item type')
-
-    if template_for == 'item':
-        cache.add(
-            'item_template_%s' % item_type,
-            utils.get_item_template(item_type),
-            60 * 24 * 7)
-        item_template = cache.get('item_template_%s' % item_type)
-        return HttpResponse(item_template, mimetype='application/json')
-
-    elif template_for == 'creators':
-        creators = cache.add(
-            'creators_%s' % item_type,
-            utils.get_creator_types(item_type),
-            60 * 24 * 7)
-        creators = cache.get('creators_%s' % item_type)
-        return HttpResponse(creators, mimetype='application/json')
-
+    if item_type:
+        item_template = utils.get_item_template(item_type)
+        form = ZoteroForm(data={'zotero_data': item_template})
     else:
-        return HttpResponseBadRequest()
+        form = ZoteroForm()
+    return HttpResponse(form.as_p())
 
 def get_blank_item(request):
-    if not request.is_ajax() or not request.GET.get('itemType', False):
+    if not request.is_ajax():
         return HttpResponseBadRequest()
     item_type = request.GET.get('itemType')
     blank_item = utils.get_item_template(item_type)

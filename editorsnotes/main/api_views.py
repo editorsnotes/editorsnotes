@@ -1,5 +1,6 @@
 from django.contrib.sites.models import Site
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from models import *
 import json
