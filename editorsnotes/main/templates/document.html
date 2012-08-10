@@ -113,9 +113,16 @@
             {% endif %}
           </div>
 
-          <hr />
-
-          <a class="btn edit-button" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
+          <div class="row edit-row">
+            <div class="span6 edit-button">
+              {% if request.user.is_authenticated %}
+              <a class="btn" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
+              {% endif %}
+            </div>
+            <div class="span6 edit-history">
+              {{ document|display_edit_history }}
+            </div>
+          </div>
 
         </section>
 
@@ -128,7 +135,9 @@
               {% endfor %}
             </ul>
           </div>
+          {% if request.user.is_authenticated %}
           <a class="btn" href="{{ document.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
+          {% endif %}
         </section>
         {% endif %}
 
@@ -159,7 +168,6 @@
 
         {% if document.transcript %}
         <section id="transcript-tab" class="tab-pane">
-          {% if document.transcript %}
           <article id="transcript-{{ document.transcript.id }}" class="transcript">
             <div id="transcript-content">
               {{ document.transcript.content|as_html|typogrify }}
@@ -167,34 +175,19 @@
             <div id="transcript-notes">
               {% for note in document.transcript.footnotes.all %}
               <div id="note-{{ note.id }}" class="transcript-note hide"> 
-<!-- modal" data-backdrop="false">
-<div class="modal-header">
-  <button type="button" class="close" data-dismiss="modal">x</button>
-  <h3>title</h3>
-</div>
-<div class="modal-body">
--->
                 {{ note.content|as_html|typogrify }}
-<!--
-              </div>
-              <div class="modal-footer">
-                <a href="{{ note.get_absolute_url }}">More information about this footnote</a>
-              </div>
--->
               </div>
               {% endfor %}
             </div>
             <div>
-              <a class="btn" href="{{ document.transcript.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit</a>
+              {% if user.is_authenticated %}
+              <a class="btn" href="{{ document.transcript.get_admin_url }}?return_to={{ document.get_absolute_url }}">Edit transcript</a>
+              {% endif %}
               <div class="edit-history">
                 {{ document.transcript|display_edit_history }}
               </div>
             </div>
           </article>
-          {% else %}
-          <p>This document has not been transcribed.</p>
-          <a class="btn edit-button" href="{% url admin:main_transcript_add %}?document={{ document.id }}&amp;return_to={{ document.get_absolute_url }}">Edit</a>
-          {% endif %}
         </section>
         {% endif %}
 

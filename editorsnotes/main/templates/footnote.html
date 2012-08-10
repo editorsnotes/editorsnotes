@@ -11,10 +11,6 @@
 </script>
 {% endblock %}
 
-{% block css %}
-<link rel="stylesheet" href="{{ STATIC_URL }}style/disqus.css" type="text/css"/>
-{% endblock %}
-
 {% block content %}
     <header>
       <h3>
@@ -44,7 +40,9 @@
             {{ footnote.content|as_html|typogrify }}
           </div>
           <div class="span-2">
+            {% if request.user.is_authenticated %}
             <a class="button" href="{{ footnote.get_admin_url }}?return_to={{ footnote.get_absolute_url }}">Edit</a>
+            {% endif %}
           </div>
           <div class="edit-history">
             {{ footnote|display_edit_history }}

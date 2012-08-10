@@ -88,7 +88,9 @@
 
           <div class="row edit-row">
             <div class="span6 edit-button">
+              {% if request.user.is_authenticated %}
               <a class="btn" href="{{ note.get_admin_url }}?return_to={{ note.get_absolute_url }}">Edit</a>
+              {% endif %}
             </div>
             <div class="span6 edit-history">
               {{ note|display_edit_history }}
@@ -133,7 +135,10 @@
         <span class="quiet">This note is empty</div>
       {% endif %}
 
+      {% if note_section_form %}
+
       <hr/>
+
       <div>
         {% if affiliated %}
           <p>You are a member of the project that owns this note, so you can add to it.</p>
@@ -166,16 +171,21 @@
       </div>
       {% endif %}
 
+      {% else %}
+      <div class="clearer" style="height: 100px;">&nbsp;</div>
+
+      {% endif %}
+
       </section>
 
       <section id="history-tab" class="tab-pane">
-        <p>Showing {{ history|length }} revisions, most recent first.</p>
+        <p>{{ history|length }} revision{% if history|length == 1 %}{% else %}s{% endif %}; most recent listed first.</p>
         <ol>
         {% for version in history %}
           {% with fields=version.field_dict %}
           <li>
             {{ fields.last_updated|date }} by {{ fields.last_updater|user_from_id }}
-            (<a href="history/?compare={{ version.revision_id }}">compare</a>)
+            {% comment %}(<a href="history/?compare={{ version.revision_id }}">compare</a>){% endcomment %}
           </li>
           {% endwith %}
         {% endfor %}

@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
@@ -19,6 +19,7 @@ import json
 # Note, topic, document admin
 ################################################################################
 
+@login_required
 def document_add(request):
     o = {}
     if request.method == 'POST':
@@ -88,6 +89,7 @@ def document_add(request):
     return render_to_response(
         'admin/document_add.html', o, context_instance=RequestContext(request))
 
+@login_required
 def document_change(request, document_id):
     document = get_object_or_404(Document, id=document_id)
     o = {}
@@ -159,6 +161,7 @@ def document_change(request, document_id):
     return render_to_response(
         'admin/document_change.html', o, context_instance=RequestContext(request))
 
+@login_required
 def note_add(request):
     o = {}
     if request.method == 'POST':
@@ -200,6 +203,7 @@ def note_add(request):
     return render_to_response(
         'admin/note_add.html', o, context_instance=RequestContext(request))
 
+@login_required
 def note_change(request, note_id):
     note = get_object_or_404(main_models.Note, id=note_id)
     o = {}
@@ -245,6 +249,7 @@ def note_change(request, note_id):
     return render_to_response(
         'admin/note_change.html', o, context_instance=RequestContext(request))
 
+@login_required
 def notesection_add(request):
     o = {}
     if request.method == 'POST':
@@ -254,6 +259,7 @@ def notesection_add(request):
     return render_to_response(
         'admin/notesection_add.html', o, context_instance=RequestContext(request))
 
+@login_required
 def notesection_change(request):
     o = {}
     if request.method == 'POST':
@@ -269,6 +275,7 @@ def notesection_change(request):
 # Project management
 ################################################################################
 
+@login_required
 def project_roster(request, project_id):
     o = {}
     project = get_object_or_404(Project, id=project_id)
@@ -316,6 +323,7 @@ def project_roster(request, project_id):
     return render_to_response(
         'admin/project_roster.html', o, context_instance=RequestContext(request))
 
+@login_required
 def change_project(request, project_id):
     o = {}
     project = get_object_or_404(Project, id=project_id)
@@ -340,6 +348,7 @@ def change_project(request, project_id):
     return render_to_response(
         'admin/project_change.html', o, context_instance=RequestContext(request))
 
+@login_required
 def change_featured_items(request, project_id):
     o = {}
     project = get_object_or_404(Project, id=project_id)

@@ -51,7 +51,6 @@ def user_logout(request):
     return render_to_response(
         'logout.html', context_instance=RequestContext(request))
 
-@login_required
 def user(request, username=None):
     o = {}
     if not username:
@@ -59,7 +58,7 @@ def user(request, username=None):
         o['own_profile'] = True
     else:
         user = get_object_or_404(User, username=username)
-        o['own_profile'] = False if user != request.user else True
+        o['own_profile'] = user == request.user
 
     o['profile'] = UserProfile.get_for(user)
     o['log_entries'], ignored = UserProfile.get_activity_for(user, max_count=20)
@@ -89,7 +88,6 @@ def index(request):
     return render_to_response(
         'index.html', o, context_instance=RequestContext(request))
 
-@login_required
 def browse(request):
     max_count = 6
     o = {}
@@ -107,7 +105,6 @@ def browse(request):
 reel_numbers = re.compile(r'(\S+):(\S+)')
 ignored_punctuation = '!#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
 
-@login_required
 def search(request):
     query = ''
     results = EmptySearchQuerySet()
@@ -150,21 +147,16 @@ def search(request):
 # Individual instances of models
 # ------------------------------------------------------------------------------
 
-@login_required
 def project(request, project_slug):
     o = {}
     o['project'] = get_object_or_404(Project, slug=project_slug)
     o['log_entries'], ignored = Project.get_activity_for(o['project'], max_count=10)
-    try:
+    if request.user.is_authenticated():
         o['can_change'] = o['project'].attempt('change', request.user)
-    except PermissionError:
-        pass
-    o['project_role'] = request.user.get_profile().get_project_role(
-        o['project'])
+        o['project_role'] = request.user.get_profile().get_project_role(o['project'])
     return render_to_response(
         'project.html', o, context_instance=RequestContext(request))
 
-@login_required
 def topic(request, topic_slug):
     o = {}
     o['topic'] = get_object_or_404(Topic, slug=topic_slug)
@@ -189,7 +181,6 @@ def topic(request, topic_slug):
     return render_to_response(
         'topic.html', o, context_instance=RequestContext(request))
 
-@login_required
 def note(request, note_id):
     o = {}
     o['note'] = get_object_or_404(Note, id=note_id)
@@ -221,17 +212,17 @@ def note(request, note_id):
                 messages.SUCCESS,
                 'Added section to %s' % o['note'])
             return HttpResponseRedirect(request.path)
-    user_profile = request.user.get_profile()
-    o['affiliated'] = len([p for p in o['note'].get_project_affiliation() if
-                           user_profile.get_project_role(p) is not None]) > 0
-    o['add_section_form'] = main_forms.NoteSectionForm()
+    if request.user.is_authenticated():
+        user_profile = request.user.get_profile()
+        o['affiliated'] = len([p for p in o['note'].get_project_affiliation() if
+                               user_profile.get_project_role(p) is not None]) > 0
+        o['add_section_form'] = main_forms.NoteSectionForm()
     o['history'] = get_unique_for_object(o['note'])
     o['topics'] = [ ta.topic for ta in o['note'].topics.all() ]
     o['cites'] = _sort_citations(o['note'])
     return render_to_response(
         'note.html', o, context_instance=RequestContext(request))
 
-@login_required
 def footnote(request, footnote_id):
     o = {}
     o['footnote'] = get_object_or_404(Footnote, id=footnote_id)
@@ -240,7 +231,6 @@ def footnote(request, footnote_id):
     return render_to_response(
         'footnote.html', o, context_instance=RequestContext(request))
 
-@login_required
 def document(request, document_id):
     o = {}
     o['document'] = get_object_or_404(Document, id=document_id)
@@ -267,7 +257,6 @@ def document(request, document_id):
 # Aggregations of models
 # ------------------------------------------------------------------------------
 
-@login_required
 def all_topics(request, project_slug=None):
     o = {}
     if project_slug:
@@ -290,7 +279,6 @@ def all_topics(request, project_slug=None):
     return render_to_response(
         template, o, context_instance=RequestContext(request))
 
-@login_required
 def all_documents(request, project_slug=None):
     o = {}
     template = 'all-documents.html'
@@ -362,7 +350,6 @@ def all_documents(request, project_slug=None):
     return render_to_response(
         template, o, context_instance=RequestContext(request))
 
-@login_required
 def all_notes(request, project_slug=None):
     o = {}
     template = 'all-notes.html'
@@ -400,4 +387,3 @@ def all_notes(request, project_slug=None):
 
     return render_to_response(
         template, o, context_instance=RequestContext(request)) 
-
