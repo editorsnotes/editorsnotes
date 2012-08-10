@@ -79,64 +79,156 @@
     max-width: 270px; 
     padding-right: 18px;
   }
-  .screencast {
+  #carousel {
     float: right;
+    width: 360px;
+    height: 270px;
   }
 </style>
 {% endblock %}
 
 {% block js %}
 <script type="text/javascript">
+
+  function selectFeature($toggle) {
+    $toggle.parents('ul').find('.selected').removeClass('selected');
+    $toggle.addClass('selected');
+    $('#description').children().hide()
+      .filter($toggle.attr('href')).show();
+  }
+
   $(document).ready(function() {
     $('#features-toggle a').click(function(event) {
-      var $this = $(this);
-      $this.parents('ul').find('.selected').removeClass('selected');
-      $this.addClass('selected');
-      $('#description').children().hide()
-        .filter($this.attr('href')).show();
+      var $toggle = $(this);
+      selectFeature($toggle);
+      $('#carousel').carousel($toggle.data('carouselNumber'));
       return false;
     }).filter(':first').trigger('click');
 
+    $('#carousel').carousel({ interval: false });
+    $('#carousel').on('slid', function() {
+      var number = $('#carousel .active').index('#carousel .item'),
+          $toggle = $('#features-toggle a[data-carousel-number="' + number + '"]');
+      if ($toggle.length > 0) {
+        selectFeature($toggle);
+      }
+    });
   });
 </script>
 {% endblock %}
 
 {% block content %}
 <div class="row">
-    <p class="message">
+  <p class="message">
     Editors' Notes is an <a href="http://github.com/rybesh/editorsnotes">open-source</a>, web-based tool for recording, organizing, preserving, and opening access to research notes, built with the needs of documentary editing projects, archives, and library special collections in mind.
-    </p>
+  </p>
 
-    <div id="examples">
-      <h4>A few ways projects are using Editors' Notes:</h4>
-      <ul class="unstyled">
-        <li>
-          <a href="{% url project_view 'sanger' %}">The Margaret Sanger Papers</a> are researching <a href="{% url topic_view 'india-birth-control-movement-in' %}#notes">the birth control movement in India</a>.
-        </li>
-        <li>
+  <div id="examples">
+    <h4>A few ways projects are using Editors' Notes:</h4>
+    <ul class="unstyled">
+      <li>
+        <a href="{% url project_view 'sanger' %}">The Margaret Sanger Papers</a> are researching <a href="{% url topic_view 'india-birth-control-movement-in' %}#notes">the birth control movement in India</a>.
+      </li>
+      <li>
         <a href="{% url project_view 'ecssba' %}">The Elizabeth Cady Stanton &amp; Susan B. Anthony Papers Project</a> are collecting sources about <a href="{% url topic_view 'women-already-voters-test-cases-during-reconstruction' %}">women using direct action to test voting laws during reconstruction</a>.
-        </li>
-        <li>
-          <a href="{% url project_view 'labadie' %}">The Labadie Collection</a> is sharing items in its collection that mention <a href="{% url note_view 341 %}">Emma Goldman's visits to Detroit</a>.
-        </li>
-        <li>
+      </li>
+      <li>
+        <a href="{% url project_view 'labadie' %}">The Labadie Collection</a> is sharing items in its collection that mention <a href="{% url note_view 341 %}">Emma Goldman's visits to Detroit</a>.
+      </li>
+      <li>
         <a href="{% url project_view 'emma' %}">The Emma Goldman Papers Project</a> are researching the origins of the <a href="{% url note_view 134 %}">1919 deportation of strikers in Bisbee, Arizona</a>.
-        </li>
-      </ul>
-    </div>
+      </li>
+    </ul>
+  </div>
 
-    <div id="features">
+  <div id="features">
 
     <ul id="features-toggle">
-      <li><a href="#collaboration">Project collaboration</a></li>
-      <li><a href="#notes">Flexible note-taking</a></li>
-      <li><a href="#zotero">Integration with Zotero</a></li>
-      <li><a href="#annotation">Document annotation</a></li>
+      <li><a href="#collaboration" data-carousel-number="0">Project collaboration</a></li>
+      <li><a href="#notes" data-carousel-number="4">Flexible note-taking</a></li>
+      <li><a href="#zotero" data-carousel-number="6">Integration with Zotero</a></li>
+      <li><a href="#annotation" data-carousel-number="8">Document annotation</a></li>
     </ul>
 
+    <div id="carousel" class="carousel slide" data-interval="false">
+      <div class="carousel-inner">
+        <!-- 0 -->
+        <div class="item active">
+          <img src="/static/img/project.png" alt="">
+          <div class="carousel-caption">
+            <h4>Create research teams</h4>
+          </div>  
+        </div>
+        <!-- 1 -->
+        <div class="item">
+          <img src="/static/img/permissions.png" alt="Managing permissions">
+          <div class="carousel-caption">
+            <h4>Manage permissions</h4>
+          </div>  
+        </div>
+        <!-- 2 -->
+        <div class="item">
+          <img src="/static/img/assignusers.png" alt="">
+          <div class="carousel-caption">
+            <h4>Assign researchers to tasks</h4>
+          </div>  
+        </div>
+        <!-- 3 -->
+        <div class="item">
+          <img src="/static/img/recentedits.png" alt="">
+          <div class="carousel-caption">
+            <h4>Track research activity</h4>
+          </div>  
+        </div>
+        <!-- 4 -->
+        <div class="item">
+          <img src="/static/img/note.png" alt="">
+          <div class="carousel-caption">
+            <h4>Organize research tasks around notes</h4>
+          </div>  
+        </div>
+        <!-- 5 -->
+        <div class="item">
+          <img src="/static/img/document.png" alt="">
+          <div class="carousel-caption">
+            <h4>Organize source documents</h4>
+          </div>  
+        </div>
+        <!-- 6 -->
+        <div class="item">
+          <img src="/static/img/zoterodata.png" alt="">
+          <div class="carousel-caption">
+            <h4>Manage bibliographic data with Zotero</h4>
+          </div>  
+        </div>
+        <!-- 7 -->
+        <div class="item">
+          <img src="/static/img/search.png" alt="">
+          <div class="carousel-caption">
+            <h4>Filter searches using bibliographic data</h4>
+          </div>  
+        </div>
+        <!-- 8 -->
+        <div class="item">
+          <img src="/static/img/footnote.png" alt="">
+          <div class="carousel-caption">
+            <h4>Annotate transcripts</h4>
+          </div>  
+        </div>
+        <!-- 9 -->
+        <div class="item">
+          <img src="/static/img/scans.png" alt="">
+          <div class="carousel-caption">
+            <h4>Zoom into high-resolution scans</h4>
+          </div>  
+        </div>
+      </div>
+      <a class="carousel-control left" href="#carousel" data-slide="prev">&lsaquo;</a>
+      <a class="carousel-control right" href="#carousel" data-slide="next">&rsaquo;</a>
+    </div>
+    
     <div id="description">
       <div id="collaboration">
-        <iframe class="screencast" src="http://player.vimeo.com/video/31422401?title=0&amp;byline=0&amp;portrait=0&amp;color=00a3b5" width="360" height="270" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>
         <p>
           Teams of editors, archivists, and librarians can use Editors' Notes to manage their research and note-taking. Project administrators can assign research tasks to other team members, and they can control who has permission to edit the project's notes.
         </p>
@@ -158,5 +250,6 @@
       </div>
     </div>
 
+  </div>
 </div>
 {% endblock %}
