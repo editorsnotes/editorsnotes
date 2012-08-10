@@ -159,6 +159,82 @@ def document_change(request, document_id):
     return render_to_response(
         'admin/document_change.html', o, context_instance=RequestContext(request))
 
+def note_add(request):
+    o = {}
+    if request.method == 'POST':
+        o['form'] = main_forms.NoteForm(request.POST)
+        o['form'].fields['assigned_users'].queryset=\
+                main_models.UserProfile.objects.filter(
+                    affiliation=request.user.get_profile().affiliation,
+                    user__is_active=1).order_by('user__last_name')
+        o['topics_formset'] = main_forms.TopicAssignmentFormset(
+            request.POST, prefix='ta')
+        if o['form'].is_valid() and o['topics_formset'].is_valid():
+            note = o['form'].save(commit=False)
+            note.creator = request.user
+            note.last_updater = request.user
+            note.save()
+            for form in o['topics_formset']:
+                if not form.has_changed() or not form.is_valid():
+                    continue
+                if form.cleaned_data['DELETE']:
+                    continue
+                if form.cleaned_data['topic']:
+                    if form.cleaned_data['topic'] in note.topics.all():
+                        continue
+                    ta = form.save(commit=False)
+                    ta.creator = request.user
+                    ta.topic = form.cleaned_data['topic']
+                    ta.content_object = note
+                    ta.save()
+
+            return HttpResponseRedirect(note.get_absolute_url())
+    else:
+        o['form'] = main_forms.NoteForm()
+        o['form'].fields['assigned_users'].queryset=\
+                main_models.UserProfile.objects.filter(
+                    affiliation=request.user.get_profile().affiliation,
+                    user__is_active=1).order_by('user__last_name')
+        o['topics_formset'] = main_forms.TopicAssignmentFormset(prefix='ta')
+    return render_to_response(
+        'admin/note_add.html', o, context_instance=RequestContext(request))
+
+def note_change(request, note_id):
+    note = get_object_or_404(main_models.Note, id=note_id)
+    o = {}
+
+    if request.method == 'POST':
+        pass
+    else:
+        o['form'] = main_forms.NoteForm(instance=note)
+        o['form'].fields['assigned_users'].queryset=\
+                main_models.UserProfile.objects.filter(
+                    affiliation=request.user.get_profile().affiliation,
+                    user__is_active=1).order_by('user__last_name')
+        o['topics_formset'] = main_forms.TopicAssignmentFormset(
+            instance=note, prefix='ta')
+    return render_to_response(
+        'admin/note_change.html', o, context_instance=RequestContext(request))
+
+def notesection_add(request):
+    o = {}
+    if request.method == 'POST':
+        pass
+    else:
+        pass
+    return render_to_response(
+        'admin/notesection_add.html', o, context_instance=RequestContext(request))
+
+def notesection_change(request):
+    o = {}
+    if request.method == 'POST':
+        pass
+    else:
+        pass
+    return render_to_response(
+        'admin/notesection_change.html', o, context_instance=RequestContext(request))
+
+
 
 ################################################################################
 # Project management

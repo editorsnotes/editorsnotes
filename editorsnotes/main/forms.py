@@ -13,6 +13,10 @@ from editorsnotes.djotero.utils import validate_zotero_data
 from collections import OrderedDict
 import json
 
+################################################################################
+# Project forms
+################################################################################
+
 class ProjectUserForm(ModelForm):
     project_roles = ['editor', 'researcher']
     project_role = forms.ChoiceField(
@@ -51,13 +55,9 @@ class ProjectForm(ModelForm):
         model = Project
         exclude = ('slug',)
 
-class NoteSectionForm(ModelForm):
-    class Meta:
-        model = NoteSection
-        fields = ('document', 'content',)
-        widgets = {
-            'document' : forms.widgets.HiddenInput(
-                attrs={ 'class': 'autocomplete-documents'}) }
+################################################################################
+# Document form & formsets
+################################################################################
 
 class DocumentForm(ModelForm):
     zotero_string = forms.CharField(required=False, widget=ZoteroWidget())
@@ -70,9 +70,9 @@ class DocumentForm(ModelForm):
             "function/citeproc-js/xmldom.js",
             "function/citeproc-js/citeproc.js",
             "function/citeproc-js/simple.js",
-            "function/admin-document.js"
+            "function/admin-bootstrap-base.js",
+            "function/admin-bootstrap-document.js"
         )
-
     class Meta:
         model = Document
         fields = ('description', 'edtf_date',)
@@ -114,16 +114,39 @@ class DocumentLinkForm(ModelForm):
             'description': forms.widgets.Textarea(
                 attrs={ 'cols': 80, 'rows': 2 })
         }
-
 DocumentLinkFormset = inlineformset_factory(
     main_models.Document, main_models.DocumentLink, form=DocumentLinkForm, extra=1)
 
-class ScanForm(ModelForm):
-    class Meta:
-        model = main_models.Scan
-
 ScanFormset = inlineformset_factory(
-    main_models.Document, main_models.Scan, form=ScanForm, extra=3)
+    main_models.Document, main_models.Scan, extra=3)
+
+################################################################################
+# Note form and formsets
+################################################################################
+class NoteForm(ModelForm):
+    class Media:
+        js = (
+            "function/admin-bootstrap-base.js",
+            "function/admin-bootstrap-note.js",
+            "function/wymeditor/jquery.wymeditor.pack.js",
+        )
+    class Meta:
+        model = main_models.Note
+        widgets = {
+            'assigned_users': forms.CheckboxSelectMultiple()
+        }
+
+class NoteSectionForm(ModelForm):
+    class Meta:
+        model = NoteSection
+        fields = ('document', 'content',)
+        widgets = {
+            'document' : forms.widgets.HiddenInput(
+                attrs={ 'class': 'autocomplete-documents'}) }
+
+################################################################################
+# Topic assignment form, used in multiple places
+################################################################################
 
 class TopicAssignmentWidget(forms.widgets.HiddenInput):
     def render(self, name, value, attrs=None):

@@ -1,0 +1,118 @@
+<style type="text/css">
+
+  .assigned-users-field ul {
+    list-style-type: none;
+    margin-left: 0;
+  }
+  .title-field input[type="text"] {
+    width: 500px;
+  }
+
+
+  /* all below this should be combined into a base admin stylesheet (sorry) */
+  legend {
+    margin-bottom: 8px;
+  }
+
+  fieldset {
+    margin-bottom: 1em;
+  }
+
+  .form-horizontal .control-label {
+    width: 120px;
+  }
+  .form-horizontal .controls {
+    margin-left: 132px;
+  }
+  .form-horizontal .control-group {
+    margin-bottom: 8px;
+  }
+
+  .zotero-information-edit .control-group {
+    margin-bottom: 0px !important;
+  }
+
+  .related-topics-edit .control-group:last-child input[type="checkbox"],
+  .related-topics-edit .control-group:last-child i {
+    display: none;
+  }
+
+  .related-topics-edit .control-group:last-child {
+    margin-top: 2em;
+  }
+  .related-topics-edit .control-group:only-child {
+    margin-top: 0;
+  }
+
+  .left-margin {
+    margin-left: 20px;
+  }
+
+</style>
+
+  <form method="post" class="form-horizontal">{% csrf_token %}
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-error">
+      {{ form.non_field_errors }}
+    </div>
+    {% endif %}
+
+    <fieldset class="title-field">
+      <legend>
+        Title
+      </legend>
+      <div class="fieldset-content">
+        {{ form.title }}
+      </div>
+    </fieldset>
+
+    <fieldset class="description-field collapsable">
+      <legend>Description</legend>
+      <div class="fieldset-content">
+        {{ form.content }}
+      </div>
+    </fieldset>
+
+
+    <fieldset class="status-field collapsable">
+      <legend>
+        Status
+      </legend>
+      <div class="fieldset-content">
+        {{ form.status }}
+      </div>
+    </fieldset>
+
+    {% comment %}Change related-topics-{edit,field}{% endcomment %}
+    <fieldset class="related-topics-edit collapsable">
+      {{ topics_formset.management_form }}
+      <legend>
+        Related topics
+      </legend>
+      <div class="fieldset-content">
+        {% for form in topics_formset %}
+        <div class="control-group">
+          {{ form.id }}
+          {{ form.topic }}
+          {{ form.DELETE }}
+        </div>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <fieldset class="assigned-users-field collapsable">
+      <legend>
+        Assigned users
+      </legend>
+      <div class="fieldset-content">
+        {{ form.assigned_users }}
+      </div>
+    </fieldset>
+
+    <hr/>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+
+
+  </form>
