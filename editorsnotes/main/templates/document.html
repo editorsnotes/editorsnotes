@@ -192,16 +192,30 @@
         {% endif %}
 
         <section id="notes-tab" class="tab-pane">
-          {% if notes %}
-          <ul id="collapse">
-            {% for note, topics, cites in notes %}
-              {% include "note.include" %}
-              {% if forloop.last %}{% else %}<hr/>{% endif %}
-            {% endfor %}
-          </ul>
-          {% else %}
-          <p>There are no notes or queries citing this document.</p>
-          {% endif %}
+        {% if notes %}
+          {% for note, topics in notes %}
+          <div id="note-{{ note.id }}" class="related-note">
+            <div class="note-link">
+              <a href="{{ note.get_absolute_url }}">{{ note.title}}</a>
+            </div>
+            <div class="note-last-modified">
+              <span class="quiet">Last modified: </span><span>{{ note.last_updated|date:"F j, Y" }}</span>
+            </div>
+            {% if topics %}
+            <div class="note-topics">
+              <span class="quiet">Related topics: </span>
+              <ul class="topic-list unstyled">
+                {% for topic in topics %}
+                  <li>{{ topic|as_link }}</a>{% if not forloop.last %} | {% endif %}</li>
+                {% endfor %}
+              </ul>
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        {% else %}
+          There are no notes or queries related to <em>{{ topic.preferred_name }}</em>.
+        {% endif %}
         </section>
       </div>
 {% endblock %}

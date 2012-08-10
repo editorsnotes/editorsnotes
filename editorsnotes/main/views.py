@@ -185,6 +185,8 @@ def note(request, note_id):
     o = {}
     o['note'] = get_object_or_404(Note, id=note_id)
     if request.method == 'POST':
+        if not request.user.is_authenticated():
+            return HttpResponseForbidden()
         form = main_forms.NoteSectionForm(request.POST)
         user = request.user
         if form.is_valid():
@@ -240,11 +242,11 @@ def document(request, document_id):
                 content_type=ContentType.objects.get_for_model(Topic)) ])
     o['scans'] = o['document'].scans.all()
     o['domain'] = Site.objects.get_current().domain
-    notes = [ c.content_object for c in o['document'].citations.filter(
-            content_type=ContentType.objects.get_for_model(Note)) ]
-    o['notes'] = zip(notes, 
-                     [ [ ta.topic for ta in n.topics.all() ] for n in notes ],
-                     [ _sort_citations(n) for n in notes ])
+
+    notes = Note.objects.filter(sections__document=o['document'])
+    note_topics = [ [ ta.topic for ta in n.topics.all() ] for n in notes ]
+    o['notes'] = zip(notes, note_topics)
+
     if o['document'].zotero_link():
         o['zotero_data'] = as_readable(o['document'].zotero_link().zotero_data)
         o['zotero_url'] = o['document'].zotero_link().zotero_url
