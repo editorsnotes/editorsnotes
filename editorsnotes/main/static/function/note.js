@@ -2,7 +2,7 @@ $(document).ready(function() {
 
   var url = $.param.fragment();
   if ( url == '' ) {
-    window.location.replace(window.location.href + '#note');
+    window.location.replace(window.location.href + '#about');
     url = $.param.fragment();
   }
 

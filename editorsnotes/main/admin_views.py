@@ -174,6 +174,7 @@ def note_add(request):
             note.creator = request.user
             note.last_updater = request.user
             note.save()
+            o['form'].save_m2m()
             for form in o['topics_formset']:
                 if not form.has_changed() or not form.is_valid():
                     continue
@@ -204,7 +205,35 @@ def note_change(request, note_id):
     o = {}
 
     if request.method == 'POST':
-        pass
+        o['form'] = main_forms.NoteForm(request.POST, instance=note)
+        o['form'].fields['assigned_users'].querset=\
+                main_models.UserProfile.objects.filter(
+                    affiliation=request.user.get_profile().affiliation,
+                    user__is_active=1).order_by('user__last_name')
+        o['topics_formset'] = main_forms.TopicAssignmentFormset(
+            request.POST, instance=note, prefix='ta')
+        if o['form'].is_valid() and o['topics_formset'].is_valid():
+            note = o['form'].save(commit=False)
+            note.last_updater = request.user
+            note.save()
+            o['form'].save_m2m()
+            for form in o['topics_formset']:
+                if not form.has_changed() or not form.is_valid():
+                    continue
+                if form.cleaned_data['DELETE']:
+                    if form.instance and form.instance.id:
+                        form.instance.delete()
+                    continue
+                elif form.cleaned_data['topic']:
+                    if form.cleaned_data['topic'] in note.topics.all():
+                        continue
+                    ta = form.save(commit=False)
+                    ta.creator = request.user
+                    ta.topic = form.cleaned_data['topic']
+                    ta.content_object = note
+                    ta.save()
+        return HttpResponseRedirect(note.get_absolute_url())
+
     else:
         o['form'] = main_forms.NoteForm(instance=note)
         o['form'].fields['assigned_users'].queryset=\
