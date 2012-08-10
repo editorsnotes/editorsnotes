@@ -84,7 +84,6 @@ def user(request, username=None):
 # Basic navigation
 # ------------------------------------------------------------------------------
 
-@login_required
 def index(request):
     o = {}
     return render_to_response(
