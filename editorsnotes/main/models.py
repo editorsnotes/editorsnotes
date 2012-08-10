@@ -484,10 +484,16 @@ class Note(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
     so it may have hyperlinks and all the other features that XHTML
     enables.
     """
+    NOTE_STATUS_CHOICES = (
+        ('0', 'Closed'),
+        ('1', 'Open'),
+        ('2', 'Hibernating')
+    )
     title = models.CharField(max_length='80', unique=True)
     content = fields.XHTMLField()
+    assigned_users = models.ManyToManyField('UserProfile', blank=True, null=True)
+    status = models.CharField(choices=NOTE_STATUS_CHOICES, max_length=1, default='1')
     topics = generic.GenericRelation('TopicAssignment')
-    citations = generic.GenericRelation('Citation')
     def has_topic(self, topic):
         return topic.id in self.topics.values_list('topic_id', flat=True)
     def as_text(self):
