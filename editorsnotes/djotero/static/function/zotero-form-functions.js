@@ -64,32 +64,38 @@ $(document).ready(function() {
     updateSelector: '#document-save',
     updateEvent: 'click',
     classHtml: '',
-    postInit: function() {
-      var $documentwym = this;
-      $($documentwym._iframe).css('height', '92px');
-      var generateCiteLink = $('' +
-          '<a style="width: 100px;" id="generate-citation" href="#_">Generate citation</a>')
-        generateCiteLink.click(function(event, auto) {
+    postInit: function(wym) {
+
+      var generateCiteLink = $('<a>', {
+        css: {'width': '100px'},
+        id: 'wym-editor-generate-citation',
+        href: '#',
+        text: 'Generate citation',
+        click: function(event) {
           var zoteroForm = $('.zotero-information-edit'),
             zoteroString;
-          if (!zoteroForm.length && auto == undefined) {
+
+          event.preventDefault();
+
+          if (!zoteroForm.find('input').length) {
             alert('Fill in zotero information to generate citation');
             return true;
           }
           zoteroString = JSON.stringify( zoteroFormToObject(zoteroForm) );
-          $.ajax({
-            url: '/api/document/csl/',
-            data: {'zotero-json': zoteroString},
-            success: function(data) {
-              var formattedRef = runCite( JSON.stringify(data) );
-              if (formattedRef.match(/reference with no printed form/)) {
-                formattedRef = '';
-              }
-              $documentwym.html(formattedRef);
+          $.get('/api/document/csl/', {'zotero-json': zoteroString}, function(data) {
+            var formattedRef = runCite(JSON.stringify(data));
+            if (formattedRef.match(/reference with no printed form/)) {
+              formattedRef = '';
             }
+            wym.html('<p>' + formattedRef + '</p>');
           });
-        });
-      $(this._box).find(this._options.toolsSelector + this._options.toolsListSelector)
+        }
+      });
+
+      $(wym._iframe)
+        .css('height', '92px');
+      $(wym._box)
+        .find(wym._options.toolsListSelector)
         .append(generateCiteLink);
     }
   });
