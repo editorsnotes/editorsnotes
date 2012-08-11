@@ -49,7 +49,7 @@ ROOT_URLCONF = 'editorsnotes.urls'
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': '/var/tmp/zotero_api_cache',
+        'LOCATION': '/tmp/zotero_api_cache',
     }
 }
 
