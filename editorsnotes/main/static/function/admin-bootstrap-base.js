@@ -1,5 +1,11 @@
 $(document).ready(function() {
 
+  $('form').one('input change', function() {
+    window.onbeforeunload = function() {
+      return 'You have not saved your changes.';
+    };
+  });
+
   $('.collapsable').each(function() {
     var $legend = $(this).find('legend');
     $legend
