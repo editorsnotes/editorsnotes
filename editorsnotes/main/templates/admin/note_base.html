@@ -32,16 +32,8 @@
     margin-bottom: 0px !important;
   }
 
-  .related-topics-edit .control-group:last-child input[type="checkbox"],
-  .related-topics-edit .control-group:last-child i {
+  .related-topic:last-of-type {
     display: none;
-  }
-
-  .related-topics-edit .control-group:last-child {
-    margin-top: 2em;
-  }
-  .related-topics-edit .control-group:only-child {
-    margin-top: 0;
   }
 
   .left-margin {
@@ -84,15 +76,14 @@
       </div>
     </fieldset>
 
-    {% comment %}Change related-topics-{edit,field}{% endcomment %}
-    <fieldset class="related-topics-edit collapsable">
+    <fieldset class="related-topics-field collapsable">
       {{ topics_formset.management_form }}
       <legend>
         Related topics
       </legend>
       <div class="fieldset-content">
         {% for form in topics_formset %}
-        <div class="control-group">
+        <div class="control-group related-topic">
           {{ form.id }}
           {{ form.topic }}
           {{ form.DELETE }}

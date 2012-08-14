@@ -155,8 +155,7 @@ class TopicAssignmentWidget(forms.widgets.HiddenInput):
             topic = get_object_or_404(main_models.Topic, id=value)
             extra_content = topic.preferred_name
         else:
-            extra_content = ('<label>Add topic:</label>' +
-                             '<input type="text" class="topic-autocomplete" placeholder="Type to search" />')
+            extra_content = ''
         return mark_safe(extra_content + hidden_input)
 
 
