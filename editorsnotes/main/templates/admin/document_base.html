@@ -55,6 +55,11 @@
     <fieldset class="collapsable">
       <legend>Zotero data</legend>
       <div class="fieldset-content">
+        {% if form.zotero_string.errors %}
+        <div class="alert alert-error">
+          {{ form.zotero_string.errors }}
+        </div>
+        {% endif %}
         <div class ="zotero-container">
         </div>
         {{ form.zotero_string }}
@@ -65,6 +70,11 @@
       {{ topics_formset.management_form }}
       <legend>Related topics</legend>
       <div class="fieldset-content">
+        {% if topics_formset.errors %}
+          <div class="alert alert-error">
+            {{ topics_formset.errors }}
+          </div>
+        {% endif %}
         {% for form in topics_formset %}
           <div class="control-group related-topic">
             {{ form.id }}
