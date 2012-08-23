@@ -180,7 +180,7 @@ class TopicAdmin(VersionAdmin):
               'function/jquery/jquery-ui-1.8.18.custom.min.js',
               'function/wymeditor/jquery.wymeditor.pack.js',
               'function/jquery/jquery.timeago.js',
-              'function/models/admin.js')
+              'function/admin.js')
 
 class NoteAdmin(VersionAdmin):
     inlines = (CitationInline, TopicAssignmentInline)
