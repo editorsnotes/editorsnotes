@@ -1,6 +1,84 @@
 $(document).ready(function() {
+  
+  var $z2csl = $(z2csl),
+    zoteroObjectToCsl,
+    zoteroFormToObject,
+    zoteroWymSettings,
+    zoteroForm = $('.zotero-information-edit');
 
-  var zoteroFormToObject = function($form, sorted) {
+  zoteroObjectToCsl = function(zoteroObject) {
+    var cslObject = {},
+      $typeMap,
+      $cslFieldMap,
+      $cslCreatorMap;
+      
+    $typeMap = $z2csl.find('typeMap[zType="' + zoteroObject.itemType + '"]');
+    $cslFieldMap = $z2csl.find('cslFieldMap');
+    $cslCreatorMap = $z2csl.find('cslCreatorMap');
+
+    cslObject['type'] = $typeMap.attr('cslType');
+
+    $.each(zoteroObject, function(key, val) {
+      var $thisField,
+        fieldKey,
+        cslKey;
+      
+      if (!val.length) {
+        // you have nothing to show us
+        return true;
+      }
+
+      switch (key) {
+
+      case 'itemType':
+      case 'tags':
+        // we don't need you
+        break;
+
+      case 'creators':
+        $.each(val, function() {
+          var creatorObject = {},
+            creatorType = this.creatorType,
+            cslCreatorKey;
+
+          cslCreatorKey = $typeMap
+                       .find('field[value="' + creatorType + '"]')
+                       .attr('baseField') || creatorType;
+
+          if (!cslObject[cslCreatorKey]) {
+            cslObject[cslCreatorKey] = [];
+          }
+
+          if (this.hasOwnProperty('firstName') && this.hasOwnProperty('lastName')) {
+            creatorObject['given'] = this.firstName;
+            creatorObject['family'] = this.lastName;
+          } else {
+            creatorObject['literal'] = this.name;
+          }
+
+          cslObject[cslCreatorKey].push(creatorObject);
+        });
+        break;
+
+      case 'date':
+        cslObject['issued'] = {'raw': val}
+        break;
+        
+      default:
+        fieldKey = $typeMap
+                     .find('field[value="' + key + '"]')
+                     .attr('baseField') || key;
+        cslKey = $cslFieldMap
+                   .find('fieldMap[zfield="' + fieldKey + '"]')
+                   .attr('cslField');
+        cslObject[cslKey] = val;
+      }
+    });
+
+    return cslObject;
+  };
+
+  zoteroFormToObject = function($form, sorted) {
     // Given a form rendered with buildZoteroForm above, create two different
     // objects: an array that preserves the order of they fields, and an object
     // that doesn't. The former is meant to be passed to the server, the latter
