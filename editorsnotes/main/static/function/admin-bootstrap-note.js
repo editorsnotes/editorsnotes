@@ -1,4 +1,5 @@
 $(document).ready(function() {
+  /*
   var wymconfig = {
     skin: 'custom',
     toolsItems: [
@@ -17,4 +18,22 @@ $(document).ready(function() {
     classesHtml: ''
   };
   $('.description-field .xhtml-textarea').wymeditor(wymconfig);
+  */
+
+  var editor = new wysihtml5.Editor('id_content', {
+    toolbar: 'content-toolbar',
+    parserRules: wysihtml5ParserRules,
+    stylesheets: ['/static/function/wysihtml5/stylesheet.css']
+  });
+
+  editor.on('focus:composer', function() {
+    var ed = this;
+    setTimeout(function() {
+      if (ed.textareaElement.value === '' &&
+          ed.composer.selection.getSelectedNode() === ed.composer.element) {
+        ed.composer.commands.exec('formatBlock', 'p');
+      }
+    });
+  });
+
 });

@@ -126,6 +126,8 @@ ScanFormset = inlineformset_factory(
 class NoteForm(ModelForm):
     class Media:
         js = (
+            "function/wysihtml5/wysihtml5-0.3.0.js",
+            "function/wysihtml5/parser_rules.js",
             "function/admin-bootstrap-base.js",
             "function/admin-bootstrap-note.js",
             "function/wymeditor/jquery.wymeditor.pack.js",
