@@ -223,4 +223,16 @@ $(document).ready(function() {
         $thisRow.remove();
       }
     });
+
+  $('[data-zotero-key="archive"] textarea').autocomplete({
+    source: function(request, response) {
+      $.getJSON('/api/document/archives/',{'q': request.term}, function(data) {
+        response($.map(data, function(item, index) {
+          return { label: item.name };
+        }));
+      });
+    }
+  });
+
+    
 });
