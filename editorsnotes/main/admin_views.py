@@ -24,15 +24,16 @@ def document_add(request):
     o = {}
     if request.method == 'POST':
         o['form'] = main_forms.DocumentForm(request.POST)
-        o['links_fs'] = main_forms.DocumentLinkFormset(
+        o['links_formset'] = main_forms.DocumentLinkFormset(
             request.POST, prefix='links')
-        o['scans_fs'] = main_forms.ScanFormset(
+        o['scans_formset'] = main_forms.ScanFormset(
             request.POST, request.FILES, prefix='scans')
-        o['topics_fs'] = main_forms.TopicAssignmentFormset(
+        o['topics_formset'] = main_forms.TopicAssignmentFormset(
             request.POST, prefix='ta')
 
-        formsets_are_valid = map(lambda fs: fs.is_valid(),
-                                 [o['links_fs'], o['scans_fs'], o['topics_fs']])
+        formsets_are_valid = map(
+            lambda fs: fs.is_valid(),
+            [o['links_formset'], o['scans_formset'], o['topics_formset']])
 
         if o['form'].is_valid() and all(formsets_are_valid):
             document = o['form'].save(commit=False)
@@ -42,7 +43,7 @@ def document_add(request):
 
             o['form'].save_zotero_data()
 
-            for form in [f for fs in [o['links_fs'], o['scans_fs']] for f in fs]:
+            for form in [f for fs in [o['links_formset'], o['scans_formset']] for f in fs]:
                 if (not form.has_changed() or
                     not form.is_valid() or
                     form.cleaned_data['DELETE']):
@@ -52,7 +53,7 @@ def document_add(request):
                 obj.creator = request.user
                 obj.save()
 
-            for form in o['topics_fs']:
+            for form in o['topics_formset']:
                 if not form.has_changed() or not form.is_valid():
                     continue
                 if form.cleaned_data['DELETE']:
@@ -96,15 +97,16 @@ def document_change(request, document_id):
 
     if request.method == 'POST':
         o['form'] = main_forms.DocumentForm(request.POST, instance=document)
-        o['links_fs'] = main_forms.DocumentLinkFormset(
+        o['links_formset'] = main_forms.DocumentLinkFormset(
             request.POST, instance=document, prefix='links')
-        o['scans_fs'] = main_forms.ScanFormset(
+        o['scans_formset'] = main_forms.ScanFormset(
             request.POST, request.FILES, instance=document, prefix='scans')
-        o['topics_fs'] = main_forms.TopicAssignmentFormset(
+        o['topics_formset'] = main_forms.TopicAssignmentFormset(
             request.POST, instance=document, prefix='ta')
 
-        formsets_are_valid = map(lambda fs: fs.is_valid(),
-                                 [o['links_fs'], o['scans_fs'], o['topics_fs']])
+        formsets_are_valid = map(
+            lambda fs: fs.is_valid(),
+            [o['links_formset'], o['scans_formset'], o['topics_formset']])
 
         if o['form'].is_valid() and all(formsets_are_valid):
             document = o['form'].save(commit=False)
@@ -113,7 +115,7 @@ def document_change(request, document_id):
 
             o['form'].save_zotero_data()
 
-            for form in [f for fs in [o['links_fs'], o['scans_fs']] for f in fs]:
+            for form in [f for fs in [o['links_formset'], o['scans_formset']] for f in fs]:
                 if not form.has_changed() or not form.is_valid():
                     # We already know the form is valid, but have to call it in
                     # able to access form.cleaned_data
@@ -129,7 +131,7 @@ def document_change(request, document_id):
                         obj.document = document
                     obj.save()
 
-            for form in o['topics_fs']:
+            for form in o['topics_formset']:
                 if not form.has_changed() or not form.is_valid():
                     continue
                 if form.cleaned_data['DELETE']:
