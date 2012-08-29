@@ -3,8 +3,7 @@ $(document).ready(function() {
   var $z2csl = $(z2csl),
     zoteroObjectToCsl,
     zoteroFormToObject,
-    zoteroWymSettings,
-    zoteroForm = $('.zotero-information-edit');
+    zoteroForm = $('#zotero-information-edit');
 
   zoteroObjectToCsl = function(zoteroObject) {
     var cslObject = {},
@@ -131,59 +130,14 @@ $(document).ready(function() {
     return zoteroObject
   };
 
-  $('.document-description-edit .xhtml-textarea').wymeditor({
-    skin: 'custom',
-    toolsItems: [
-      {'name': 'Bold', 'title': 'Strong', 'css': 'wym_tools_strong'}, 
-      {'name': 'Italic', 'title': 'Emphasis', 'css': 'wym_tools_emphasis'},
-    ],
-    containersHtml: '',
-    classesHtml: '',
-    updateSelector: '#document-save',
-    updateEvent: 'click',
-    classHtml: '',
-    postInit: function(wym) {
 
-      var generateCiteLink = $('<a>', {
-        css: {'width': '100px'},
-        id: 'wym-editor-generate-citation',
-        href: '#',
-        text: 'Generate citation',
-        click: function(event) {
-          var zoteroForm = $('.zotero-information-edit'),
-            zoteroString;
-
-          event.preventDefault();
-
-          if (!zoteroForm.find('input').length) {
-            alert('Fill in zotero information to generate citation');
-            return true;
-          }
-          zoteroString = JSON.stringify( zoteroFormToObject(zoteroForm) );
-          $.get('/api/document/csl/', {'zotero-json': zoteroString}, function(data) {
-            var formattedRef = runCite(JSON.stringify(data));
-            if (formattedRef.match(/reference with no printed form/)) {
-              formattedRef = '';
-            }
-            wym.html('<p>' + formattedRef + '</p>');
-          });
-        }
-      });
-
-      $(wym._iframe)
-        .css('height', '92px');
-      $(wym._box)
-        .find(wym._options.toolsListSelector)
-        .append(generateCiteLink);
-    }
-  });
 
   // Bindings
-  $('.zotero-information-edit')
+  $('#zotero-information-edit')
     // Get form on creator type change
     .on('change', 'select[name="item-type-select"]', function() {
       var $itemTypeSelect = $(this),
-        $zoteroContainer = $itemTypeSelect.parents('.zotero-information-edit'),
+        $zoteroContainer = $itemTypeSelect.parents('#zotero-information-edit'),
         itemType = $itemTypeSelect.val();
       if (itemType.length) {
         $.ajax({
@@ -193,7 +147,7 @@ $(document).ready(function() {
             $zoteroContainer.data('itemTypeSelect', $itemTypeSelect.parents('.control-group'));
 
             $zoteroContainer
-              .html($(data).closest('.zotero-information-edit').html())
+              .html($(data).closest('#zotero-information-edit').html())
               .find('.zotero-entry-delete').remove();
           }
         });
@@ -201,7 +155,7 @@ $(document).ready(function() {
     })
 
     // Update creators' hidden inputs as they're changed
-    .on('input', '.zotero-creator', function() {
+    .on('input change', '.zotero-creator', function() {
       var $this = $(this),
         $creatorAttrs = $this.find('.creator-attr'),
         creatorObject = {};
@@ -222,17 +176,15 @@ $(document).ready(function() {
       if ($thisRow.siblings('.zotero-creator').length) {
         $thisRow.remove();
       }
+    })
+
+    // Update form data on input & change
+    .on('input change', function() {
+      var $this = $(this),
+        zoteroObject = zoteroFormToObject($this);
+      $this
+        .data('asZoteroObject', zoteroObject)
+        .data('asCslObject', zoteroObjectToCsl(zoteroObject));
     });
 
-  $('[data-zotero-key="archive"] textarea').autocomplete({
-    source: function(request, response) {
-      $.getJSON('/api/document/archives/',{'q': request.term}, function(data) {
-        response($.map(data, function(item, index) {
-          return { label: item.name };
-        }));
-      });
-    }
-  });
-
-    
 });

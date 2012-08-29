@@ -43,7 +43,7 @@ class ZoteroWidget(Widget):
                             '</div>')
             return mark_safe(control_html)
 
-        html = u'<div class="zotero-information-edit">'
+        html = u'<div id="zotero-information-edit">'
 
         ITEM_TYPES = ''.join([ '<option value="%s">%s</option>' % (key, val)
                                for key, val in type_map['readable'].items() ])

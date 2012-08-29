@@ -1,0 +1,55 @@
+/******************************************************************** 
+/* Fieldset spacing
+ ********************************************************************/
+    /*
+     * Webkit doesn't render margins for legends
+     * https://bugs.webkit.org/show_bug.cgi?id=35981#c13
+     *
+     * For consistency, remove margin for legends everywhere & increase
+     * padding for next element to separate legend & field
+     */
+    legend {
+        margin-bottom: 0px;
+    }
+    .fieldset-content {
+        padding-top: 8px;
+    }
+
+    /* Add space between fields */
+    fieldset {
+        margin-bottom: 1em;
+    }
+
+
+
+/******************************************************************** 
+ * Individual field layout 
+ ********************************************************************/
+    /* Change default bootstrap spacing for horizontal forms */
+    .form-horizontal .control-label {
+        width: 120px;
+    }
+    .form-horizontal .controls {
+        margin-left: 132px;
+    }
+    .form-horizontal .control-group {
+        margin-bottom: 8px;
+    }
+    .left-margin {
+        margin-left: 20px;
+    }
+
+
+
+/******************************************************************** 
+ * Special field rules
+ ********************************************************************/
+    /* Eliminate large gap between wymeditor/wysihtml5 & corresponding toolbar */
+    .fieldset-content .btn-toolbar {
+        margin-bottom: 0;
+    }
+    /* Hide extra empty related topic */
+    .related-topic:last-of-type {
+        display: none;
+    }
+

@@ -63,16 +63,21 @@ class DocumentForm(ModelForm):
     zotero_string = forms.CharField(required=False, widget=ZoteroWidget())
     class Media:
         js = (
-            "function/wymeditor/jquery.wymeditor.pack.js",
-            "function/zotero-localization.js",
             "function/zotero-form-functions.js",
             "function/citeproc-js/xmle4x.js",
             "function/citeproc-js/xmldom.js",
             "function/citeproc-js/citeproc.js",
             "function/citeproc-js/simple.js",
             "function/admin-bootstrap-base.js",
-            "function/admin-bootstrap-document.js"
+            "function/admin-bootstrap-document.js",
+            "function/wysihtml5/wysihtml5-0.3.0.js",
+            "function/wysihtml5/parser_rules.js",
         )
+        css = {
+            'all' : (
+                "style/bootstrap-admin.css",
+            )
+        }
     class Meta:
         model = Document
         fields = ('description', 'edtf_date',)
@@ -132,6 +137,11 @@ class NoteForm(ModelForm):
             "function/admin-bootstrap-note.js",
             "function/wymeditor/jquery.wymeditor.pack.js",
         )
+        css = {
+            'all' : (
+                "style/bootstrap-admin.css",
+            )
+        }
     class Meta:
         model = main_models.Note
         widgets = {

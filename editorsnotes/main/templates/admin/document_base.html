@@ -1,35 +1,11 @@
 <style type="text/css">
-
-  legend {
-    margin-bottom: 8px;
-  }
-
-  fieldset {
-    margin-bottom: 1em;
-  }
-
-  .form-horizontal .control-label {
-    width: 120px;
-  }
-  .form-horizontal .controls {
-    margin-left: 132px;
-  }
-  .form-horizontal .control-group {
-    margin-bottom: 8px;
-  }
-
   .zotero-information-edit .control-group {
     margin-bottom: 0px !important;
   }
-
-  .related-topic:last-of-type {
-    display: none;
+  #id_description {
+    width: 100%;
+    height: 50px;
   }
-
-  .left-margin {
-    margin-left: 20px;
-  }
-
 </style>
 
   <form enctype="multipart/form-data" method="post" class="form-horizontal">{% csrf_token %}
@@ -42,12 +18,29 @@
 
     <fieldset>
       <legend>Description</legend>
-      <div class="document-description-edit">
+      <div class="document-description-edit fieldset-content span11">
         {% if form.description.errors %}
           <div class="alert alert-error">
             {{ form.description.errors }}
           </div>
         {% endif %}
+        <div id="description-toolbar" class="btn-toolbar" style="display: none;">
+          <div class="btn-group">
+            <a data-wysihtml5-command="bold" class="btn">
+              <i class="icon-bold"></i>
+            </a>
+            <a data-wysihtml5-command="italic" class="btn">
+              <i class="icon-italic"></i>
+            </a>
+          </div>
+          <div class="pull-right">
+            <a data-wysihtml5-command="generateCitation" class="btn">
+              Generate citation
+            </a>
+            <span>Autoupdate?</span>
+            <input type="checkbox" id="autoupdate-citation" />
+          </div>
+        </div>
         {{ form.description }}
       </div>
     </fieldset>

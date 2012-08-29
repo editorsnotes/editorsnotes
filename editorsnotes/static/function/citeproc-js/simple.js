@@ -34,7 +34,7 @@ var dateParser = new CSL.DateParser;
 
 // change settings
 citeproc.setOutputFormat("text");
-CSL.Output.Formats.text["@font-style/italic"] = "<i>%%STRING%%</i>"
+CSL.Output.Formats.text["@font-style/italic"] = "<em>%%STRING%%</em>"
 
 // initiate bibdata object
 var bibdata = new Object
