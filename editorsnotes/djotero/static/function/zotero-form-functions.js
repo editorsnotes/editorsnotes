@@ -3,6 +3,7 @@ $(document).ready(function() {
   var $z2csl = $(z2csl),
     zoteroObjectToCsl,
     zoteroFormToObject,
+    initArchiveAutocomplete,
     zoteroForm = $('#zotero-information-edit');
 
   zoteroObjectToCsl = function(zoteroObject) {
@@ -130,7 +131,20 @@ $(document).ready(function() {
     return zoteroObject
   };
 
+  initArchiveAutocomplete = function() {
+    $('[data-zotero-key="archive"] textarea').autocomplete({
+      source: function(request, response) {
+        $.getJSON('/api/document/archives/',{'q': request.term}, function(data) {
+          response($.map(data, function(item, index) {
+            return { label: item.name };
+          }));
+        });
+      }
+    });
+  }
 
+  // do this on page load
+  initArchiveAutocomplete();
 
   // Bindings
   $('#zotero-information-edit')
@@ -149,6 +163,8 @@ $(document).ready(function() {
             $zoteroContainer
               .html($(data).closest('#zotero-information-edit').html())
               .find('.zotero-entry-delete').remove();
+        
+            initArchiveAutocomplete();
           }
         });
       }
