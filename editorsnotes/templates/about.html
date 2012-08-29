@@ -1,16 +1,44 @@
 {% extends "base.html" %}
 
+{% block css %}
+<style type="text/css">
+  #main a {
+    color: #107887;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <h1>About</h1>
-<p>Every project which works closely with historical documents-- researching, contextualizing, ordering them-- produces massive amounts of thorough research notes which are too often locked away in filing cabinets or the minds of editors and curators, never to be seen by anyone. The Editors' Notes project is a collaboration between the editors of the Stanton-Anthony Papers, the Emma Goldman Papers, the Margaret Sanger Papers, and the Labadie Collection which aims to preserve those research notes in a way that makes them useful to future scholars and interested minds.</p>
-<p>This website has been made possible by a generous grant from the Mellon Foundation. For more information, visit <a href="http://ecai.org/mellon2010/">the project's section of ECAI website</a>.
+<p>
+Every project that works closely with documents-- researching, contextualizing, and ordering them-- produces massive amounts of thorough research notes which are too often locked away in filing cabinets or the minds of editors and curators, never to be seen by anyone. The Editors' Notes project is a collaboration between the editors of the <a href="http://ecssba.rutgers.edu">Stanton-Anthony Papers</a>, the <a href="http://sunsite.berkeley.edu/goldman/">Emma Goldman Papers</a>, the <a href="http://www.nyu.edu/projects/sanger/">Margaret Sanger Papers</a>, and the <a href="http://www.lib.umich.edu/labadie-collection/">Labadie Collection</a> which aims to preserve those research notes in a way that makes them useful to future scholars and interested minds.</p>
+<p>This website has been made possible by a generous grant from the <a href="http://www.mellon.org">Mellon Foundation</a>. For more information, visit <a href="http://ecai.org/mellon2010/">the project's section of ECAI website</a>.
 <hr>
-<h1>Support the Project</h1>
-<p>There are many ways that independent researchers or other interested parties can aid the work being done on this site.
-<ul>
-  <li>Transcribe a scanned document</li>
-  <li>Contact a project with a query about the content of a note</li>
-  <li>Tag topics within notes to better link content</li>
-</ul>
+
+<h1>Contact</h1>
+<p>
+Send questions or comments to <a href="mailto:info@editorsnotes.org">info@editorsnotes.org</a>, or use the form below.
+</p>
+<form>
+  <label>Name</label>
+  <input type="text" name="name" />
+
+  <label>Email</label>
+  <input type="text" name="email" />
+
+  <label>Purpose</label>
+  <select name="purpose">
+    <option>Feedback</option>
+    <option>Request for account</option>
+    <option>Other</option>
+  </select>
+
+  <label>Message</label>
+  <textarea rows="7" cols="50" style="width: 50em;"></textarea>
+
+  <div>
+    <button type="submit" class="btn">Send</button>
+  </div>
+</form>
 
 {% endblock %}
