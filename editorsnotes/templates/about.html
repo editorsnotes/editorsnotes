@@ -16,25 +16,17 @@ Every project that works closely with documents-- researching, contextualizing, 
 <hr>
 
 <h1>Contact</h1>
+{% comment %}
 <p>
 Send questions or comments to <a href="mailto:info@editorsnotes.org">info@editorsnotes.org</a>, or use the form below.
 </p>
-<form>
-  <label>Name</label>
-  <input type="text" name="name" />
-
-  <label>Email</label>
-  <input type="text" name="email" />
-
-  <label>Purpose</label>
-  <select name="purpose">
-    <option>Feedback</option>
-    <option>Request for account</option>
-    <option>Other</option>
-  </select>
-
-  <label>Message</label>
-  <textarea rows="7" cols="50" style="width: 50em;"></textarea>
+{% endcomment %}
+<p>
+Use the form below to submit questions or comments.
+</p>
+<form method="post">
+  {% csrf_token %}
+  {{ form }}
 
   <div>
     <button type="submit" class="btn">Send</button>
