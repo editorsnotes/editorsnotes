@@ -8,6 +8,7 @@ from django.template import RequestContext
 from django.views.decorators.csrf import csrf_protect
 from editorsnotes.djotero.models import ZoteroLink
 from editorsnotes.djotero.utils import validate_zotero_data
+from reversion import revision
 from models import Project, PermissionError, Document, FeaturedItem, DocumentLink
 import forms as main_forms
 import models as main_models
@@ -20,6 +21,7 @@ import json
 ################################################################################
 
 @login_required
+@revision.create_on_success
 def document_add(request):
     o = {}
     if request.method == 'POST':
@@ -91,6 +93,7 @@ def document_add(request):
         'admin/document_add.html', o, context_instance=RequestContext(request))
 
 @login_required
+@revision.create_on_success
 def document_change(request, document_id):
     document = get_object_or_404(Document, id=document_id)
     o = {}
@@ -164,6 +167,7 @@ def document_change(request, document_id):
         'admin/document_change.html', o, context_instance=RequestContext(request))
 
 @login_required
+@revision.create_on_success
 def note_add(request):
     o = {}
     if request.method == 'POST':
@@ -206,6 +210,7 @@ def note_add(request):
         'admin/note_add.html', o, context_instance=RequestContext(request))
 
 @login_required
+@revision.create_on_success
 def note_change(request, note_id):
     note = get_object_or_404(main_models.Note, id=note_id)
     o = {}
@@ -252,6 +257,7 @@ def note_change(request, note_id):
         'admin/note_change.html', o, context_instance=RequestContext(request))
 
 @login_required
+@revision.create_on_success
 def notesection_add(request):
     o = {}
     if request.method == 'POST':
@@ -262,6 +268,7 @@ def notesection_add(request):
         'admin/notesection_add.html', o, context_instance=RequestContext(request))
 
 @login_required
+@revision.create_on_success
 def notesection_change(request):
     o = {}
     if request.method == 'POST':
@@ -278,6 +285,7 @@ def notesection_change(request):
 ################################################################################
 
 @login_required
+@revision.create_on_success
 def project_roster(request, project_id):
     o = {}
     project = get_object_or_404(Project, id=project_id)
@@ -326,6 +334,7 @@ def project_roster(request, project_id):
         'admin/project_roster.html', o, context_instance=RequestContext(request))
 
 @login_required
+@revision.create_on_success
 def change_project(request, project_id):
     o = {}
     project = get_object_or_404(Project, id=project_id)
@@ -351,6 +360,7 @@ def change_project(request, project_id):
         'admin/project_change.html', o, context_instance=RequestContext(request))
 
 @login_required
+@revision.create_on_success
 def change_featured_items(request, project_id):
     o = {}
     project = get_object_or_404(Project, id=project_id)

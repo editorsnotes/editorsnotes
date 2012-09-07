@@ -15,6 +15,7 @@ from django.contrib.contenttypes import generic
 from django.core import urlresolvers
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.urlresolvers import NoReverseMatch
+from django.dispatch import receiver
 from django.utils.html import conditional_escape, escape
 from django.utils.safestring import mark_safe
 from io import StringIO
@@ -72,8 +73,7 @@ class PermissionsMixin(object):
             return False
 
 class ProjectSpecific(models.Model, PermissionsMixin):
-    affiliated_projects = models.ManyToManyField('Project', blank=True,
-                                                 null=True)
+    affiliated_projects = models.ManyToManyField('Project', blank=True, null=True)
 
     def get_all_updaters(self):
         all_updaters = set()
@@ -83,14 +83,10 @@ class ProjectSpecific(models.Model, PermissionsMixin):
             if uid:
                 all_updaters.add(uid)
         return [UserProfile.objects.get(user__id=u) for u in all_updaters]
+
     def get_project_affiliation(self):
         projects = {u.affiliation for u in self.get_all_updaters() if u.affiliation}
         return list(projects)
-    def save(self, *args, **kwargs):
-        super(ProjectSpecific, self).save(*args, **kwargs)
-        last_updating_project = self.last_updater.get_profile().affiliation
-        if last_updating_project:
-            self.affiliated_projects.add(last_updating_project)
 
     # Custom Project permissions
     def allow_delete_for(self, user):
