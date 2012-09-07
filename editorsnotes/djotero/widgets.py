@@ -57,7 +57,8 @@ class ZoteroWidget(Widget):
         if not value:
             html += ('<div id="item-type-select-dialog" class="control-group">' +
                      '<label class="control-label">Item Type</label>' +
-                     '<div class="controls">%s</div>' % ITEM_TYPE_SELECT)
+                     '<div class="controls">%s</div>' % ITEM_TYPE_SELECT +
+                     '</div></div>')
             return mark_safe(html)
 
         data = json.loads(force_unicode(value), object_pairs_hook=OrderedDict)

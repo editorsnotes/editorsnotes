@@ -219,6 +219,7 @@ def note(request, note_id):
         o['affiliated'] = len([p for p in o['note'].get_project_affiliation() if
                                user_profile.get_project_role(p) is not None]) > 0
         o['add_section_form'] = main_forms.NoteSectionForm()
+        o['document_form'] = main_forms.DocumentForm()
     o['history'] = get_unique_for_object(o['note'])
     o['topics'] = [ ta.topic for ta in o['note'].topics.all() ]
     o['cites'] = _sort_citations(o['note'])

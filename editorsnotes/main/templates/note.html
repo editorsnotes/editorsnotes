@@ -7,7 +7,6 @@
 <script type="text/javascript" src="{{ STATIC_URL }}function/jquery/jquery.ba-bbq.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}function/note.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}function/wymeditor/jquery.wymeditor.pack.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}function/handlebars-1.0.0.beta.6.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}function/zotero-localization.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}function/zotero-form-modal.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}function/zotero-form-functions.js"></script>
@@ -16,11 +15,20 @@
 <script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/xmldom.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/citeproc.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/simple.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/wysihtml5/wysihtml5-0.3.0.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/wysihtml5/parser_rules.js"></script>
 
 {% endblock %}
 
 {% block css %}
 <style type="text/css">
+  .zotero-information-edit .control-group {
+    margin-bottom: 0px !important;
+  }
+  #id_description {
+    width: 90%;
+    height: 50px;
+  }
   .note-status {
     font-weight: bold;
     padding-bottom: 1em;
@@ -34,6 +42,10 @@
   }
   .note-status-closed {
     color: red;
+  }
+  .zotero-container {
+    height: 355px;
+    overflow-y: scroll;
   }
   
 </style>
@@ -152,15 +164,34 @@
       </div>
 
       {% if affiliated %}
-      <div id="document-inline-edit" class="modal hide">
+      <div id="document-inline-edit" class="modal hide form-horizontal">
         <h3>Add a document</h3>
-        <div class="document-description-edit">
-          <textarea class="xhtml-textarea"></textarea>
-        </div>
-        <div id="document-zotero-information">
-          <div class="zotero-information-edit form-horizontal">
+        <div id="description-toolbar" class="btn-toolbar" style="display: none;">
+          <div class="btn-group">
+            <a data-wysihtml5-command="bold" class="btn">
+              <i class="icon-bold"></i>
+            </a>
+            <a data-wysihtml5-command="italic" class="btn">
+              <i class="icon-italic"></i>
+            </a>
+          </div>
+          <div class="pull-right">
+            <a data-wysihtml5-command="generateCitation" class="btn">
+              Generate citation
+            </a>
+            <span>Autoupdate?</span>
+            <input type="checkbox" id="autoupdate-citation" />
           </div>
         </div>
+        <div class="document-description-edit">
+          {{ document_form.description }}
+        </div>
+
+        <div class="zotero-container">
+          <br/>
+          {{ document_form.zotero_string }}
+        </div>
+
         <div id="modal-edit-row">
           <a id="document-edit-close" class="btn btn-daner">Cancel</a>
           <span id="modal-loading">Loading...'

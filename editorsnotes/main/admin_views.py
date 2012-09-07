@@ -24,6 +24,19 @@ import json
 @revision.create_on_success
 def document_add(request):
     o = {}
+    if request.is_ajax():
+        o['form'] = main_forms.DocumentForm(request.POST)
+        if o['form'].is_valid():
+            document = o['form'].save(commit=False)
+            document.creator = request.user
+            document.last_updater = request.user
+            document.save()
+            o['form'].save_zotero_data()
+            return HttpResponse(json.dumps(
+                {'document': document.as_text(), 'id': document.id} ))
+        else:
+            return HttpResponse(json.dumps(o['form'].errors))
+
     if request.method == 'POST':
         o['form'] = main_forms.DocumentForm(request.POST)
         o['links_formset'] = main_forms.DocumentLinkFormset(
@@ -73,11 +86,6 @@ def document_add(request):
                     ta.topic = form.cleaned_data['topic']
                     ta.content_object = document
                     ta.save()
-
-            if request.is_ajax():
-                return HttpResponse(json.dumps(
-                    {'document': document.as_text(),
-                     'id': document.id} ))
 
             messages.add_message(request, messages.SUCCESS,
                                  'Document %s added' % document.as_text())
