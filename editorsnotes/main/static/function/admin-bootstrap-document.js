@@ -7,7 +7,7 @@ $(document).ready(function() {
     autoupdate;
 
   // If initial citation was blank or the same as a citation generated
-  // from CSL, turn on autocomplete
+  // from CSL, turn on autocomplete on page load
   testcite = runCite(JSON.stringify(zoteroForm.data('asCslObject')));
   autoupdate = initialCitation === '' ||
                initialCitation.replace(regexChars, '')
