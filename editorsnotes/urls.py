@@ -17,7 +17,8 @@ urlpatterns += patterns('editorsnotes.main.admin_views',
     url(r'^admin/main/document/add/$', 'document_add', name='admin:main_document_add'),
     url(r'^admin/main/document/(?P<document_id>\d+)/$', 'document_change', name='admin:main_document_change'),
     url(r'^admin/main/note/add/$', 'note_add', name='admin:main_note_add'),
-    url(r'^admin/main/note/(?P<note_id>\d+)/$', 'note_change', name='admin:main_note_change')
+    url(r'^admin/main/note/(?P<note_id>\d+)/$', 'note_change', name='admin:main_note_change'),
+    url(r'^admin/main/note/(?P<note_id>\d+)/edit/$', 'note_change_new', name='admin:main_note_change_new'),
 )
 
 urlpatterns += patterns('',

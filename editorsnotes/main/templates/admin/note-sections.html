@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% load display %}
+
+{% block css %}
+<style type="text/css">
+  .note-section {
+    padding: 7px 10px;
+    border-radius: 2px;
+    margin-bottom: 2px;
+  }
+  .note-section:last-child {
+    margin-bottom: 50px;
+  }
+  .note-section:not(.note-section-active):hover {
+    cursor: pointer;
+  }
+  .note-section:hover,
+  .note-section-active {
+    border-width: 2px;
+    border: 1px solid #999;
+    padding: 6px 9px;
+  }
+  .note-section-content :last-child {
+    margin-bottom: 0px;
+  }
+  .note-section-document i[class$="file"] {
+    position: relative;
+    top: 2px;
+    color: #444;
+    font-size: 20px;
+    margin-right: 6px;
+  }
+  #add-new-document i[class$="plus-sign"] {
+    font-size: 18px;
+    padding: 3px;
+    position: relative;
+    top: 3px;
+  }
+  #add-new-document:hover {
+    text-decoration: none;
+  }
+  .note-section-content > :first-child,
+  .note-section .btn-toolbar {
+    border-top: 1px dotted #c0c0c0;
+    margin-top: 6px;
+    padding-top: 6px;
+  }
+  .note-section .btn-toolbar {
+    margin-bottom: 2px;
+    padding-top: 8px;
+  }
+</style>
+{% endblock %}
+
+{% block js %}
+
+<script type="text/javascript" src="/static/function/wysihtml5/wysihtml5-0.3.0.js"></script>
+<script type="text/javascript" src="/static/function/wysihtml5/parser_rules.js"></script>
+<script type="text/javascript" src="/static/function/admin-bootstrap-note-sections.js"></script>
+
+{% endblock %}
+
+{% block content %}
+  <h2>{{ note.title }}</h2>
+
+  <div>{{ note.content|as_html }}</div>
+
+  <div style="margin: 1.75em 0 1em 0; padding: .75em 0; border: 1px solid #999;">
+    <h4 style="display: inline-block; margin: 0px 10px;">Add section:</h4>
+    <a class="btn" href="#_" id="add-note-section">Text content</a>&nbsp;
+    <a class="btn" href="#_">Document citation</a>
+  </div>
+
+
+  <div id="sections">
+    {% for ns in note.sections.all %}
+    <div class="note-section" id="note-section-{{ ns.id }}">
+      <div class="note-section-document"><i class="icon-file"></i>{{ ns.document }}</div>
+      <div class="note-section-content">
+        {% if ns.has_content %}
+        {{ ns.content|as_html }}
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div id="note-section-toolbar" class="btn-toolbar" style="display: none;">
+    <div class="btn-group">
+      <a data-wysihtml5-command="bold" class="btn">
+        <i class="icon-bold"></i>
+      </a>
+      <a data-wysihtml5-command="italic" class="btn">
+        <i class="icon-italic"></i>
+      </a>
+      <a data-wysihtml5-command="formatBlock"
+         data-wysihtml5-command-value="p"
+        class="btn">
+        <strong>P</strong>
+      </a>
+      <a data-wysihtml5-command="formatBlock"
+         data-wysihtml5-command-value="h1"
+        class="btn">
+        <strong>H1</strong>
+      </a>
+      <a data-wysihtml5-command="formatBlock"
+         data-wysihtml5-command-value="h2"
+        class="btn">
+        <strong>H2</strong>
+      </a>
+      <a data-wysihtml5-command="formatBlock"
+         data-wysihtml5-command-value="h3"
+        class="btn">
+        <strong>H3</strong>
+      </a>
+      <a data-wysihtml5-command="insertOrderedList" class="btn">
+        <i class="icon-list-ol"></i>
+      </a>
+      <a data-wysihtml5-command="insertUnorderedList" class="btn">
+        <i class="icon-list-ul"></i>
+      </a>
+      <a data-wysihtml5-command="createLink" class="btn">
+        <i class="icon-link"></i>
+      </a>
+    </div>
+
+    <div data-wysihtml5-dialog="createLink" style="display: none;">
+      <label>
+        Link:
+        <input data-wysihtml5-dialog-field="href" value="http://">
+      </label>
+      <a data-wysihtml5-dialog-action="save" class="btn">OK</a>
+      <a data-wysihtml5-dialog action="cancel" class="btn">Cancel</a>
+    </div>
+
+  </div>
+{% endblock %}

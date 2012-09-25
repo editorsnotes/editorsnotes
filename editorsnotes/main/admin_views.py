@@ -264,28 +264,16 @@ def note_change(request, note_id):
     return render_to_response(
         'admin/note_change.html', o, context_instance=RequestContext(request))
 
-@login_required
 @revision.create_on_success
-def notesection_add(request):
+def note_change_new(request, note_id):
+    note = get_object_or_404(main_models.Note, id=note_id)
     o = {}
     if request.method == 'POST':
         pass
     else:
-        pass
+        o['note'] = note
     return render_to_response(
-        'admin/notesection_add.html', o, context_instance=RequestContext(request))
-
-@login_required
-@revision.create_on_success
-def notesection_change(request):
-    o = {}
-    if request.method == 'POST':
-        pass
-    else:
-        pass
-    return render_to_response(
-        'admin/notesection_change.html', o, context_instance=RequestContext(request))
-
+        'admin/note-sections.html', o, context_instance=RequestContext(request))
 
 
 ################################################################################
