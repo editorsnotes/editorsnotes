@@ -27,23 +27,6 @@
             {{ form.description.errors }}
           </div>
         {% endif %}
-        <div id="description-toolbar" class="btn-toolbar" style="display: none;">
-          <div class="btn-group">
-            <a data-wysihtml5-command="bold" class="btn">
-              <i class="icon-bold"></i>
-            </a>
-            <a data-wysihtml5-command="italic" class="btn">
-              <i class="icon-italic"></i>
-            </a>
-          </div>
-          <div class="pull-right">
-            <a data-wysihtml5-command="generateCitation" class="btn">
-              Generate citation
-            </a>
-            <span>Autoupdate?</span>
-            <input type="checkbox" id="autoupdate-citation" />
-          </div>
-        </div>
         {{ form.description }}
       </div>
     </fieldset>
