@@ -1,4 +1,4 @@
-$.fn.zotero = function(options) {
+$.fn.zotero = function (options) {
   var zoteroContainer = this
     , settings
     , toolbar
@@ -26,7 +26,7 @@ $.fn.zotero = function(options) {
   descriptionEdit = $(settings.description).before(toolbar);
 
   wysihtml5.commands.generateCitation = {
-    exec: function(composer, command, param) {
+    exec: function (composer, command, param) {
       var CSL = zoteroContainer.data('asCslObject')
         , citation = EditorsNotes.CSL.makeCitation(CSL)
       if (citation.search(/reference with no printed form/) > -1) {
@@ -34,15 +34,15 @@ $.fn.zotero = function(options) {
       }
       composer.setValue(citation);
     },
-    state: function() { return false; },
-    value: function() { return undefined; }
+    state: function () { return false; },
+    value: function () { return undefined; }
   }
 
-  initArchiveAutocomplete = function() {
+  initArchiveAutocomplete = function () {
     $('[data-zotero-key="archive"] textarea', zoteroContainer).autocomplete({
-      source: function(request, response) {
-        $.getJSON('/api/document/archives/', {'q': request.term}, function(data) {
-          response($.map(data, function(item, index) {
+      source: function (request, response) {
+        $.getJSON('/api/document/archives/', {'q': request.term}, function (data) {
+          response($.map(data, function (item, index) {
             return { label: item.name };
           }));
         });
@@ -54,7 +54,7 @@ $.fn.zotero = function(options) {
     EditorsNotes.CSL.makeCitation = EditorsNotes.CSL.createCSLEngine('chicago_fullnote_bibliography2');
   }
 
-  return this.each(function() {
+  return this.each(function () {
     var editor = new wysihtml5.Editor(settings.description.slice(1), {
       toolbar: 'description-toolbar',
       parserRules: wysihtml5ParserRules,
@@ -62,10 +62,10 @@ $.fn.zotero = function(options) {
     });
 
     editor
-      .on('change:composer', function() {
+      .on('change:composer', function () {
         $('input.autoupdate-toggle').attr('checked', false).trigger('change');
       })
-      .on('load', function() {
+      .on('load', function () {
         if (editor.getValue() === '') {
           $('input.autoupdate-toggle').attr('checked', true).trigger('change');
         }
@@ -74,14 +74,14 @@ $.fn.zotero = function(options) {
     zoteroContainer.data('editor', editor);
 
     $('body')
-      .on('change', 'input.autoupdate-toggle', 'change', function() {
+      .on('change', 'input.autoupdate-toggle', 'change', function () {
         zoteroContainer.toggleClass('autoupdate-citation', this.checked);
       })
 
     initArchiveAutocomplete();
 
     zoteroContainer
-      .on('input change', function() {
+      .on('input change', function () {
         var zoteroObject = EditorsNotes.zotero.zoteroFormToObject(zoteroContainer)
           , CSLObject = EditorsNotes.zotero.zoteroToCSL(zoteroObject)
 
@@ -95,7 +95,7 @@ $.fn.zotero = function(options) {
 
       })
       // Get template for form when item type selected
-      .on('change', 'select[name="item-type-select"]', function() {
+      .on('change', 'select[name="item-type-select"]', function () {
         var $itemTypeSelect = $(this)
           , itemType = $itemTypeSelect.val()
 
@@ -103,7 +103,7 @@ $.fn.zotero = function(options) {
         $.ajax({
           url: '/api/document/template/',
           data: {'itemType': itemType},
-          success: function(data) {
+          success: function (data) {
             zoteroContainer
               .data('itemTypeSelect', $itemTypeSelect.parents('.control-group'))
               .html($(data).closest('#zotero-information-edit').html())
@@ -115,11 +115,11 @@ $.fn.zotero = function(options) {
       })
 
       // Update creators' hidden inputs as they're changed
-      .on('input change', '.zotero-creator', function() {
+      .on('input change', '.zotero-creator', function () {
         var $this = $(this)
           , creatorObject = {};
         $this
-          .find('.creator-attr').each(function() {
+          .find('.creator-attr').each(function () {
             creatorObject[$(this).data('creator-key')] = this.value;
           });
         $this
@@ -128,12 +128,12 @@ $.fn.zotero = function(options) {
       })
 
       // Buttons for adding/removing creators
-      .on('click', '.zotero-creator .add-creator', function() {
+      .on('click', '.zotero-creator .add-creator', function () {
         var $oldCreator = $(this).parents('.zotero-creator'),
           $newCreator = $oldCreator.clone(true, true).insertAfter($oldCreator);
         $newCreator.find('textarea').val('').trigger('input');
       })
-      .on('click', '.zotero-creator .remove-creator', function() {
+      .on('click', '.zotero-creator .remove-creator', function () {
         var $thisRow = $(this).parents('.zotero-creator');
         if ($thisRow.siblings('.zotero-creator').length) {
           $thisRow.remove();

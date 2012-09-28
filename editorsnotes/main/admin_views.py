@@ -33,7 +33,7 @@ def document_add(request):
             document.save()
             o['form'].save_zotero_data()
             return HttpResponse(json.dumps(
-                {'document': document.as_text(), 'id': document.id} ))
+                {'description': document.as_text(), 'id': document.id} ))
         else:
             return HttpResponse(json.dumps(o['form'].errors))
 

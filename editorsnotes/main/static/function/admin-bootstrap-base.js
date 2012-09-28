@@ -4,7 +4,7 @@ $(document).ready(function() {
     // Warn users who have not saved changes before leaving page
     .one('change', function() {
       window.onbeforeunload = function() {
-        return 'You have not saved your changes.';
+        return 'You have unsaved changes.';
       };
     })
     // ..but not when next page is triggered by clicking save
@@ -87,18 +87,19 @@ $(document).ready(function() {
         at: 'left top'
       },
       select: function(event, ui) {
-        var $oldExtraField = $('.related-topic:last').trigger('change'),
-          $newExtraField = $oldExtraField.clone().insertAfter($oldExtraField),
-          oldFieldCounter,
-          newFieldCounter;
+        var $oldExtraField = $('.related-topic:last').trigger('change')
+          , $newExtraField = $oldExtraField.clone().insertAfter($oldExtraField)
+          , oldFieldCounter
+          , newFieldCounter
 
         // Create a new extra field
-        oldFieldCounter = $oldExtraField
+        oldFieldCounter = parseInt($oldExtraField
           .find('input[type="hidden"]')
           .attr('name')
-          .match(/\d+/)[0];
-        oldFieldCounter = parseInt(oldFieldCounter);
+          .match(/\d+/)[0]);
+
         newFieldCounter = oldFieldCounter + 1;
+
         $newExtraField.find('input').each(function() {
           var $this = $(this);
           if ($this.attr('name')) {

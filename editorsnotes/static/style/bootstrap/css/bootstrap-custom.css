@@ -68,41 +68,28 @@ ul .document-link p {
     overflow-x: hidden;
 }
 
+
 /****************************
  * Inline document editing
  ****************************/
-#document-inline-edit {
-    padding: 10px;
-    height: 525px;
+.modal.add-document-modal {
+    position: absolute !important,
+    border-radius: 2px,
+    margin: 0,
+    top: 0,
+    left: 0
+    overflow-y: hide;
 }
-#document-inline-edit #document-description {
-    height: 167px;
-    border-bottom: 1px solid #ddd;
-    margin-bottom: 1px;
+.modal.add-document-modal .modal-footer {
+    padding: 10px 15px;
 }
-#document-inline-edit #document-zotero-information {
-    height: 312px;
-    overflow-y: auto;
-}
-#document-inline-edit #modal-edit-row {
-    margin-top: 1px;
-    padding-top: 6px;
-    border-top: 1px solid #ddd;
-}
-#document-inline-edit .control-group {
-    margin-bottom: 3px;
-}
-#document-inline-edit .control-group > label {
-    width: 105px;
-}
-#document-inline-edit .control-group > .controls {
-    margin-left: 120px;
-}
-
 
 /****************************
  * Zotero form sizes
  ****************************/
+.zotero-information-edit .control-group {
+    margin-bottom: 0 !important;
+}
 .zotero-entry textarea {
     height: 1.4em;
     margin-bottom: 5px;

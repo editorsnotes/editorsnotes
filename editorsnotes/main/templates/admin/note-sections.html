@@ -55,9 +55,14 @@
 
 {% block js %}
 
-<script type="text/javascript" src="/static/function/wysihtml5/wysihtml5-0.3.0.js"></script>
-<script type="text/javascript" src="/static/function/wysihtml5/parser_rules.js"></script>
-<script type="text/javascript" src="/static/function/admin-bootstrap-note-sections.js"></script>
+
+<script type="text/javascript" src="{{ STATIC_URL }}function/zotero.jquery.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/xmle4x.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/xmldom.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/citeproc.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/wysihtml5/wysihtml5-0.3.0.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/wysihtml5/parser_rules.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/admin-bootstrap-note-sections.js"></script>
 
 {% endblock %}
 
@@ -72,6 +77,7 @@
     <a class="btn" href="#_">Document citation</a>
   </div>
 
+  <form>{% csrf_token %}
 
   <div id="sections">
     {% for ns in note.sections.all %}
@@ -85,6 +91,8 @@
     </div>
     {% endfor %}
   </div>
+
+  </form>
 
   <div id="note-section-toolbar" class="btn-toolbar" style="display: none;">
     <div class="btn-group">
