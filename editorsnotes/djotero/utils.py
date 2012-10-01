@@ -179,15 +179,13 @@ def resolve_names(zotero_data, format):
             # This is needed because blank creators are kept inside the zotero
             # json, for easier inline editing. If a creator doesn't have a name,
             # that data isn't rendered.
-            name_parts = [creator[key] for key in creator.keys() if key != 'creatorType']
-            if not any(name_parts):
+            if not any([creator[key] for key in creator.keys()
+                        if key != 'creatorType']):
                 continue
-            name = (creator.get('firstName') + ' ' + creator.get('lastName')) \
-                    or creator.get('name')
+            name = creator.get('name') or '%(firstName)s %(lastName)s' % creator
             contribs.append({'zotero_key' : creator['creatorType'],
                              'label' : contrib_map['readable'][creator['creatorType']],
                              'value' : name})
-    
     return contribs
 
 def parse_xml(url):

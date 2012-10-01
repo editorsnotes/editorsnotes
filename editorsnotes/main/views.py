@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
+from django.core.mail import mail_admins
 #from django.core.paginator import Paginator, InvalidPage
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequest, HttpResponseRedirect
@@ -142,6 +143,25 @@ def search(request):
     return render_to_response(
         'search.html', o, context_instance=RequestContext(request))
 
+def about(request):
+    o = {}
+    if request.method == 'POST':
+        o['form'] = main_forms.FeedbackForm(request.POST)
+        if o['form'].is_valid():
+            choice = o['form'].cleaned_data['purpose']
+            subj = '(%s) %s' % (
+                dict(o['form'].fields['purpose'].choices)[choice],
+                o['form'].cleaned_data['name'])
+            msg = 'reply to: %(email)s\n\n%(message)s' % o['form'].cleaned_data
+            mail_admins(subj, msg, fail_silently=True)
+            messages.add_message(
+                request, messages.SUCCESS,
+                'Thank you. Your feedback has been submitted.')
+            return HttpResponseRedirect('/about/')
+    else:
+        o['form'] = main_forms.FeedbackForm()
+    return render_to_response(
+        'about.html', o, context_instance=RequestContext(request))
 
 # ------------------------------------------------------------------------------
 # Individual instances of models

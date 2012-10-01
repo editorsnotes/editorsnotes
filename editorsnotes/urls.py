@@ -57,13 +57,13 @@ api_patterns = patterns('editorsnotes.main.api_views',
 )
 index_patterns = patterns('editorsnotes.main.views',
     url(r'^$', 'index', name='index_view'),
+    url(r'^about/$', 'about', name='about_view'),
     url(r'^browse/$', 'browse', name='browse_view'),
     url(r'^documents/$', 'all_documents', name='all_documents_view'),
     url(r'^topics/$', 'all_topics', name='all_topics_view'),
     url(r'^notes/$', 'all_notes', name='all_notes_view'),
 )
 static_patterns = patterns('django.views.generic.simple',
-    url(r'^about/$', 'direct_to_template', {'template' : 'about.html'}),
     url(r'^help/$', 'direct_to_template', {'template' : 'help.html'}),
 )
 urlpatterns += api_patterns
