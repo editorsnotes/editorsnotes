@@ -101,13 +101,16 @@
       </div>
     </fieldset>
 
+    {% for formset in formsets %}
+
+    {% if formset.prefix == 'topicassignment' %}
     <fieldset class="related-topics-field collapsable">
-      {{ topics_formset.management_form }}
+      {{ formset.management_form }}
       <legend>
         Related topics
       </legend>
       <div class="fieldset-content">
-        {% for form in topics_formset %}
+        {% for form in formset %}
         <div class="control-group related-topic">
           {{ form.id }}
           {{ form.topic }}
@@ -116,6 +119,9 @@
         {% endfor %}
       </div>
     </fieldset>
+    {% endif %}
+
+    {% endfor %}
 
     <fieldset class="assigned-users-field collapsable">
       <legend>
