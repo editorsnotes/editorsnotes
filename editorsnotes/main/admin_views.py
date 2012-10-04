@@ -68,7 +68,7 @@ def document_admin(request, document_id=None):
             document.save()
             o['form'].save_zotero_data()
             return http.HttpResponse(json.dumps(
-                {'description': document.as_text(), 'id': document.id}))
+                {'description': document.as_html(), 'id': document.id}))
         else:
             return http.HttpResponse(json.dumps(o['form'].errors))
 
