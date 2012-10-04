@@ -4,6 +4,7 @@
 
 {% block css %}
 <style type="text/css">
+
   .note-section {
     padding: 7px 10px;
     border-radius: 2px;
@@ -50,6 +51,9 @@
     margin-bottom: 2px;
     padding-top: 8px;
   }
+  .note-section-fields input, textarea {
+    display: none;
+  }
 </style>
 {% endblock %}
 
@@ -71,26 +75,41 @@
 
   <div>{{ note.content|as_html }}</div>
 
-  <div style="margin: 1.75em 0 1em 0; padding: .75em 0; border: 1px solid #999;">
-    <h4 style="display: inline-block; margin: 0px 10px;">Add section:</h4>
-    <a class="btn" href="#_" id="add-note-section">Text content</a>&nbsp;
-    <a class="btn" href="#_">Document citation</a>
-  </div>
 
-  <form>{% csrf_token %}
+  <form method="post">
 
-  <div id="sections">
-    {% for ns in note.sections.all %}
-    <div class="note-section" id="note-section-{{ ns.id }}">
-      <div class="note-section-document"><i class="icon-file"></i>{{ ns.document }}</div>
-      <div class="note-section-content">
-        {% if ns.has_content %}
-        {{ ns.content|as_html }}
-        {% endif %}
-      </div>
+    <div style="margin: 1.75em 0 1em 0; padding: .75em; border: 1px solid #999;">
+      <h4 style="display: inline-block; margin: 0px 3px 0 0;">Add section:</h4>
+      <a class="btn" id="add-note-section" href="#">Document citation</a>
+      <button class="btn btn-primary pull-right" type="submit">Save changes</button>
     </div>
-    {% endfor %}
-  </div>
+
+    {% csrf_token %}
+    <div id="management-form">
+      {{ sections_formset.management_form }}
+    </div>
+
+    <div id="sections">
+      {% for section in sections_formset %}
+      {% with section.instance as ns %}
+
+        <div class="note-section" id="note-{{ section.prefix }}">
+          <div class="note-section-document"><i class="icon-file"></i>{{ ns.document }}</div>
+          <div class="note-section-content">
+            {% if ns.has_content %}
+            {{ ns.content|as_html }}
+            {% endif %}
+          </div>
+          <div class="note-section-fields">
+            {% for field in section %}
+              {{ field }}
+            {% endfor %}
+          </div>
+        </div>
+
+      {% endwith %}
+      {% endfor %}
+    </div>
 
   </form>
 
@@ -143,4 +162,22 @@
     </div>
 
   </div>
+
+  <div class="modal add-document-modal hide form-horizontal row span10">
+    <div class="modal-header">
+      <button type="button" data-dismiss="modal" class="close" aria-hidden="true">&times;</button>
+      <h3>Add document</h3>
+    </div>
+    <div class="document-description modal-header">
+      <textarea style="width: 98%"></textarea>
+    </div>
+    <div class="modal-body">
+      <div class="zotero-information-edit">Loading...</div>
+    </div>
+    <div class="modal-footer">
+      <a href="#" class="btn" data-dismiss="modal">Cancel</a>
+      <a href="#" class="btn btn-primary save-document">Save</a>
+    </div>
+  </div>
+
 {% endblock %}

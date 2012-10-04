@@ -102,7 +102,8 @@
           <div class="row edit-row">
             <div class="span6 edit-button">
               {% if request.user.is_authenticated %}
-              <a class="btn" href="{{ note.get_admin_url }}?return_to={{ note.get_absolute_url }}">Edit</a>
+              <a class="btn" href="{% url admin:main_note_change note.id %}?return_to={{ note.get_absolute_url }}">Edit note details</a>
+              <a class="btn" href="{% url note_sections note.id %}">Edit note content</a>
               {% endif %}
             </div>
             <div class="span6 edit-history">
@@ -132,7 +133,7 @@
           <div class="note-section{% if section.document %} has-document{% endif %}{% if section.has_content %} has-content{% endif %}">
           {% if section.document %}
             <div class="note-section-document">
-              <a href="{{ section.document.get_absolute_url }}" target="_blank"><i class="icon-file"></i></a>
+              <a href="{{ section.document.get_absolute_url }}"><i class="icon-file"></i></a>
               {{ section.document.as_html }}
             </div>
           {% endif %}
@@ -146,66 +147,6 @@
         </div>
       {% else %}
         <span class="quiet">This note is empty</span>
-      {% endif %}
-
-      {% if add_section_form %}
-
-      <hr/>
-
-      <div>
-        {% if affiliated %}
-          <p>You are a member of the project that owns this note, so you can add to it.</p>
-        {% else %}
-          <p>You are not a member of the project that owns this note, so any additions you make will have to be approved by that project's editor.</p>
-        {% endif %}
-        <form class="well" method="post" id="add-section">{% csrf_token %}
-          {{ add_section_form.as_p }}
-          <input type="submit" class="btn" value="Add to note">
-        </form>
-      </div>
-
-      {% if affiliated %}
-      <div id="document-inline-edit" class="modal hide form-horizontal">
-        <h3>Add a document</h3>
-        <div id="description-toolbar" class="btn-toolbar" style="display: none;">
-          <div class="btn-group">
-            <a data-wysihtml5-command="bold" class="btn">
-              <i class="icon-bold"></i>
-            </a>
-            <a data-wysihtml5-command="italic" class="btn">
-              <i class="icon-italic"></i>
-            </a>
-          </div>
-          <div class="pull-right">
-            <a data-wysihtml5-command="generateCitation" class="btn">
-              Generate citation
-            </a>
-            <span>Autoupdate?</span>
-            <input type="checkbox" id="autoupdate-citation" />
-          </div>
-        </div>
-        <div class="document-description-edit">
-          {{ document_form.description }}
-        </div>
-
-        <div class="zotero-container">
-          <br/>
-          {{ document_form.zotero_string }}
-        </div>
-
-        <div id="modal-edit-row">
-          <a id="document-edit-close" class="btn btn-daner">Cancel</a>
-          <span id="modal-loading">Loading...'
-            <img src="/static/style/icons/ajax-loader.gif" />
-          </span>
-          <a id="document-save" class="btn btn-primary pull-right">Save</a>
-        </div>
-      </div>
-      {% endif %}
-
-      {% else %}
-      <div class="clearer" style="height: 100px;">&nbsp;</div>
-
       {% endif %}
 
       </section>

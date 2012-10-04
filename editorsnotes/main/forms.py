@@ -226,9 +226,10 @@ class NoteSectionForm(ModelForm):
     class Meta:
         model = NoteSection
         fields = ('document', 'content',)
-        widgets = {
-            'document' : forms.widgets.HiddenInput(
-                attrs={ 'class': 'autocomplete-documents'}) }
+        widgets = {'document' : forms.widgets.HiddenInput()}
+
+NoteSectionFormset = inlineformset_factory(
+    main_models.Note, main_models.NoteSection, form=NoteSectionForm, extra=0)
 
 ################################################################################
 # Topic assignment form, used in multiple places

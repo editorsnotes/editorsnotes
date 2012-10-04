@@ -7,7 +7,6 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core.mail import mail_admins
-#from django.core.paginator import Paginator, InvalidPage
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render_to_response, get_object_or_404
@@ -126,16 +125,7 @@ def search(request):
             # restore the original form of the query so highlighting works
             query = query.replace('"%s %s"' % match.group(1,2), match.group(0))
 
-    # paginator = Paginator(results, 20)
-    
-    # try:
-    #     page = paginator.page(int(request.GET.get('page', 1)))
-    # except InvalidPage:
-    #     raise Http404('No such page of results!')
-    
     o = {
-        # 'page': page,
-        # 'paginator': paginator,
         'results': results,
         'query': query,
     }
@@ -204,42 +194,6 @@ def topic(request, topic_slug):
 def note(request, note_id):
     o = {}
     o['note'] = get_object_or_404(Note, id=note_id)
-    if request.method == 'POST':
-        if not request.user.is_authenticated():
-            return HttpResponseForbidden()
-        form = main_forms.NoteSectionForm(request.POST)
-        user = request.user
-        if form.is_valid():
-
-            # Quick fix with checking if a document field is blank: wymeditor by
-            # default posts '<br/>'
-            if not (request.POST.get('document') or
-                    len(request.POST.get('content')) > 6):
-                messages.add_message(
-                    request, messages.ERROR,
-                    'Enter a value for one or both of the fields "Content" and "Description"')
-                return HttpResponseRedirect(request.path)
-
-            new_section = NoteSection.objects.create(
-                creator=user, last_updater=user, note=o['note'])
-            if len(request.POST.get('content')) > 6:
-                new_section.content = request.POST.get('content')
-            if request.POST.get('document'):
-                new_section.document = get_object_or_404(
-                    Document, id=request.POST.get('document'))
-            new_section.save()
-
-            messages.add_message(
-                request,
-                messages.SUCCESS,
-                'Added section to %s' % o['note'])
-            return HttpResponseRedirect(request.path)
-    if request.user.is_authenticated():
-        user_profile = request.user.get_profile()
-        o['affiliated'] = len([p for p in o['note'].get_project_affiliation() if
-                               user_profile.get_project_role(p) is not None]) > 0
-        o['add_section_form'] = main_forms.NoteSectionForm()
-        o['document_form'] = main_forms.DocumentForm()
     o['history'] = get_unique_for_object(o['note'])
     o['topics'] = [ ta.topic for ta in o['note'].topics.all() ]
     o['cites'] = _sort_citations(o['note'])

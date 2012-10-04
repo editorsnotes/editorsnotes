@@ -165,13 +165,26 @@ def note_admin(request, note_id=None):
         o, context_instance=RequestContext(request))
 
 @revision.create_on_success
-def note_change_new(request, note_id):
+def note_sections(request, note_id):
     note = get_object_or_404(main_models.Note, id=note_id)
     o = {}
+    o['note'] = note
     if request.method == 'POST':
-        pass
+        o['sections_formset'] = main_forms.NoteSectionFormset(
+            request.POST, instance=note, auto_id=False)
+        if o['sections_formset'].is_valid():
+            for form in o['sections_formset']:
+                obj = form.save(commit=False)
+                if not obj.id:
+                    obj.creator = request.user
+                obj.last_updater = request.user
+                obj.save()
+            messages.add_message(
+                request, messages.SUCCESS, 'Note %s updated' % note.title)
+            return http.HttpResponseRedirect(note.get_absolute_url())
     else:
-        o['note'] = note
+        o['sections_formset'] = main_forms.NoteSectionFormset(instance=note,
+                                                              auto_id=False)
     return render_to_response(
         'admin/note-sections.html', o, context_instance=RequestContext(request))
 
