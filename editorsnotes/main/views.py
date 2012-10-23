@@ -175,7 +175,7 @@ def about(request):
 
     if request.method == 'POST':
 
-        bad_answers = request.session.get('bad_answers', 0)
+        bad_answers = request.session.setdefault('bad_answers', 0)
         if bad_answers > 3:
             return HttpResponseForbidden(
                 'Too many failed attempts. Try again later.')
