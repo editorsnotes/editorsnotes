@@ -229,7 +229,7 @@ class NoteSectionForm(ModelForm):
         widgets = {'document' : forms.widgets.HiddenInput()}
 
 NoteSectionFormset = inlineformset_factory(
-    main_models.Note, main_models.NoteSection, form=NoteSectionForm, extra=0)
+    main_models.Note, main_models.NoteSection, form=NoteSectionForm, extra=1)
 
 ################################################################################
 # Topic assignment form, used in multiple places

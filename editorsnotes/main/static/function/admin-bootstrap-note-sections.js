@@ -6,6 +6,10 @@ $(document).ready(function () {
     , addDocumentModal
     , saveDocument
 
+  $('#sections').sortable({
+    placeholder: 'note-section-placeholder'
+  });
+
   /**
    * Removes current wysihtml5 instance and updates form values to reflect
    * any changes made to previous active section.
@@ -34,14 +38,14 @@ $(document).ready(function () {
 
       // Right now, a section is blank if it doesn't cite a document. This will
       // need to be updated when we have different kinds of sections
-      isBlankSection = !!$this.find('.document').length
+      isBlankSection = !$('.note-section-document', $this).text().trim().length;
 
       if (isBlankSection) {
-        $this.remove()
+        $this.remove();
       }
 
       // Update the management after everything else has been done
-      $('input[name="sections-TOTAL_FORMS"]').val($('.note-section').length)
+      $('input[name="sections-TOTAL_FORMS"]').val($('.note-section').length);
 
     });
   };
@@ -93,10 +97,12 @@ $(document).ready(function () {
     editor = new wysihtml5.Editor(textarea.attr('id'), {
       toolbar: toolbar.attr('id'),
       parserRules: wysihtml5ParserRules,
-      stylesheets: ['/static/function/wysihtml5/stylesheet.css']
+      stylesheets: ['/static/function/wysihtml5/stylesheet.css'],
+      useLineBreaks: false
     });
 
     $section.data('editor', editor);
+
   };
 
 
@@ -114,7 +120,7 @@ $(document).ready(function () {
       , autocompleteOptions = $('body').data('baseAutocompleteOptions');
 
     lastSectionID = Math.max.apply(Math, $('.note-section').map(function () {
-      return (/\d/).exec(this.id);
+      return (/\d+/).exec(this.id);
     }))
 
     $newSection
@@ -159,7 +165,7 @@ $(document).ready(function () {
       })
       .autocomplete($.extend(autocompleteOptions, {
         'select': function (event, ui) {
-          $(event.target).replaceWith(ui.item.value);
+          $(event.target).replaceWith($('<div class="document">').html(ui.item.value));
           $('input[name$="document"]', $newSection).val(ui.item.id);
           $newDocumentButton.remove();
         }

@@ -174,6 +174,12 @@ def note_sections(request, note_id):
             request.POST, instance=note, auto_id=False)
         if o['sections_formset'].is_valid():
             for form in o['sections_formset']:
+                if not form.has_changed() or not form.is_valid():
+                    continue
+                if form.cleaned_data['DELETE']:
+                    if form.instance and form.instance.id:
+                        form.instance.delete()
+                    continue
                 obj = form.save(commit=False)
                 if not obj.id:
                     obj.creator = request.user

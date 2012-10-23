@@ -54,16 +54,21 @@
   .note-section-fields input, textarea {
     display: none;
   }
+  .note-section-placeholder {
+    height: 50px;
+    background: #ccc;
+    opacity: .5;
+  }
 </style>
 {% endblock %}
 
 {% block js %}
 
 
-<script type="text/javascript" src="{{ STATIC_URL }}function/zotero.jquery.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/xmle4x.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/xmldom.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/citeproc.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/zotero.jquery.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}function/wysihtml5/wysihtml5-0.3.0.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}function/wysihtml5/parser_rules.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}function/admin-bootstrap-note-sections.js"></script>
@@ -93,11 +98,16 @@
       {% for section in sections_formset %}
       {% with section.instance as ns %}
 
-        <div class="note-section" id="note-{{ section.prefix }}">
-          <div class="note-section-document"><i class="icon-file"></i>{{ ns.document }}</div>
+        <div class="note-section {% if forloop.last %}hide{% endif %}" id="note-{{ section.prefix }}">
+          <div class="note-section-document">
+            <i class="icon-file"></i>
+            {% if ns.document %}
+              {{ ns.document }}
+            {% endif %}
+          </div>
           <div class="note-section-content">
             {% if ns.has_content %}
-            {{ ns.content|as_html }}
+              {{ ns.content|as_html }}
             {% endif %}
           </div>
           <div class="note-section-fields">
@@ -169,7 +179,7 @@
       <h3>Add document</h3>
     </div>
     <div class="document-description modal-header">
-      <textarea style="width: 98%"></textarea>
+      <textarea style="width: 98%; height: 50px;"></textarea>
     </div>
     <div class="modal-body">
       <div class="zotero-information-edit">Loading...</div>
