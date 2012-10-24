@@ -5,6 +5,9 @@
   #main a {
     color: #107887;
   }
+  .test {
+    margin: 1.5em 0;
+  }
 </style>
 {% endblock %}
 
@@ -27,6 +30,11 @@ Use the form below to submit questions or comments.
 <form method="post">
   {% csrf_token %}
   {{ form }}
+
+  <div class="test">
+    {% if bad_answer %}<div class="alert alert-error">Try again</div>{% endif %}
+    <img src="test/"></img> equals? <input style="margin: 0; width: 30px;" type="text" name="testanswer" />
+  </div>
 
   <div>
     <button type="submit" class="btn">Send</button>
