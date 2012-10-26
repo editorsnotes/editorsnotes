@@ -4,6 +4,7 @@ ADMINS = (
     ('Ryan Shaw', 'ryanshaw@unc.edu'),
     ('Patrick Golden', 'ptgolden@berkeley.edu'),
 )
+SERVER_EMAIL = 'django@localhost'
 
 MANAGERS = ADMINS
 
