@@ -46,6 +46,139 @@ def save_topic_form(form, obj, user):
 # Note, topic, document admin
 ###########################################################################
 
+class ProcessFormsetView(View):
+    def get(self, request, *args, **kwargs):
+        form_class = self.get_form_class()
+        form = self.get_form(form_class)
+        formsets = self.collect_formsets()
+        return self.render_to_response(self.get_context_data(
+            form=form, formsets=formsets))
+    def post(self, request, *args, **kwargs):
+        form_class = self.get_form_class()
+        form = self.get_form(form_class)
+        formsets = self.collect_formsets()
+        if all(map(lambda f: f.is_valid(), [form] + formsets)):
+            return self.form_valid(form, formsets)
+        else:
+            return self.form_invalid(form, formsets)
+    def collect_formsets(self):
+        fs = []
+        if not hasattr(self, formset_classes):
+            return fs
+        for formset in self.formset_classes:
+            fs_kwargs = self.get_form_kwargs()
+            fs_kwargs['prefix'] = formset.model._meta.module_name
+            fs.append(formset(**fs_kwargs))
+        return fs
+    def validate_formsets(self, formsets):
+        return all(map(lambda fs: fs.is_valid(), formsets))
+    def save_formsets(self, formsets):
+        for formset in formsets:
+            for form in formset:
+                if not form.has_changed() or not form.is_valid():
+                    continue
+                if form.cleaned_data['DELETE']:
+                    if form.instance and form.instance.id:
+                        form.instance.delete()
+                    continue
+                save_method = getattr(self,
+                                      'save_%s_formset_form' % formset.prefix,
+                                      'save_formset_form')
+                save_method(form)
+        return self.formsets
+    def save_formset_form(self, form):
+        # Must implement
+        pass
+    def save_topicassignment_formset_form(self, form):
+        if not form.cleaned_data['topic']:
+            return
+        if form.instance and form.instance.id:
+            return
+        if form.cleaned_data['topic'] in self.instance.topics.all():
+            return
+        ta = form.save(commit=False)
+        ta.creator = self.request.user
+        ta.topic = form.cleaned_data['topic']
+        ta.content_object = obj
+        ta.save()
+        return ta
+
+class BaseAdminView(ModelFormMixin, ProcessFormsetView):
+    def get_object(self):
+        # must implement
+        pass
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self.template = template_base % ('change' if self.object else 'add')
+        if self.object and not self.object.attempt('change', self.request.user):
+            return HttpResponseForbidden(
+                'You do not have permission to change this object')
+        return super(BaseAdminView, self).get(request, *args, **kwargs)
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self.template = template_base % ('change' if self.object else 'add')
+        if self.object and not self.object.attempt('change', self.request.user):
+            return HttpResponseForbidden(
+                'You do not have permission to change this object')
+        return super(BaseAdminView, self).post(request, *args, **kwargs)
+    def get_form_kwargs(self):
+        kwargs = super(ModelFormMixin, self).get_form_kwargs()
+        if self.object:
+            kwargs.update({'instance': self.object})
+        return kwargs
+    def form_valid(self, form, formsets):
+        obj = form.save(commit=False)
+        if not obj.id:
+            obj.creator = self.request.user
+        obj.last_updater = self.request.user
+        obj.save()
+        obj.save_m2m()
+        self.obj = obj
+
+        self.save_formsets()
+
+        return redirect(self.get_success_url())
+    def form_invalid(self, form, formsets):
+        return self.render_to_response(self.get_context_data(
+            form=form, formsets=formsets))
+
+class DocumentAdminView(BaseAdminView):
+    form_class = main_forms.DocumentForm
+    formset_classes = (
+        main_forms.TopicAssignmentFormset,
+        main_forms.DocumentLinkFormset,
+        main_forms.ScanFormset
+    )
+    template_base = 'admin/document_%s.html'
+    def get_object(self, document_id=None):
+        return document_id and get_object_or_404(main_models.Document, id=document_id)
+    def save_formset_form(self, form):
+        obj = form.save(commit=False)
+        obj.document = document
+        obj.creator = request.user
+        obj.save()
+        return obj
+
+class NoteAdminView(BaseAdminView):
+    form_class = main_forms.NoteForm
+    formset_classes = (
+        main_forms.TopicAssignmentFormset
+    )
+    template_base = 'admin/note_%s.html'
+    def get_form(self, form_class):
+        form = form_class(**self.get_form_kwargs())
+        form.fields['assigned_users'].queryset=\
+                main_models.UserProfile.objects.filter(
+                    affiliation=self.request.user.get_profile().affiliation,
+                    user__is_active=1).order_by('user__last_name')
+    def get_object(self, note_id=None):
+        return note_id and get_object_or_404(main_models.Note, id=note.id)
+    def save_formset_form(self, form):
+        obj = form.save(commit=False)
+        obj.note = note
+        obj.creator = request.user
+        obj.save()
+
 @login_required
 @revision.create_on_success
 def document_admin(request, document_id=None):
