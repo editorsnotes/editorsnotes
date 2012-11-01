@@ -6,6 +6,7 @@ from django import http
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.views.decorators.csrf import csrf_protect
+from django.views.generic.edit import View, ModelFormMixin, TemplateResponseMixin
 
 from reversion import revision
 
@@ -46,7 +47,7 @@ def save_topic_form(form, obj, user):
 # Note, topic, document admin
 ###########################################################################
 
-class ProcessFormsetView(View):
+class ProcessInlineFormsetsView(View):
     def get(self, request, *args, **kwargs):
         form_class = self.get_form_class()
         form = self.get_form(form_class)
@@ -88,27 +89,28 @@ class ProcessFormsetView(View):
         raise NotImplementedError(
             'Child views must create a default formset saving method.')
 
-class BaseAdminView(ModelFormMixin, ProcessFormsetView):
-    def get_object(self):
-        # must implement
-        pass
+class BaseAdminView(ProcessInlineFormsetsView, ModelFormMixin, TemplateResponseMixin):
     def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        self.template = template_base % ('change' if self.object else 'add')
+        self.object = self.get_object(**kwargs)
+        self.template_name = self.template_base % ('change' if self.object else 'add')
         if self.object and not self.object.attempt('change', self.request.user):
             return HttpResponseForbidden(
                 'You do not have permission to change this object')
         return super(BaseAdminView, self).get(request, *args, **kwargs)
     def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        self.template = template_base % ('change' if self.object else 'add')
+        self.object = self.get_object(**kwargs)
+        self.template_name = self.template_base % ('change' if self.object else 'add')
         if self.object and not self.object.attempt('change', self.request.user):
             return HttpResponseForbidden(
                 'You do not have permission to change this object')
         return super(BaseAdminView, self).post(request, *args, **kwargs)
+
+    def get_object(self):
+        raise NotImplementedError(
+            'Child views must create get_object method')
     def get_form_kwargs(self):
         kwargs = super(ModelFormMixin, self).get_form_kwargs()
-        if self.object:
+        if hasattr(self, 'object') and self.object:
             kwargs.update({'instance': self.object})
         return kwargs
     def form_valid(self, form, formsets):
