@@ -170,7 +170,7 @@ class NoteAdminView(BaseAdminView):
         form = form_class(**self.get_form_kwargs())
         form.fields['assigned_users'].queryset=\
                 main_models.UserProfile.objects.filter(
-                    affiliation=self.request.user.get_profile().affiliation,
+                    affiliation=main_models.Project.get_affiliation_for(self.request.user),
                     user__is_active=1).order_by('user__last_name')
     def get_object(self, note_id=None):
         return note_id and get_object_or_404(main_models.Note, id=note.id)
