@@ -218,6 +218,7 @@ class NoteForm(ModelForm):
         }
     class Meta:
         model = main_models.Note
+        exclude = ('affiliated_projects',)
         widgets = {
             'assigned_users': forms.CheckboxSelectMultiple()
         }
