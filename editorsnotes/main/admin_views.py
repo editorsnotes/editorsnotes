@@ -61,47 +61,32 @@ class ProcessFormsetView(View):
             return self.form_valid(form, formsets)
         else:
             return self.form_invalid(form, formsets)
+
     def collect_formsets(self):
         fs = []
-        if not hasattr(self, formset_classes):
-            return fs
-        for formset in self.formset_classes:
-            fs_kwargs = self.get_form_kwargs()
-            fs_kwargs['prefix'] = formset.model._meta.module_name
-            fs.append(formset(**fs_kwargs))
+        if hasattr(self, 'formset_classes'):
+            for formset in self.formset_classes:
+                fs_kwargs = self.get_form_kwargs()
+                fs_kwargs.pop('initial', 0)
+                fs_kwargs['prefix'] = formset.model._meta.module_name
+                fs.append(formset(**fs_kwargs))
         return fs
-    def validate_formsets(self, formsets):
-        return all(map(lambda fs: fs.is_valid(), formsets))
     def save_formsets(self, formsets):
-        for formset in formsets:
-            for form in formset:
+        for fs in formsets:
+            save_method = getattr(
+                self, 'save_%s_formset_form' % fs.prefix, 'save_formset_form')
+            for form in fs:
                 if not form.has_changed() or not form.is_valid():
                     continue
                 if form.cleaned_data['DELETE']:
                     if form.instance and form.instance.id:
                         form.instance.delete()
                     continue
-                save_method = getattr(self,
-                                      'save_%s_formset_form' % formset.prefix,
-                                      'save_formset_form')
                 save_method(form)
-        return self.formsets
+        return formsets
     def save_formset_form(self, form):
-        # Must implement
-        pass
-    def save_topicassignment_formset_form(self, form):
-        if not form.cleaned_data['topic']:
-            return
-        if form.instance and form.instance.id:
-            return
-        if form.cleaned_data['topic'] in self.instance.topics.all():
-            return
-        ta = form.save(commit=False)
-        ta.creator = self.request.user
-        ta.topic = form.cleaned_data['topic']
-        ta.content_object = obj
-        ta.save()
-        return ta
+        raise NotImplementedError(
+            'Child views must create a default formset saving method.')
 
 class BaseAdminView(ModelFormMixin, ProcessFormsetView):
     def get_object(self):
@@ -141,6 +126,20 @@ class BaseAdminView(ModelFormMixin, ProcessFormsetView):
     def form_invalid(self, form, formsets):
         return self.render_to_response(self.get_context_data(
             form=form, formsets=formsets))
+
+    def save_topicassignment_formset_form(self, form):
+        if not form.cleaned_data['topic']:
+            return
+        if form.instance and form.instance.id:
+            return
+        if form.cleaned_data['topic'] in self.instance.topics.all():
+            return
+        ta = form.save(commit=False)
+        ta.creator = self.request.user
+        ta.topic = form.cleaned_data['topic']
+        ta.content_object = obj
+        ta.save()
+        return ta
 
 class DocumentAdminView(BaseAdminView):
     form_class = main_forms.DocumentForm
