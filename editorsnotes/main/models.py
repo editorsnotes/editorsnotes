@@ -65,9 +65,10 @@ class PermissionsMixin(object):
 
     @staticmethod
     def _attempt(obj, action, user, msg):
+        # Need to fix for users who are not logged in
         if not (isinstance(action, basestring) and isinstance(user, User)):
             raise TypeError
-        if getattr(obj, 'allow_%s_for' % action)(user):
+        if user.is_superuser or getattr(obj, 'allow_%s_for' % action)(user):
             return True
         else:
             return False
@@ -94,7 +95,7 @@ class ProjectSpecific(models.Model, PermissionsMixin):
         # Make sure no other projects are using this object before deleting
         other_contributing_projects = set.difference(
             set(object_affiliation), set([user.get_profile().affiliation]))
-        if len(other_contributing_projects) and not user.is_superuser:
+        if len(other_contributing_projects):
             msg = 'Cannot delete %s because it is in use by %s' % (
                 self, ', '.join([p.name for p in other_contributing_projects]))
             raise PermissionError(msg)
@@ -103,18 +104,18 @@ class ProjectSpecific(models.Model, PermissionsMixin):
     def allow_change_for(self, user):
         object_affiliation = self.affiliated_projects.all()
         can_change = False
-        while not can_change:
-            for p in object_affiliation:
-                can_change = user.has_perm('%s.change_%s' % (
-                    p.slug, self._meta.module_name))
+        for p in object_affiliation:
+            if user.has_perm('%s.change_%s' % (p.slug, self._meta.module_name)):
+                can_change=True
+                break
         return can_change
     def allow_view_for(self, user):
         object_affiliation = self.affiliated_projects.all()
         can_view = False
-        while not can_view:
-            for p in object_affiliation:
-                can_view = user.has_perm('%s.view_%s' % (
-                    p.slug, self._meta.module_name))
+        for p in object_affiliation:
+            if user.has_perm('%s.view_%s' % (p.slug, self._meta.module_name)):
+                can_view=True
+                break
         return can_view
 
     class Meta:
@@ -528,6 +529,12 @@ class Project(models.Model, URLAccessible, PermissionsMixin):
     def has_description(self):
         return self.description is not None
     @staticmethod
+    def get_affiliation_for(user, single=True):
+        profile = UserProfile.get_for(user)
+        qs = Project.objects.filter(members=profile)
+        if single:
+            qs = qs[:1]
+        return qs
     def get_activity_for(project, max_count=50):
         roster = [u.user for u in project.userprofile_set.select_related('user')]
         object_urls = set()
