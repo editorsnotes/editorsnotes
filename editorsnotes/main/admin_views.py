@@ -3,16 +3,16 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django import http
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
+from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
 from django.views.generic.edit import View, ModelFormMixin, TemplateResponseMixin
-
-from reversion import revision
 
 from editorsnotes.main import forms as main_forms
 from editorsnotes.main import models as main_models
 
+import reversion
 import json
 
 def collect_forms(form, formsets, **kwargs):
@@ -90,18 +90,21 @@ class ProcessInlineFormsetsView(View):
             'Child views must create a default formset saving method.')
 
 class BaseAdminView(ProcessInlineFormsetsView, ModelFormMixin, TemplateResponseMixin):
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(BaseAdminView, self).dispatch(*args, **kwargs)
     def get(self, request, *args, **kwargs):
         self.object = self.get_object(**kwargs)
         self.template_name = self.template_base % ('change' if self.object else 'add')
         if self.object and not self.object.attempt('change', self.request.user):
-            return HttpResponseForbidden(
+            return http.HttpResponseForbidden(
                 'You do not have permission to change this object')
         return super(BaseAdminView, self).get(request, *args, **kwargs)
     def post(self, request, *args, **kwargs):
         self.object = self.get_object(**kwargs)
         self.template_name = self.template_base % ('change' if self.object else 'add')
         if self.object and not self.object.attempt('change', self.request.user):
-            return HttpResponseForbidden(
+            return http.HttpResponseForbidden(
                 'You do not have permission to change this object')
         return super(BaseAdminView, self).post(request, *args, **kwargs)
 
@@ -113,21 +116,39 @@ class BaseAdminView(ProcessInlineFormsetsView, ModelFormMixin, TemplateResponseM
         if hasattr(self, 'object') and self.object:
             kwargs.update({'instance': self.object})
         return kwargs
-    def form_valid(self, form, formsets):
-        obj = form.save(commit=False)
-        if not obj.id:
-            obj.creator = self.request.user
-        obj.last_updater = self.request.user
-        obj.save()
-        obj.save_m2m()
-        self.obj = obj
 
-        self.save_formsets()
+    def form_valid(self, form, formsets):
+        with reversion.create_revision():
+            obj = form.save(commit=False)
+            action = 'add' if not obj.id else 'change'
+            if action == 'add':
+                obj.creator = self.request.user
+            obj.last_updater = self.request.user
+            obj.save()
+            self.object = obj
+
+            # Set reversion metadata
+            reversion.set_user(self.request.user)
+            reversion.set_comment('%sed %s.' % (action, obj._meta.module_name))
+
+            # Now save models that depend on this object existing
+            obj.affiliated_projects.add(
+                *main_models.Project.get_affiliation_for(self.request.user))
+            self.save_formsets(formsets)
+            form.save_m2m()
+
+            # Sorry for this :( It's complicated saving the zotero string in
+            # the document form, since it's a separate model. I would just
+            # stick this inside the DocumentForm's save_m2m, where, really,
+            # it makes sense, but that method is dynamically created from
+            # save_instance() in django/forms/models.py
+            if hasattr(form, 'save_zotero_data'):
+                form.save_zotero_data()
 
         return redirect(self.get_success_url())
     def form_invalid(self, form, formsets):
-        return self.render_to_response(self.get_context_data(
-            form=form, formsets=formsets))
+        return self.render_to_response(
+            self.get_context_data(form=form, formsets=formsets))
 
     def save_topicassignment_formset_form(self, form):
         if not form.cleaned_data['topic']:
@@ -163,7 +184,7 @@ class DocumentAdminView(BaseAdminView):
 class NoteAdminView(BaseAdminView):
     form_class = main_forms.NoteForm
     formset_classes = (
-        main_forms.TopicAssignmentFormset
+        main_forms.TopicAssignmentFormset,
     )
     template_base = 'admin/note_%s.html'
     def get_form(self, form_class):
@@ -172,8 +193,9 @@ class NoteAdminView(BaseAdminView):
                 main_models.UserProfile.objects.filter(
                     affiliation=main_models.Project.get_affiliation_for(self.request.user),
                     user__is_active=1).order_by('user__last_name')
+        return form
     def get_object(self, note_id=None):
-        return note_id and get_object_or_404(main_models.Note, id=note.id)
+        return note_id and get_object_or_404(main_models.Note, id=note_id)
     def save_formset_form(self, form):
         obj = form.save(commit=False)
         obj.note = note
@@ -319,6 +341,8 @@ def note_sections(request, note_id):
                     obj.creator = request.user
                 obj.last_updater = request.user
                 obj.save()
+            reversion.set_user(request.user)
+            reversion.set_comment('Note sections changed')
             messages.add_message(
                 request, messages.SUCCESS, 'Note %s updated' % note.title)
             return http.HttpResponseRedirect(note.get_absolute_url())
@@ -334,7 +358,7 @@ def note_sections(request, note_id):
 ###########################################################################
 
 @login_required
-@revision.create_on_success
+@reversion.revision.create_on_success
 def project_roster(request, project_id):
     o = {}
     project = get_object_or_404(main_models.Project, id=project_id)
@@ -383,7 +407,7 @@ def project_roster(request, project_id):
         'admin/project_roster.html', o, context_instance=RequestContext(request))
 
 @login_required
-@revision.create_on_success
+@reversion.revision.create_on_success
 def change_project(request, project_id):
     o = {}
     project = get_object_or_404(main_models.Project, id=project_id)
@@ -409,7 +433,7 @@ def change_project(request, project_id):
         'admin/project_change.html', o, context_instance=RequestContext(request))
 
 @login_required
-@revision.create_on_success
+@reversion.revision.create_on_success
 def change_featured_items(request, project_id):
     o = {}
     project = get_object_or_404(main_models.Project, id=project_id)
