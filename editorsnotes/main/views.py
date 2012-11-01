@@ -183,24 +183,25 @@ def about(request):
         o['form'] = main_forms.FeedbackForm(request.POST)
         if o['form'].is_valid():
 
-            test_answer = request.POST.get('testanswer') or '999'
-            if int(test_answer, 10) != request.session['test_answer']:
+            test_answer = request.POST.get('testanswer')
+            if test_answer.isdigit() and int(test_answer) == request.session['test_answer']:
+                request.session.pop('bad_answers')
+
+                choice = o['form'].cleaned_data['purpose']
+                subj = '(%s) %s' % (
+                    dict(o['form'].fields['purpose'].choices)[choice],
+                    o['form'].cleaned_data['name'])
+                msg = 'reply to: %(email)s\n\n%(message)s' % o['form'].cleaned_data
+                mail_admins(subj, msg, fail_silently=True)
+                messages.add_message(
+                    request, messages.SUCCESS,
+                    'Thank you. Your feedback has been submitted.')
+                return HttpResponseRedirect('/about/')
+            else:
                 request.session['bad_answers'] = bad_answers + 1
                 o['bad_answer'] = True
                 return render_to_response(
                     'about.html', o, context_instance=RequestContext(request))
-            request.session.pop('bad_answers')
-
-            choice = o['form'].cleaned_data['purpose']
-            subj = '(%s) %s' % (
-                dict(o['form'].fields['purpose'].choices)[choice],
-                o['form'].cleaned_data['name'])
-            msg = 'reply to: %(email)s\n\n%(message)s' % o['form'].cleaned_data
-            mail_admins(subj, msg, fail_silently=True)
-            messages.add_message(
-                request, messages.SUCCESS,
-                'Thank you. Your feedback has been submitted.')
-            return HttpResponseRedirect('/about/')
     else:
         o['form'] = main_forms.FeedbackForm()
     return render_to_response(
