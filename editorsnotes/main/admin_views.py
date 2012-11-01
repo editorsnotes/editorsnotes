@@ -144,14 +144,41 @@ class DocumentAdminView(BaseAdminView):
         main_forms.ScanFormset
     )
     template_base = 'admin/document_%s.html'
+    def post(self, request, *args, **kwargs):
+        if request.is_ajax():
+            return self.ajax_post(request, *args, **kwargs)
+        return super(DocumentAdminView, self).post(request, *args, **kwargs)
+
     def get_object(self, document_id=None):
         return document_id and get_object_or_404(main_models.Document, id=document_id)
+
     def save_formset_form(self, form):
         obj = form.save(commit=False)
         obj.document = document
         obj.creator = request.user
         obj.save()
         return obj
+
+    def ajax_post(self, request, *args, **kwargs):
+        form_class = self.get_form_class()
+        form = self.get_form(form_class)
+        self.object = self.get_object()
+        if self.object is not None:
+            return http.HttpResponse(
+                'Cannot save existing documents via ajax.', status=400)
+        if form.is_valid():
+            with reversion.create_revision():
+                document = form.save(commit=False)
+                document.creator = self.request.user
+                document.last_updater = self.request.user
+                document.save()
+                form.save_zotero_data()
+            return http.HttpResponse(json.dumps(
+                {'description': document.as_html(),
+                 'id': document.id}
+            ))
+        else:
+            return http.HttpResponse(json.dumps(form.errors), status=400)
 
 class NoteAdminView(BaseAdminView):
     form_class = main_forms.NoteForm
