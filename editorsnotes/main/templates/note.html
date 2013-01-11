@@ -6,21 +6,17 @@
 {% block js %}
 <script type="text/javascript" src="{{ STATIC_URL }}function/jquery/jquery.ba-bbq.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}function/note.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}function/wymeditor/jquery.wymeditor.pack.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}function/handlebars-1.0.0.beta.6.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}function/zotero-localization.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}function/zotero-form-modal.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}function/zotero-form-functions.js"></script>
-
-<script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/xmle4x.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/xmldom.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/citeproc.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/simple.js"></script>
-
 {% endblock %}
 
 {% block css %}
 <style type="text/css">
+  .zotero-information-edit .control-group {
+    margin-bottom: 0px !important;
+  }
+  #id_description {
+    width: 90%;
+    height: 50px;
+  }
   .note-status {
     font-weight: bold;
     padding-bottom: 1em;
@@ -34,6 +30,10 @@
   }
   .note-status-closed {
     color: red;
+  }
+  .zotero-container {
+    height: 355px;
+    overflow-y: scroll;
   }
   
 </style>
@@ -73,6 +73,7 @@
 
         {% if note.assigned_users.all %}
         <hr/>
+        <strong>Assigned users:</strong>
 
         <div>
           <ul class="unstyled">
@@ -81,15 +82,16 @@
             {% endfor %}
           </ul>
         </div>
-          {% else %}
-          {% endif %}
+        {% else %}
+        {% endif %}
 
           <br/>
 
           <div class="row edit-row">
             <div class="span6 edit-button">
               {% if request.user.is_authenticated %}
-              <a class="btn" href="{{ note.get_admin_url }}?return_to={{ note.get_absolute_url }}">Edit</a>
+              <a class="btn" href="{% url admin:main_note_change note.id %}?return_to={{ note.get_absolute_url }}">Edit note details</a>
+              <a class="btn" href="{% url note_sections note.id %}">Edit note content</a>
               {% endif %}
             </div>
             <div class="span6 edit-history">
@@ -101,7 +103,7 @@
 
       <section id="note-tab" class="tab-pane active">
 
-      {% if note.sections.all %}
+      {% if cites %}
         <div class="sort">
           <ul class="unstyled">
             <li><span class="big">Sort by:</span></li>
@@ -115,65 +117,24 @@
           </ul>
         </div>
         <div id="note-sections">
-        {% for section in note.sections.all %}
-          <div class="note-section{% if section.document %} has-document{% endif %}{% if section.has_content %} has-content{% endif %}">
-          {% if section.document %}
+        {% for cite in cites %}
+          <div class="note-section has-document{% if cite.has_notes %} has-content{% endif %}">
             <div class="note-section-document">
-              <a href="{{ section.document.get_absolute_url }}" target="_blank"><i class="icon-file"></i></a>
-              {{ section.document.as_html }}
+              <a href="{{ cite.document.get_absolute_url }}"><i class="icon-file"></i></a>
+              {{ cite.document.as_html }}
             </div>
-          {% endif %}
-          {% if section.has_content %}
+
+            {% if cite.has_notes %}
             <div class="note-section-content">
-              {{ section.content|as_html }}
+              {{ cite.notes|as_html }}
             </div>
-          {% endif %}
+            {% endif %}
+
           </div>
         {% endfor %}
         </div>
       {% else %}
         <span class="quiet">This note is empty</span>
-      {% endif %}
-
-      {% if note_section_form %}
-
-      <hr/>
-
-      <div>
-        {% if affiliated %}
-          <p>You are a member of the project that owns this note, so you can add to it.</p>
-        {% else %}
-          <p>You are not a member of the project that owns this note, so any additions you make will have to be approved by that project's editor.</p>
-        {% endif %}
-        <form class="well" method="post" id="add-section">{% csrf_token %}
-          {{ add_section_form.as_p }}
-          <input type="submit" class="btn" value="Add to note">
-        </form>
-      </div>
-
-      {% if affiliated %}
-      <div id="document-inline-edit" class="modal hide">
-        <h3>Add a document</h3>
-        <div class="document-description-edit">
-          <textarea class="xhtml-textarea"></textarea>
-        </div>
-        <div id="document-zotero-information">
-          <div class="zotero-information-edit form-horizontal">
-          </div>
-        </div>
-        <div id="modal-edit-row">
-          <a id="document-edit-close" class="btn btn-daner">Cancel</a>
-          <span id="modal-loading">Loading...'
-            <img src="/static/style/icons/ajax-loader.gif" />
-          </span>
-          <a id="document-save" class="btn btn-primary pull-right">Save</a>
-        </div>
-      </div>
-      {% endif %}
-
-      {% else %}
-      <div class="clearer" style="height: 100px;">&nbsp;</div>
-
       {% endif %}
 
       </section>

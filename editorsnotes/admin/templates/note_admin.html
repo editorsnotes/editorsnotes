@@ -1,0 +1,76 @@
+{% extends "admin_base.html" %}
+
+{% block admin %}
+
+<style type="text/css">
+  .assigned-users-field ul {
+    list-style-type: none;
+    margin-left: 0;
+  }
+  .title-field input[type="text"] {
+    width: 500px;
+  }
+  .description-field textarea {
+    width: 700px;
+    height: 300px;
+    border-radius: 0;
+    box-shadow: none;
+    border: 1px solid black;
+    padding: 8px;
+    background: #f0f0f0;
+  }
+
+</style>
+
+  <form method="post" class="form-horizontal">{% csrf_token %}
+
+    {% include "includes/bootstrap_errors.html" with errors=form.non_field_errors %}
+
+    <fieldset class="title-field">
+      {% include "includes/bootstrap_errors.html" with errors=form.title.errors %}
+      <legend>Title</legend>
+      <div class="fieldset-content">
+        {{ form.title }}
+      </div>
+    </fieldset>
+
+    <fieldset class="description-field collapsable">
+      <legend>Description</legend>
+      {% include "includes/bootstrap_errors.html" with errors=form.content.errors %}
+      <div class="fieldset-content">
+        {% include "includes/wysihtml5_full_toolbar.html" with toolbar_id="content-toolbar" %}
+        {{ form.content }}
+      </div>
+    </fieldset>
+
+
+    <fieldset class="status-field collapsable">
+      {% include "includes/bootstrap_errors.html" with errors=form.status.errors %}
+      <legend>Status</legend>
+      <div class="fieldset-content">
+        {{ form.status }}
+      </div>
+    </fieldset>
+
+    {% with formset=formsets.topicassignment %}
+    <fieldset class="collapsable related-topics">
+      <legend>Related topics</legend>
+      {% include "includes/bootstrap_formset.html" %}
+    </fieldset>
+    {% endwith %}
+
+    <fieldset class="assigned-users-field collapsable">
+      {% include "includes/bootstrap_errors.html" with errors=form.assigned_users.errors %}
+      <legend>Assigned users</legend>
+      <div class="fieldset-content">
+        {{ form.assigned_users }}
+      </div>
+    </fieldset>
+
+    <hr/>
+
+    <input type="submit" value="Save note" class="btn btn-primary" />
+
+  </form>
+
+{% endblock %}

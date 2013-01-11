@@ -1,0 +1,109 @@
+{% extends "admin_base.html" %}
+{% load display %}
+
+{% block admin %}
+  <form method="post" class="form-horizontal">{% csrf_token %}
+
+    {% include "includes/bootstrap_errors.html" with errors=form.non_field_errors %}
+
+    <fieldset name="transcript_content">
+      {% include "includes/bootstrap_errors.html" with errors=form.content.errors %}
+      <div class="fieldset-content">
+        <div id="content-toolbar"
+             class="btn-toolbar wysihtml5-toolbar"
+             style="display: none;">
+          <div class="btn-group">
+            <a data-wysihtml5-command="bold" class="btn">
+              <i class="icon-bold"></i>
+            </a>
+            <a data-wysihtml5-command="italic" class="btn">
+              <i class="icon-italic"></i>
+            </a>
+          </div>
+          <div class="btn-group">
+            <a data-wysihtml5-command="formatBlock"
+               data-wysihtml5-command-value="p"
+              class="btn">
+              <strong>P</strong>
+            </a>
+            <a data-wysihtml5-command="formatBlock"
+               data-wysihtml5-command-value="h1"
+              class="btn">
+              <strong>H1</strong>
+            </a>
+            <a data-wysihtml5-command="formatBlock"
+               data-wysihtml5-command-value="h2"
+              class="btn">
+              <strong>H2</strong>
+            </a>
+            <a data-wysihtml5-command="formatBlock"
+               data-wysihtml5-command-value="h3"
+              class="btn">
+              <strong>H3</strong>
+            </a>
+          </div>
+          <div class="btn-group">
+            <a data-wysihtml5-command="insertOrderedList" class="btn">
+              <i class="icon-list-ol"></i>
+            </a>
+            <a data-wysihtml5-command="insertUnorderedList" class="btn">
+              <i class="icon-list-ul"></i>
+            </a>
+          </div>
+          <div class="btn-group">
+            <a data-wysihtml5-command="footnote" style="border-radius: 4px; padding-left: 20px; padding-right: 20px;" class="btn">
+              <strong>Abc</strong><sup>1</sup>
+            </a>
+          </div>
+        </div>
+      </div>
+      {{ form.content }}
+    </fieldset>
+
+    <style type="text/css">
+      .footnote-edit .footnote-anchor {
+        border-bottom: 1px dashed #ccc;
+        margin-bottom: 3px;
+        padding-bottom: 3px;
+      }
+    </style>
+
+    {% with formset=formsets.footnote %}
+    <fieldset id="footnote-formset">
+      <h3>Footnotes</h3>
+      {{ formset.management_form }}
+      <div id="footnote-items">
+        {% for footnote in formset %}
+        {% with footnote.instance as fn %}
+
+        <div {% if fn.id %}id="footnote-{{ fn.id }}"{% endif %}
+             class="footnote-edit {% if forloop.last %}hide{% endif %}">
+          <div class="footnote-anchor">
+            {{ fn.as_text }}
+          </div>
+
+          <div class="footnote-content">
+            {{ fn.content|as_html }}
+          </div>
+
+          <div class="footnote-fields">
+            {% for field in footnote %} {{ field }} {% endfor %}
+          </div>
+        </div>
+
+        {% endwith %}
+        {% endfor %}
+      </div>
+
+      {% include "includes/wysihtml5_full_toolbar.html" with toolbar_id="footnote-toolbar" %}
+
+    </fieldset>
+    {% endwith %}
+
+
+    <button type="submit">Save</button>
+
+
+  </form>
+{% endblock %}
+

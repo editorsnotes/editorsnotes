@@ -1,3 +1,6 @@
+
+var EditorsNotes = {};
+
 $(document).ready(function () {
   // Initialize timeago.
   $('time.timeago').timeago();
@@ -19,19 +22,9 @@ $(document).ready(function () {
     }
   }
 
-  // Initialize autocomplete for search input box.
-  $('input.search-autocomplete')
-  .keydown(function(event) {
-    // If no autocomplete menu item is active, submit on ENTER.
-    if (event.keyCode == $.ui.keyCode.ENTER) {
-      if ($('#ui-active-menuitem').length == 0) {
-        $('#searchform form').submit();
-      }
-    }
-  })
-  .autocomplete({
+  var baseAutocompleteOptions = {
     source: function(request, response, x) {
-      var targetModel = this.element.attr('search-target'),
+      var targetModel = this.element.attr('search-target') || this.element.data('search-target'),
         query = {'q': request.term};
 
       if (this.element.attr('search-project-id')) {
@@ -125,5 +118,19 @@ $(document).ready(function () {
           });
       }
     }
-  });
+  }
+
+  $('body').data('baseAutocompleteOptions', baseAutocompleteOptions);
+
+  // Initialize autocomplete for search input box.
+  $('input.search-autocomplete')
+  .keydown(function(event) {
+    // If no autocomplete menu item is active, submit on ENTER.
+    if (event.keyCode == $.ui.keyCode.ENTER) {
+      if ($('#ui-active-menuitem').length == 0) {
+        $('#searchform form').submit();
+      }
+    }
+  })
+  .autocomplete(baseAutocompleteOptions);
 });

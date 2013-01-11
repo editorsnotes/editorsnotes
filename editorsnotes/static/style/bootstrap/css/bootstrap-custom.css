@@ -68,41 +68,28 @@ ul .document-link p {
     overflow-x: hidden;
 }
 
+
 /****************************
  * Inline document editing
  ****************************/
-#document-inline-edit {
-    padding: 10px;
-    height: 525px;
+.modal.add-document-modal {
+    position: absolute !important,
+    border-radius: 2px,
+    margin: 0,
+    top: 0,
+    left: 0
+    overflow-y: hide;
 }
-#document-inline-edit #document-description {
-    height: 167px;
-    border-bottom: 1px solid #ddd;
-    margin-bottom: 1px;
+.modal.add-document-modal .modal-footer {
+    padding: 10px 15px;
 }
-#document-inline-edit #document-zotero-information {
-    height: 312px;
-    overflow-y: auto;
-}
-#document-inline-edit #modal-edit-row {
-    margin-top: 1px;
-    padding-top: 6px;
-    border-top: 1px solid #ddd;
-}
-#document-inline-edit .control-group {
-    margin-bottom: 3px;
-}
-#document-inline-edit .control-group > label {
-    width: 105px;
-}
-#document-inline-edit .control-group > .controls {
-    margin-left: 120px;
-}
-
 
 /****************************
  * Zotero form sizes
  ****************************/
+.zotero-information-edit .control-group {
+    margin-bottom: 0 !important;
+}
 .zotero-entry textarea {
     height: 1.4em;
     margin-bottom: 5px;
@@ -194,3 +181,44 @@ ul .document-link p {
 }
 #scan-viewer {width:auto;height:400px;background-color:black;border:2px solid black;color:white;}
 #progress-notify {width:400px;height:53px;z-index:10;color:white;}
+
+.wysihtml5-command-active {
+}
+.wysihtml5-command-active,
+.wysihtml5-command-active:hover {
+    color: #ffffff;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+}
+.wysihtml5-command-active.active {
+    color: rgba(255, 255, 255, 0.75);
+}
+.wysihtml5-command-active {
+    background-color: #0074cc;
+    background-image: -moz-linear-gradient(top, #0088cc, #0055cc);
+    background-image: -ms-linear-gradient(top, #0088cc, #0055cc);
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#0088cc), to(#0055cc));
+    background-image: -webkit-linear-gradient(top, #0088cc, #0055cc);
+    background-image: -o-linear-gradient(top, #0088cc, #0055cc);
+    background-image: linear-gradient(top, #0088cc, #0055cc);
+    background-repeat: repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#0088cc', endColorstr='#0055cc', GradientType=0);
+    border-color: #0055cc #0055cc #003580;
+    border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+    *background-color: #0055cc;
+    /* Darken IE7 buttons by default so they stand out more given they won't have borders */
+
+    filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+}
+.wysihtml5-command-active:hover,
+.wysihtml5-command-active:active,
+.wysihtml5-command-active.active,
+.wysihtml5-command-active.disabled,
+.wysihtml5-command-active[disabled] {
+    background-color: #0055cc;
+    *background-color: #004ab3;
+}
+.wysihtml5-command-active:active,
+.wysihtml5-command-active.active {
+    background-color: #004099 \9;
+}
+

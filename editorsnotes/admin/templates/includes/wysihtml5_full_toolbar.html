@@ -1,0 +1,52 @@
+<div id="{% if toolbar_id %}{{ toolbar_id }}{% else %}wysihtml5-toolbar{% endif %}"
+     class="btn-toolbar wysihtml5-toolbar"
+     style="display: none;">
+
+  <div class="btn-group">
+    <a data-wysihtml5-command="bold" class="btn">
+      <i class="icon-bold"></i>
+    </a>
+    <a data-wysihtml5-command="italic" class="btn">
+      <i class="icon-italic"></i>
+    </a>
+    <a data-wysihtml5-command="formatBlock"
+       data-wysihtml5-command-value="p"
+      class="btn">
+      <strong>P</strong>
+    </a>
+    <a data-wysihtml5-command="formatBlock"
+       data-wysihtml5-command-value="h1"
+      class="btn">
+      <strong>H1</strong>
+    </a>
+    <a data-wysihtml5-command="formatBlock"
+       data-wysihtml5-command-value="h2"
+      class="btn">
+      <strong>H2</strong>
+    </a>
+    <a data-wysihtml5-command="formatBlock"
+       data-wysihtml5-command-value="h3"
+      class="btn">
+      <strong>H3</strong>
+    </a>
+    <a data-wysihtml5-command="insertOrderedList" class="btn">
+      <i class="icon-list-ol"></i>
+    </a>
+    <a data-wysihtml5-command="insertUnorderedList" class="btn">
+      <i class="icon-list-ul"></i>
+    </a>
+    <a data-wysihtml5-command="createLink" class="btn">
+      <i class="icon-link"></i>
+    </a>
+  </div>
+
+  <div data-wysihtml5-dialog="createLink" style="display: none;">
+    <label>
+      Link:
+      <input data-wysihtml5-dialog-field="href" value="http://">
+    </label>
+    <a data-wysihtml5-dialog-action="save" class="btn">OK</a>
+    <a data-wysihtml5-dialog action="cancel" class="btn">Cancel</a>
+  </div>
+
+</div>

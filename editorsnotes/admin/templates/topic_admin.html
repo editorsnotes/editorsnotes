@@ -1,0 +1,57 @@
+{% extends "admin_base.html" %}
+
+{% block admin %}
+  <form method="post" class="form-horizontal">{% csrf_token %}
+
+    {% include "includes/bootstrap_errors.html" with errors=form.non_field_errors %}
+
+    <fieldset name="preferred_name_fields">
+      <legend>Name</legend>
+      {% include "includes/bootstrap_errors.html" with errors=form.preferred_name.errors %}
+      <div class="fieldset-content">
+        {{ form.preferred_name }}
+      </div>
+    </fieldset>
+
+    <fieldset name="type_fields">
+      <legend>Type</legend>
+      {% include "includes/bootstrap_errors.html" with errors=form.type.errors %}
+      <div class="fieldset-content">
+        {{ form.type }}
+      </div>
+    </fieldset>
+
+    {% with formset=formsets.alias %}
+    <fieldset name="alternate_forms_fields">
+      <legend>Alternate forms</legend>
+      {% include "includes/bootstrap_formset.html" %}
+    </fieldset>
+    {% endwith %}
+
+    {% with formset=formsets.topicassignment %}
+    <fieldset name="related_topics_fields" class="related-topics">
+      <legend>Related topics</legend>
+      {% include "includes/bootstrap_formset.html" %}
+    </fieldset>
+    {% endwith %}
+
+    <fieldset name="article_fields">
+      <legend>Article</legend>
+      {% include "includes/bootstrap_errors.html" with errors=form.summary.errors %}
+      <div class="fieldset-content article">
+        {% include "includes/wysihtml5_full_toolbar.html" with toolbar_id="summary-toolbar" %}
+        {{ form.summary }}
+      </div>
+
+      <div class="article-citations" style="margin: 1em .5em;">
+        <h4>Citations</h4>
+        {% include "includes/citation_formset.html" with citations_formset=formsets.citation %}
+        <a href="#" id="add-citation">Add citation</a>
+      </div>
+
+  </fieldset>
+
+  <button type="submit" class="btn btn-primary">Save</button>
+
+  </form>
+{% endblock %}

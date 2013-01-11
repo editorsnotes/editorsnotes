@@ -1,0 +1,34 @@
+/* distinguish block level elements */
+h1, h2, h3, h4, h5, p, div, ul, ol {
+    margin-top: 0px;
+    margin-bottom: 6px;
+    background: white;
+    padding: 6px;
+}
+
+ul {
+    list-style: disc inside;
+}
+
+ol {
+    list-style: decimal inside;
+}
+
+
+body > div:first-child {
+    margin: 0;
+    padding: 0;
+    background: none;
+}
+
+.topic-tag {
+    background-color: #0074cc;
+    background-image: -moz-linear-gradient(center top , #0088CC, #0055CC);
+    border-radius: 2px;
+    padding: 1px 4px 1px 1px;
+    color: white;
+}
+
+.topic-tag :after {
+
+}

@@ -1,0 +1,117 @@
+{% extends "admin_base.html" %}
+
+{% block admin %}
+
+<style type="text/css">
+  #id_description {
+    width: 100%;
+    height: 50px;
+  }
+  .existing-scan:last-of-type {
+    margin-bottom: 2em;
+  }
+</style>
+
+  <form enctype="multipart/form-data" method="post" class="form-horizontal">{% csrf_token %}
+
+    {% include "includes/bootstrap_errors.html" with errors=form.non_field_errors %}
+
+    <fieldset>
+      <legend>Description</legend>
+      {% include "includes/bootstrap_errors.html" with errors=form.description.errors %}
+      <div class="document-description-edit fieldset-content span11">
+        {{ form.description }}
+      </div>
+    </fieldset>
+
+    <fieldset class="collapsable">
+      <legend>Zotero data</legend>
+      {% include "includes/bootstrap_errors.html" with errors=form.zotero_string.errors %}
+      <div class="fieldset-content">
+        <div class="zotero-container"></div>
+        {{ form.zotero_string }}
+      </div>
+    </fieldset>
+
+    {% with formset=formsets.topicassignment %}
+    <fieldset class="collapsable related-topics">
+      <legend>Related topics</legend>
+      {% include "includes/bootstrap_formset.html" %}
+    </fieldset>
+    {% endwith %}
+
+    {% with formset=formsets.documentlink %}
+    <fieldset class="collapsable">
+      <legend>Document Links</legend>
+      {% include "includes/bootstrap_formset.html" %}
+    </fieldset>
+    {% endwith %}
+
+    {% with formset=formsets.scan %}
+    <fieldset class="collapsable scan-field">
+      <legend>Scans</legend>
+      <div class="fieldset-content">
+
+        <div class="additional-scan">
+          {% if formset.non_form_errors %}
+          <div class="alert alert-error">
+            {% for error in formset.non_form_errors %}
+              {{ error }}
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          {{ formset.management_form }}
+
+          <ol>
+            {% for form in formset %}
+              {{ form.id }}
+              {{ form.document }}
+              {{ form.ordering }}
+              {% if not forloop.last %}
+                <li class="existing-scan">
+                  {{ form.image }}
+                  {{ form.DELETE }}
+                </li>
+              {% else %}
+              <div>
+                <label for="{{ form.image.auto_id }}">Add scans:</label>
+                {{ form.image }}
+              </div>
+              {% endif %}
+            {% endfor %}
+          </ol>
+        </div>
+
+      </div>
+    </fieldset>
+    {% endwith %}
+
+
+    <fieldset class="collapsable">
+      <legend>Transcript</legend>
+      <div class="fieldset-content">
+        <div class="left-margin">
+          {% with form.instance as d %}
+            {% if not form.instance %}
+              Save document before adding a transcript.
+            {% else %}
+              {% if d.has_transcript %}
+                <label>A transcript for this document exists.</label>
+                <a class="btn" href="{% url admin:main_transcript_change d.transcript.id %}">Edit transcript</a>
+              {% else %}
+                <label>No transcript for this document exists.</label>
+                <a class="btn" href="{% url admin:main_transcript_add %}?document={{ d.id }}">Add transcript</a>
+              {% endif %}
+            {% endif %}
+          {% endwith %}
+        </div>
+        <hr/>
+      </div>
+    </fieldset>
+
+    <button type="submit" id="document-save" class="btn btn-primary">Save</button>
+
+  </form>
+
+{% endblock %}

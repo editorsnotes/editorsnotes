@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% load display %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ STATIC_URL }}style/bootstrap-admin.css" type="text/css" />
+{% endblock %}
+
+{% block js %}
+
+
+<script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/xmle4x.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/xmldom.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/citeproc-js/citeproc.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/zotero.jquery.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/wysihtml5/wysihtml5-0.3.0.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/wysihtml5/parser_rules.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/admin-bootstrap-note-sections.js"></script>
+
+{% endblock %}
+
+{% block content %}
+  <h2>{{ note.title }}</h2>
+
+  <div>{{ note.content|as_html }}</div>
+
+  <form method="post"> {% csrf_token %}
+
+    <div style="margin: 1.75em 0 1em 0; padding: .75em; border: 1px solid #999;">
+      <h4 style="display: inline-block; margin: 0px 3px 0 0;">Add section:</h4>
+      <a class="btn" id="add-citation" href="#">Document citation</a>
+      <button class="btn btn-primary pull-right" type="submit">Save changes</button>
+    </div>
+
+    {% include "includes/citation_formset.html" %}
+
+  </form>
+
+{% endblock %}

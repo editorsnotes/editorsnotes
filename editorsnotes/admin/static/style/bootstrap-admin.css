@@ -1,0 +1,162 @@
+/******************************************************************** 
+/* Fieldset spacing
+ ********************************************************************/
+    /*
+     * Webkit doesn't render margins for legends
+     * https://bugs.webkit.org/show_bug.cgi?id=35981#c13
+     *
+     * For consistency, remove margin for legends everywhere & increase
+     * padding for next element to separate legend & field
+     */
+    legend {
+        margin-bottom: 0px;
+    }
+    .fieldset-content {
+        padding-top: 6px;
+    }
+
+    /* Add space between fields */
+    fieldset {
+        margin-bottom: 1em;
+    }
+
+    .error-message {
+        margin-top: 6px;
+        margin-bottom: 0;
+    }
+    .error-message ul {
+        margin-bottom: 0 ;
+    }
+
+
+
+/******************************************************************** 
+ * Individual field layout 
+ ********************************************************************/
+    /* Change default bootstrap spacing for horizontal forms */
+    .form-horizontal .control-label {
+        width: 120px;
+    }
+    .form-horizontal .controls {
+        margin-left: 132px;
+    }
+    .form-horizontal .control-group {
+        margin-bottom: 8px;
+    }
+    .left-margin {
+        margin-left: 20px;
+    }
+
+    .xhtml-textarea {
+        width: 100%;
+    }
+
+
+
+/******************************************************************** 
+ * Special field rules
+ ********************************************************************/
+    /* Eliminate large gap between wymeditor/wysihtml5 & corresponding toolbar */
+    .fieldset-content .btn-toolbar {
+        margin-bottom: 0;
+    }
+
+    .topicassignment {
+        margin-bottom: 3px;
+    }
+    .related-topics .ui-autocomplete-input {
+        margin-top: 10px;
+    }
+
+    /* Hide extra empty related topic */
+    .related-topics .topicassignment:last-of-type {
+        display: none;
+    }
+
+
+    /* Transcript editor should be large */
+    fieldset[name="transcript_content"] textarea {
+        height: 400px;
+    }
+
+
+/******************************************************************** 
+ * Citation formsets
+ ********************************************************************/
+
+  #citation-items.sort-active .citation-edit {
+    max-height: 100px;
+    overflow: hidden;
+  }
+
+  .citation-edit,
+  .footnote-edit {
+    padding: 7px 10px;
+    border-radius: 2px;
+    margin-bottom: 2px;
+  }
+  .citation-edit:last-child,
+  .footenote-edit:last-child {
+    margin-bottom: 50px;
+  }
+  .citation-edit:not(.citation-edit-active):hover,
+  .footnote-edit:not(.footnote-edit-active):hover {
+    cursor: pointer;
+  }
+  .citation-edit:hover,
+  .citation-edit-active,
+  .footnote-edit:hover,
+  .section-edit-active {
+    border-width: 2px;
+    border: 1px solid #999;
+    padding: 6px 9px;
+  }
+  .citation-notes :last-child {
+    margin-bottom: 0px;
+  }
+  .citation-document i[class$="file"] {
+    position: relative;
+    top: 2px;
+    color: #444;
+    font-size: 20px;
+    margin-right: 6px;
+  }
+  .citation-notes > :first-child,
+  .citation-edit .btn-toolbar {
+    border-top: 1px dotted #c0c0c0;
+    margin-top: 6px;
+    padding-top: 6px;
+  }
+  .citation-edit .btn-toolbar {
+    margin-bottom: 2px;
+    padding-top: 8px;
+  }
+  .citation-edit .citation-fields input,
+  .citation-edit .citation-fields textarea,
+  .footnote-edit .footnote-fields input,
+  .footnote-edit .footnote-fields textarea {
+    display: none;
+  }
+  .citation-placeholder {
+    height: 50px;
+    border-radius: 2px;
+    border: 1px dashed black;
+    margin: 8px 0;
+    text-align: center;
+    opacity: .5;
+  }
+  .citation-placeholder:after {
+    position: relative;
+    top: 16px;
+    content: '(reposition here)';
+  }
+
+  .add-new-document i[class$="plus-sign"] {
+    font-size: 18px;
+    padding: 3px;
+    position: relative;
+    top: 3px;
+  }
+  .add-new-document:hover {
+    text-decoration: none;
+  }
