@@ -97,7 +97,7 @@
 
       <section id="documents-tab" class="tab-pane">
         {% if documents %}
-        <ul id="document-list" class="unstyled">
+        <ul id="document-list" class="model-list unstyled">
           {% for document in documents %}
           <li class="document-list-item">
             {{ document|as_link|typogrify }}

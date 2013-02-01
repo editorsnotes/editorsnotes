@@ -1,0 +1,311 @@
+// Our layouts
+
+// Navbars
+//---------
+.navbar-inner {
+  .border-radius(0);
+  .box-shadow(0 3px 4px rgba(0,0,0,.065));
+  border: none;
+  border-bottom: none;
+}
+
+.navbar .container {
+  width: 940px;
+}
+
+.navbar .nav > li { 
+  > a {
+    padding-left: 11px;
+    padding-right: 11px;
+    text-shadow: none;
+  }
+
+  > a:hover,
+  &.dropdown.open > a.dropdown-toggle {
+    background-color: @linkColor;
+    color: white;
+    b.caret {
+      border-top-color: #fff !important;
+      border-bottom-color: #fff !important;
+    }
+  }
+}
+
+.navbar .nav > li > .btn-group {
+  margin-left: 12px;
+  .dropdown-menu {
+    right: 0;
+    left: auto;
+  }
+  b.caret {
+    border-top-color: @gray !important;
+    border-bottom-color: @gray !important;
+  }
+}
+
+.navbar-search .search-query {
+  border-radius: 14px;
+}
+
+
+// Tabs
+// -----
+.nav-tabs a {
+  color: @textColor;
+}
+
+
+
+// Lists of models
+// ----------------
+.model-list > h4 {
+  margin-bottom: 1px;
+}
+.model-list {
+  a {
+    color: @textColor;
+  }
+  li.show-all-link {
+    margin-top: 4px;
+  }
+}
+
+
+// Document page
+// --------------
+td.zotero-key {
+  width: 125px;
+  text-align: right;
+  span {
+    text-transform: uppercase;
+    font-size: 11px;
+    font-weight: bold;
+  }
+}
+
+#document-header {
+  font-size: @fontSizeLarge;
+  line-height: 22px;
+}
+
+
+// Facets
+//--------
+#facets.loaded .facet-header img {
+  display: none;
+}
+
+#facets {
+  .makeRow();
+  margin-top: .75em;
+
+  .facet-header {
+    .makeColumn(12);
+    cursor: hand;
+    cursor: pointer;
+    h3 { display: inline-block; }
+    i { vertical-align: baseline; }
+  }
+
+  .facets-available {
+    .makeColumn(2);
+    ul {
+      margin-left: 0;
+      li {
+        .btn;
+        display: block;
+        text-align: left;
+        margin: 0 0 6px;
+        padding-left: 8px;
+        padding-right: 8px;
+        i { opacity: .7; }
+      }
+      li.facet-selected {
+        .btn-primary;
+      }
+    }
+  }
+
+  .facet-form {
+    .makeColumn(10);
+
+    .facet-selection {
+      .makeRow();
+
+      div[class^="select-facets-"] {
+        .makeColumn(10);
+        display: none;
+        margin-bottom: 10px;
+
+        h5 {
+          font-size: 14px;
+          margin: 0 0 3px 0;
+          padding: 0 0 1px 3px;
+          border-bottom: 1px dashed @grayLight;
+        }
+        // If there's only one column of facets, make it take up the entire row
+        .facet-list {
+          .makeColumn(5);
+        }
+        .facet-list:only-of-type {
+          .makeColumn(10)
+        }
+
+        .facet-list {
+          margin: 0 !important;
+          padding-right: 8px !important;
+          list-style-type: none;
+          li {
+            margin-bottom: 2px;
+          }
+          input {
+            margin: 0 2px 1px 0;
+          }
+          label { 
+            display: inline;
+            margin: 0;
+          }
+        }
+
+      }
+
+    }
+
+  }
+
+}
+
+
+// Admin
+//-------
+
+/******************************************************************** 
+ * Citation formsets
+ ********************************************************************/
+
+.content-separation-border {
+  border-top: 1px dotted #c0c0c0;
+  margin-top: 6px;
+  padding-top: 6px;
+}
+
+// For editing & viewing citations (and editing footnotes)
+.citation,
+.footnote-edit {
+  margin-bottom: 4px;
+  border-radius: 2px;
+
+  .citation-document {
+    * {
+      display: inline;
+    }
+    a {
+      color: @textColor;
+    }
+    .icon-file {
+      margin: 0 2px;
+      color: #444;
+      font-size: 20px;
+      position: relative;
+      top: 1px;
+    }
+  }
+
+  .citation-notes,
+  .footnote-content {
+    border: 1px solid darken(@grayLighter, 7%);
+    padding : 3px 10px 6px;
+    margin-top: 2px;
+
+    &:empty {
+      border: none;
+      padding-bottom: 0px;
+      margin-bottom: -5px;
+    }
+    > :last-child {
+      margin-bottom: 0px;
+    }
+  }
+
+  .btn-toolbar {
+    .content-separation-border;
+  }
+}
+
+.citation:not(.citation-edit):not(:last-of-type) {
+  margin-bottom: 1.5em;
+  &:after {
+    text-align: center;
+  }
+}
+
+// For editing citations and editing footnotes
+.citation-edit,
+.footnote-edit {
+  padding: 10px;
+
+  // Space at the bottom of editing citations & footnotes
+  &:last-child {
+    margin-bottom: 50px;
+  }
+
+  &:not([class*="active"]):hover {
+    cursor: pointer;
+  }
+
+  &:hover, &-active {
+    border-width: 2px;
+    border: 1px solid #999;
+    padding: 9px;
+  }
+
+  [class$="-fields"] {
+    input, textarea {
+      display: none;
+    }
+  }
+
+  .btn-toolbar {
+    padding-top: 8px;
+  }
+
+}
+
+// Specific to editing citations
+#citation-items {
+  .citation div, .citation p {
+    display: block;
+  }
+  &.sort-active .citation-edit {
+    max-height: 100px;
+    overflow: hidden;
+  }
+  .citation-placeholder {
+    height: 50px;
+    border-radius: 2px;
+    border: 1px dashed black;
+    margin: 8px 0;
+    text-align: center;
+    opacity: .5;
+
+    &:after {
+      position: relative;
+      top: 16px;
+      content: '(reposition here)';
+    }
+  }
+
+  .citation-document a.add-new-document {
+    color: black;
+    &:hover {
+      text-decoration: none;
+    }
+    i.icon-plus-sign {
+      font-size: 18px;
+      position: relative;
+      top: 2px;
+      left: 2px;
+    }
+  }
+
+}

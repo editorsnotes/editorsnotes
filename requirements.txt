@@ -11,6 +11,8 @@ smartypants==1.6.0.3
 PIL==1.1.7
 pytz==2011b
 refine-client==0.2.1
+django_compressor==1.2
+BeautifulSoup<4.0
 
 # Symlinks to system packages
 # symlink: xapian

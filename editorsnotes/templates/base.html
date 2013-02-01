@@ -1,25 +1,41 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
   <head>
-{% load staticfiles %}
+
+    {% load staticfiles compress %}
+
     <title>Editors' Notes{% if project %}: {{ project }}{% else %}{% endif %}{% block title %}{% endblock %}</title>
-    <link rel="stylesheet" href="{% static "style/custom-theme/jquery-ui-1.8.10.custom.css" %}" type="text/css"/>
-    <link rel="stylesheet" href="{% static "style/bootstrap/css/bootstrap.css" %}" type="text/css"/>
-    <link rel="stylesheet" href="{% static "style/font-awesome/font-awesome.css" %}" type="text/css"/>
-    <link rel="stylesheet" href="{% static "style/bootstrap/css/bootstrap-custom.css" %}" type="text/css"/>
+
     {% comment %}
-    <!--[if lt IE 8]><link rel="stylesheet" href="{% static "style/ie.css" %}" type="text/css" media="screen, projection"/><![endif]-->
+    There are three blocks for css/js, enabling good bundling/caching:
+      1. Common files for use on every page, bundled & compressed
+      2. Page-specific files, bundled & compressed
+      3. Page-specific files, not bundled or compressed
     {% endcomment %}
-    {% block css %}{% endblock %}
+
+    {% compress css %}
+    <link rel="stylesheet" href="{% static "style/main.less" %}" type="text/less"/>
+    <link rel="stylesheet" href="{% static "style/jquery-ui/jquery-ui-1.8.10.custom.css" %}" type="text/css"/>
+    <link rel="stylesheet" href="{% static "style/font-awesome/font-awesome.css" %}" type="text/css"/>
+    <link rel="stylesheet" href="{% static "style/bootstrap-custom.css" %}" type="text/css"/>
+    {% endcompress %}
+
+    {% compress css %}{% block css %}{% endblock %}{% endcompress %}
+    {% block css_nocompress %}{% endblock %}
+
+    {% compress js %}
     <script type="text/javascript" src="{% static "function/jquery/jquery-1.8.2.min.js" %}"></script>
     <script type="text/javascript" src="{% static "function/jquery/jquery-ui-1.8.24.custom.min.js" %}"></script>
     <script type="text/javascript" src="{% static "function/underscore-min.js" %}"></script>
     <script type="text/javascript" src="{% static "function/jquery/jquery.timeago.js" %}"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}function/jquery/jquery.ba-bbq.min.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}function/base.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}function/bootstrap.min.js"></script>
-    {% block js %}
-    {% endblock %}
+    <script type="text/javascript" src="{% static "function/jquery/jquery.ba-bbq.min.js" %}"></script>
+    <script type="text/javascript" src="{% static "function/base.js" %}"></script>
+    <script type="text/javascript" src="{% static "function/bootstrap.min.js" %}"></script>
+    {% endcompress %}
+
+    {% compress js %}{% block js %}{% endblock %}{% endcompress %}
+    {% block js_nocompress %}{% endblock %}
+
   </head>
   {% load typogrify display %}
   <body>
@@ -37,47 +53,40 @@
             </form> 
             </ul>
 
-
             {% if user.is_authenticated %}
+            {% with profile=user.get_profile %}
             <ul class="nav pull-right">
               <li class="dropdown">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                  {{ user }}
+                  {{ profile.display_name }}
                   <b class="caret"></b>
                 </a>
                 <ul class="dropdown-menu">
-                  {% with profile=user.get_profile %}
-                  <li><a href="{{ profile.get_absolute_url }}">My Profile</a></li>
-                  {% if profile.affiliation %}
-                  <li>{{ profile.affiliation|as_link }}</li>
-                  {% endif %}
-                  {% endwith %}
+                  <li><a href="{{ profile.get_absolute_url }}">My profile</a></li>
                   <li><a href="{% url user_logout_view %}">Log out</a></li>
                 </ul>
               </li>
               <li>
-                <div class="btn-group">
-                  <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
-                    <b class="icon-pencil"></b>
-                    <b class="caret caret-dark"></b>
-                  </a>
-                  <ul class="dropdown-menu">
-                    {% block extra_edit_actions %}{% endblock %}
-                    <li><a href="{% url admin:main_note_add %}">Add note</a></li>
-                    <li><a href="{% url admin:main_document_add %}">Add document</a></li>
-                    <li><a href="{% url admin:main_topic_add %}">Add topic</a></li>
-                  </ul>
-                </div>
+              <div class="btn-group">
+                <a href="#" class="btn dropdown-toggle" data-toggle="dropdown">
+                  <i class="icon-pencil"></i>
+                  <b class="caret"></b>
+                </a>
+                <ul class="dropdown-menu" style="right: 0; left: auto;">
+                  {% block extra_edit_actions %}{% endblock %}
+                  <li><a href="{% url admin:main_note_add %}">Add note</a></li>
+                  <li><a href="{% url admin:main_document_add %}">Add document</a></li>
+                  <li><a href="{% url admin:main_topic_add %}">Add topic</a></li>
+                </ul>
+              </div>
               </li>
             </ul>
+            {% endwith %}
             {% else %}
             <ul class="nav pull-right">
               <li><a href="/accounts/login/">Log in</a></li>
             </ul>
             {% endif %}
-
-
-
           </div>
         </div>
       </div>

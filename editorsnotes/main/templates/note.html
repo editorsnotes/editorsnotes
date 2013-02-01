@@ -104,6 +104,7 @@
       <section id="note-tab" class="tab-pane active">
 
       {% if cites %}
+      {% comment %}
         <div class="sort">
           <ul class="unstyled">
             <li><span class="big">Sort by:</span></li>
@@ -113,23 +114,23 @@
                  id="sort-by-date">
                  Date in document
                  <i class="ascending-icon icon-chevron-down"></i>
-              </a></li>
+             </a>
+            </li>
           </ul>
         </div>
+      {% endcomment %}
         <div id="note-sections">
         {% for cite in cites %}
-          <div class="note-section has-document{% if cite.has_notes %} has-content{% endif %}">
-            <div class="note-section-document">
-              <a href="{{ cite.document.get_absolute_url }}"><i class="icon-file"></i></a>
-              {{ cite.document.as_html }}
+          <div class="citation">
+            <div class="citation-document">
+              <i class="icon-file"></i>
+              <a href="{{ cite.document.get_absolute_url }}">{{ cite.document.as_html }}</a>
             </div>
-
             {% if cite.has_notes %}
-            <div class="note-section-content">
+            <div class="citation-notes">
               {{ cite.notes|as_html }}
             </div>
             {% endif %}
-
           </div>
         {% endfor %}
         </div>

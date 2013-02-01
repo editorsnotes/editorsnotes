@@ -38,20 +38,19 @@
           // The container for the facets
           var $facetContainer = $('' +
             '<div id="facets" class="row">' +
-              '<div id="facet-heading" class="span12"></div>' +
-              '<div id="facet-container">' +
-                '<div class="span2" id="available-facets">' +
-                  '<ul class="unstyled">' +
-                  '</ul>' +
+              '<div class="facet-header"></div>' +
+              '<div class="facet-body">' +
+                '<div class="facets-available">' +
+                  '<ul></ul>' +
                 '</div>' +
-                '<div class="span10 roow" id="facet-inputs">' +
-                '</div>' +
+                '<div class="facet-form"></div>' +
               '</div>' +
             '</div>'),
-            $heading = $facetContainer.find('#facet-heading');
-            $container = $facetContainer.find('#facet-container'),
-            $selectors = $facetContainer.find('ul'),
-            $values = $facetContainer.find('#facet-inputs');
+            $heading = $('.facet-header', $facetContainer),
+            $container = $('.facet-body', $facetContainer),
+            $selectors = $('.facets-available ul', $facetContainer),
+            $values = $('<div class="facet-selection">')
+              .appendTo($('.facet-form', $facetContainer));
 
           // Show/hide the container
           $('<h3 style="cursor: pointer;" id="facet-title">')
@@ -73,10 +72,10 @@
                 .appendTo($selectors)
 
                 // List of values for this filter
-               $('<div class="facet-container span10">')
+               $('<div class="select-facets-FIXME facet-container">')
                   .hide()
                   .addClass(facetKey + '-facet-container')
-                  .html('<h6>' + facetLabel + '</h6>')
+                  .html('<h5>' + facetLabel + '</h5>')
                   .appendTo($values)
                   .append('<ul class="unstyled">');
             }
@@ -92,7 +91,7 @@
               criteria = $filter.data('for'),
               target = $('.' + criteria + '-facet-container').toggle();
             $filter
-              .toggleClass('document-facet-selected btn-primary')
+              .toggleClass('document-facet-selected facet-selected btn-primary')
               .find('i')
                 .toggleClass('icon-plus icon-minus icon-white');
             if (!$filter.hasClass('document-facet-selected')) {

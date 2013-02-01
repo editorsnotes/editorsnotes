@@ -51,7 +51,7 @@
 {% block content %}
 
     <header>
-      <h3>{{ document.description|as_html|typogrify }}</h3>
+      <div id="document-header">{{ document.description|as_html|typogrify }}</div>
       <div class="related-topics">
         {% if topics %}
         <span class="quiet">Related topics:</span> 
@@ -91,7 +91,7 @@
         <section id="info-tab" class="tab-pane active">
           <div id="zotero">
             {% if zotero_data %}
-              {% include "item-information.include" %}
+              {% include "zotero_item.html" %}
             {% else %}
             <p>This document has no connected Zotero data.</p>
             {% endif %}

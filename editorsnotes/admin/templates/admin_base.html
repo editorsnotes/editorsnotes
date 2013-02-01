@@ -1,8 +1,30 @@
 {% extends "base.html" %}
 
-{% load display %}
+{% load display staticfiles %}
 
-{% block js %} {{ form.media }} {% endblock %}
+{% block js %}
+  <script src="{% static "function/wysihtml5/wysihtml5-0.3.0.js" %}"></script>
+  <script src="{% static "function/wysihtml5/parser_rules.js" %}"></script>
+  <script src="{% static "function/citeproc-js/xmldom.js" %}"></script>
+  <script src="{% static "function/citeproc-js/citeproc.js" %}"></script>
+  <script src="{% static "function/zotero.jquery.js" %}"></script>
+  <script src="{% static "function/admin-bootstrap-base.js" %}"></script>
+  {% if form.media %}{{ form.media.js }}{% endif %}
+{% endblock %}
+
+{% block js_nocompress %}
+  {% comment %}
+  This guy doesn't work on all browsers (or maybe any browsers?), so we're
+  keeping it separate to prevent any errors from stopping everything else.
+  {% endcomment %}
+  <script src="{% static "function/citeproc-js/xmle4x.js" %}"></script>
+{% endblock %}
+
+
+{% block css %}
+  <link rel="stylesheet" href="{% static "style/bootstrap-admin.css" %}" type="text/css" />
+  {% if form.media %}{{ form.media.css }}{% endif %}
+{% endblock %}
 
 {% block content %}
   <h2>{% if form.instance.id %}Change{% else %}Add{% endif %} {{ form.Meta.model|object_name|lower }}</h2>

@@ -1,94 +1,35 @@
 {% load display facet %}
 
-<div id="filters" class="loaded row">
-  <div class="span12">
-    <h3 style="cursor: pointer; cursor: hand" id="facet-title">
-      Filters
-      <i style="vertical-align: baseline;"
-         class="icon-minus"></i>
-      <img src="{{ STATIC_URL }}style/icons/ajax-loader.gif" />
-    </h3>
+<div id="facets" class="loaded">
+  <div class="facet-header">
+    <h3>Filters</h3>
+    <i class="icon-minus"></i>
+    <img src="{{ STATIC_URL }}style/icons/ajax-loader.gif" />
   </div>
-
-  <div id="filter-selection">
-    <div class="span2" id="available-filters">
-      <ul class="unstyled">
-        <li for="type" class="document-filter btn">
-          <i class="icon-plus"></i>
-          Item type
-        </li>
-        <li for="topic" class="document-filter btn">
-          <i class="icon-plus"></i>
-          Related topic
-        </li>
-        <li for="project" class="document-filter btn">
-          <i class="icon-plus"></i>
-          Project
-        </li>
-        <li for="archive" class="document-filter btn">
-          <i class="icon-plus"></i>
-          Archive
-        </li>
-        <li for="creator" class="document-filter btn">
-          <i class="icon-plus"></i>
-          Creator
-        </li>
-        <li for="publication" class="document-filter btn">
-          <i class="icon-plus"></i>
-          Publication title
-        </li>
-        <li for="representations" class="document-filter btn">
-          <i class="icon-plus"></i>
-          Representation
-        </li>
+  <div class="facet-body">
+    <div class="facets-available">
+      <ul>
+        <li data-facet-toggle="itemType"><i class="icon-plus"></i>Item type</li>
+        <li data-facet-toggle="related_topic_id"><i class="icon-plus"></i>Related topic</li>
+        <li data-facet-toggle="project_id"><i class="icon-plus"></i>Project</li>
+        <li data-facet-toggle="archive"><i class="icon-plus"></i> Archive</li>
+        <li data-facet-toggle="creators"> <i class="icon-plus"></i>Creator</li>
+        <li data-facet-toggle="publicationTitle"><i class="icon-plus"></i>Publication title</li>
+        <li data-facet-toggle="representations"><i class="icon-plus"></i>Representation</li>
       </ul>
     </div>
-
-    <div id="filter-form" class="span10 row">
-      {% if facets.itemType %}
-        <div class="type-filter span10">
-          {% create_facet_field "Item Type" facets.itemType %}
-        </div>
-      {% endif %}
-
-      {% if facets.related_topic_id %}
-        <div class="topic-filter span10">
-          {% create_facet_field "Related Topic" facets.related_topic_id %}
-        </div>
-      {% endif %}
-
-      {% if facets.project_id %}
-        <div class="project-filter span10">
-          {% create_facet_field "Project" facets.project_id %}
-        </div>
-      {% endif %}
-
-      {% if facets.archive %}
-        <div class="archive-filter span10">
-          {% create_facet_field "Containing Archive" facets.archive %}
-        </div>
-      {% endif %}
-
-      {% if facets.creators %}
-        <div class="creator-filter span10">
-          {% create_facet_field "Creator" facets.creators %}
-        </div>
-      {% endif %}
-
-      {% if facets.publicationTitle %}
-      <div class="publication-filter span10">
+    <div class="facet-form">
+      <div class="facet-selection">
+        {% create_facet_field "Item Type" facets.itemType %}
+        {% create_facet_field "Related Topic" facets.related_topic_id %}
+        {% create_facet_field "Project" facets.project_id %}
+        {% create_facet_field "Containing Archive" facets.archive %}
+        {% create_facet_field "Creator" facets.creators %}
         {% create_facet_field "Publication Title" facets.publicationTitle %}
-      </div>
-      {% endif %}
-
-      {% if facets.representations %}
-      <div class="representations-filter span10">
         {% create_facet_field "Representation" facets.representations %}
       </div>
-      {% endif %}
     </div>
   </div>
-
 </div>
 
 <hr />
@@ -103,12 +44,10 @@
     </span>
   </div>
   <div class="span12">
-    <ul class="unstyled" id="document-list">
+    <ul class="unstyled model-list" id="document-list">
     {% for document in documents %}
     <li class="document">
-      <a href="{% url document_view document_id=document.pk %}">
-        {{ document.title }}
-      </a>
+      <a href="{% url document_view document_id=document.pk %}">{{ document.title }}</a>
     </li>
     {% endfor %}
     </ul>

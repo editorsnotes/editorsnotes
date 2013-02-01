@@ -40,6 +40,9 @@ MANAGERS = ADMINS
 # STATIC_ROOT = ''
 # HAYSTACK_XAPIAN_PATH = ''
 
+# Point this to the Less CSS compiler if it is not on PATH
+# LESSC_BINARY = ''
+
 
 ######################
 # Optional variables #

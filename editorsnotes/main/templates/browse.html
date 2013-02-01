@@ -5,8 +5,8 @@
 {% block title %}{% endblock %}
 
 {% block content %}
-    <section id="projects">
-      <h3>Projects</h3>
+    <section id="projects" class="model-list">
+      <h4>Projects</h4>
       <ul class="unstyled">
         {% for project in projects %}
           <li>{{ project|as_link|typogrify }}</li>
@@ -14,37 +14,37 @@
       </ul>
     </section>
     <hr />
-    <section id="documents">
-      <h3>Recently Edited Documents</h3>
+    <section id="documents" class="model-list">
+      <h4>Recently Edited Documents</h4>
       <ul class="unstyled">
         {% for document in document_list %}
         <li>{{ document|as_link|typogrify }}</li>
         {% endfor %}
         {% if document_list %}
-        <li><a class="more-link" href="{% if project %}{% url all_documents_view project.slug %}{% else %}{% url all_documents_view %}{% endif %}">All documents</a></li>
+        <li class="show-all-link"><a class="more-link" href="{% if project %}{% url all_documents_view project.slug %}{% else %}{% url all_documents_view %}{% endif %}">All documents</a></li>
         {% endif %}      
       </ul>
     </section>
     <div class="row">
-      <section id="topics" class="span6">
-        <h3>Recently Edited Topics</h3>
+      <section id="topics" class="span6 model-list">
+        <h4>Recently Edited Topics</h4>
         <ul class="unstyled">
           {% for topic in topic_list %}
           <li>{{ topic|as_link|typogrify }}</li>
           {% endfor %}
           {% if topic_list %}
-          <li><a class="more-link" href="{% if project %}{% url all_topics_view project.slug %}{% else %}{% url all_topics_view %}{% endif %}">All topics</a></li>
+          <li class="show-all-link"><a class="more-link" href="{% if project %}{% url all_topics_view project.slug %}{% else %}{% url all_topics_view %}{% endif %}">All topics</a></li>
           {% endif %}      
         </ul>
       </section>
-      <section id="notes" class="span6">
-        <h3>Recently Edited Notes</h3>
+      <section id="notes" class="span6 model-list">
+        <h4>Recently Edited Notes</h4>
         <ul class="unstyled">
           {% for note in note_list %}
           <li>{{ note|as_link|typogrify }}</li>
           {% endfor %}
           {% if note_list %}
-          <li><a class="more-link" href="{% if project %}{% url all_notes_view project.slug %}{% else %}{% url all_notes_view %}{% endif %}">All notes</a></li>
+          <li class="show-all-link"><a class="more-link" href="{% if project %}{% url all_notes_view project.slug %}{% else %}{% url all_notes_view %}{% endif %}">All notes</a></li>
           {% endif %}      
         </ul>
       </section>

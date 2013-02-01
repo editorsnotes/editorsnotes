@@ -1,14 +1,15 @@
 {% load typogrify display %}
 
 <div class="citation">
-  {% filter typogrify %}
-  {{ cite.document.as_html }}
-  {{ cite.locator }}
-  <a href="{{ cite.document.get_absolute_url }}">More info</a>
+	{% filter typogrify %}
+	<div class="citation-document">
+		<i class="icon-file"></i>
+		<a href="{{ cite.document.get_absolute_url }}">{{ cite.document.as_html }}</a>
+	</div>
   {% endfilter %}
+	{% if cite.has_notes %}
+	<div class="citation-notes">
+		{{ cite.notes|as_html }}
+	</div>
+	{% endif %}
 </div>
-{% if cite.has_notes %}
-<div class="citation-notes">
-  {{ cite.notes|as_html|typogrify }}
-</div>
-{% endif %}

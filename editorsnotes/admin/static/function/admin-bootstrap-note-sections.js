@@ -197,7 +197,7 @@ function addSection(after) {
   }));
 
   $newSection
-    .addClass('citation-edit')
+    .addClass('citation-edit citation')
     .prop('id', 'citation-' + (lastSectionID + 1))
     .append('<div class="citation-document"><i class="icon-file"></i></div>')
     .append('<div class="citation-notes"></div>')
@@ -241,7 +241,7 @@ function addSection(after) {
         $this = $(event.target);
 
         $this.closest('.citation-document')
-          .append(ui.item.value);
+          .append(' ' + ui.item.value);
       
         $this.closest('.citation-edit')
           .find('input[name$="document"]')
@@ -365,7 +365,7 @@ function saveDocument($modal) {
           .val(newDocumentObj.id);
 
       oldInput
-        .replaceWith(newDocumentObj.value)
+        .replaceWith(' ' + newDocumentObj.value)
 
       $modal.modal('hide').remove();
     },

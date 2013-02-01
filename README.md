@@ -6,8 +6,9 @@ and make sure you have the following dependencies
 
 * libxml2
 * libxslt
-* psycopg2
 * [Xapian](http://xapian.org/download) with Python bindings
+* [Less](http://lesscss.org) CSS compiler
+* Optional: [Watchdog](http://packages.python.org/watchdog/), for use with the `fab watch_static` command to automatically collect and compile static files as they are changed.
 
 1. Run the command `fab setup` inside the project directory
 2. Edit the generated "editorsnotes/settings\_local.py" file with your database information

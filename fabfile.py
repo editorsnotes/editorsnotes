@@ -1,13 +1,15 @@
 from fabric.api import env, local, lcd
-from fabric.colors import red
+from fabric.colors import red, green
 from fabric.decorators import task, runs_once
 from fabric.utils import abort
 
+import datetime
 import fileinput
 import importlib
 import os
 import random
 import sys
+import time
 
 PROJ_ROOT = os.path.dirname(env.real_fabfile)
 env.project_name = 'editorsnotes'
@@ -74,13 +76,57 @@ def make_settings():
 
 @task
 def create_cache_tables():
-    caches = ['zotero_cache']
+    caches = ['zotero_cache', 'compress_cache']
     tables = local('./bin/python manage.py inspectdb | grep "db_table ="', capture=True)
     for cache in caches:
         if "'{}'".format(cache) in tables:
             continue
         with lcd(PROJ_ROOT):
             local('./bin/python manage.py createcachetable {}'.format(cache))
+
+@task
+def watch_static():
+    """
+    Collect static files as they are modified.
+
+    Reacts to changes of *.css, *.js, and *.less files.
+    """
+    try:
+        from watchdog.events import FileSystemEventHandler
+        from watchdog.observers import Observer
+    except ImportError:
+        abort(red('Install Watchdog python package to watch filesystem files.'))
+
+    EXTS = ['.js', '.css', '.less']
+
+    class ChangeHandler(FileSystemEventHandler):
+        def __init__(self, *args, **kwargs):
+            super(ChangeHandler, self).__init__(*args, **kwargs)
+            self.last_collected = datetime.datetime.now()
+        def on_any_event(self, event):
+            if event.is_directory:
+                return
+            if os.path.splitext(event.src_path)[-1].lower() in EXTS:
+                now = datetime.datetime.now()
+                if (datetime.datetime.now() - self.last_collected).total_seconds() < 1:
+                    return
+                local('./bin/python manage.py collectstatic --noinput')
+                sys.stdout.write('\n')
+                self.last_collected = datetime.datetime.now()
+
+    event_handler = ChangeHandler()
+    observer = Observer()
+    observer.schedule(
+        event_handler, os.path.join(PROJ_ROOT, 'editorsnotes'), recursive=True)
+    observer.start()
+    print green('\nWatching *.js, *.css, and *.less files for changes.\n')
+
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
+    observer.join()
 
 
 def make_virtual_env():

@@ -8,16 +8,14 @@
     {% for citation in citations_formset %}
     {% with citation.instance as c %}
 
-    <div class="citation-edit {% if forloop.last %}hide{% endif %}" id="{{ citation.prefix }}">
+    <div class="citation citation-edit {% if forloop.last %}hide{% endif %}" id="{{ citation.prefix }}">
 
       <div class="citation-document">
         <i class="icon-file"></i>
         {% if c.document %} {{ c.document.description|as_text }} {% endif %}
       </div>
 
-      <div class="citation-notes">
-        {% if c.has_notes %} {{ c.notes|as_html }} {% endif %}
-      </div>
+      <div class="citation-notes">{% if c.has_notes %}{{ c.notes|as_html }}{% endif %}</div>
 
       <div class="citation-fields">
         {% for field in citation %} {{ field }} {% endfor %}

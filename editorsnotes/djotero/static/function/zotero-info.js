@@ -1,11 +1,11 @@
-$(function() {
+;
+
+$(document).ready(function() {
   $('#dialog-form :input[type="text"]').attr('readonly', false);
   
-  $("#dialog-form").dialog({
-    autoOpen: false,
-    modal: true,
-    width: 400
-  });
+  $("#dialog-form")
+    .css('width', '400px')
+    .modal({ show: false });
   
   $("#test-zotero-information").live('click', function(){
     var loader = $('<img src="/static/style/icons/ajax-loader.gif">');
