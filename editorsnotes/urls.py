@@ -21,10 +21,10 @@ urlpatterns += patterns('',
     # The following won't actually be called in production, since Apache will intercept them.
     (r'^favicon.ico$', 'django.views.generic.simple.redirect_to', 
      { 'url': '/static/style/icons/favicon.ico' }),
-    (r'^media/scans/(?P<path>.*)$', 'django.views.static.serve',
-     { 'document_root': settings.MEDIA_ROOT + '/scans' }),
     (r'^media/(?P<path>.*)$', 'django.views.static.serve',
-     { 'document_root': settings.LOCAL_PATH + '/editorsnotes/static' }),
+     { 'document_root': settings.MEDIA_ROOT }),
+    (r'^static/(?P<path>.*)$', 'django.views.static.serve',
+     { 'document_root': settings.STATIC_ROOT }),
     (r'^proxy$', 'editorsnotes.main.views.proxy'),
 )
 

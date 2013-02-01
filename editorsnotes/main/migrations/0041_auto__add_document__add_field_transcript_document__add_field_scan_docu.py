@@ -15,7 +15,7 @@ class Migration(SchemaMigration):
             ('created', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('last_updater', self.gf('django.db.models.fields.related.ForeignKey')(related_name='last_to_update_document_set', to=orm['auth.User'])),
             ('last_updated', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('description', self.gf('main.fields.XHTMLField')()),
+            ('description', self.gf('editorsnotes.main.fields.XHTMLField')()),
             ('type', self.gf('django.db.models.fields.CharField')(default='S', max_length=1)),
             ('ordering', self.gf('django.db.models.fields.CharField')(max_length=32)),
             ('url', self.gf('django.db.models.fields.URLField')(max_length=200, blank=True)),
@@ -107,7 +107,7 @@ class Migration(SchemaMigration):
             'Meta': {'ordering': "['ordering']", 'object_name': 'Document'},
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_document_set'", 'to': "orm['auth.User']"}),
-            'description': ('main.fields.XHTMLField', [], {}),
+            'description': ('editorsnotes.main.fields.XHTMLField', [], {}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'last_updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'last_updater': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'last_to_update_document_set'", 'to': "orm['auth.User']"}),
@@ -117,7 +117,7 @@ class Migration(SchemaMigration):
         },
         'main.footnote': {
             'Meta': {'object_name': 'Footnote'},
-            'content': ('main.fields.XHTMLField', [], {}),
+            'content': ('editorsnotes.main.fields.XHTMLField', [], {}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_footnote_set'", 'to': "orm['auth.User']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -127,7 +127,7 @@ class Migration(SchemaMigration):
         },
         'main.note': {
             'Meta': {'ordering': "['-last_updated']", 'object_name': 'Note'},
-            'content': ('main.fields.XHTMLField', [], {}),
+            'content': ('editorsnotes.main.fields.XHTMLField', [], {}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_note_set'", 'to': "orm['auth.User']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -149,7 +149,7 @@ class Migration(SchemaMigration):
             'Meta': {'ordering': "['ordering']", 'object_name': 'Source'},
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_source_set'", 'to': "orm['auth.User']"}),
-            'description': ('main.fields.XHTMLField', [], {}),
+            'description': ('editorsnotes.main.fields.XHTMLField', [], {}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'last_updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'last_updater': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'last_to_update_source_set'", 'to': "orm['auth.User']"}),
@@ -167,7 +167,7 @@ class Migration(SchemaMigration):
             'preferred_name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': "'80'"}),
             'related_topics': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'related_topics_rel_+'", 'blank': 'True', 'to': "orm['main.Topic']"}),
             'slug': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': "'80'"}),
-            'summary': ('main.fields.XHTMLField', [], {})
+            'summary': ('editorsnotes.main.fields.XHTMLField', [], {})
         },
         'main.topicassignment': {
             'Meta': {'unique_together': "(('topic', 'object_id'),)", 'object_name': 'TopicAssignment'},
@@ -180,7 +180,7 @@ class Migration(SchemaMigration):
         },
         'main.transcript': {
             'Meta': {'object_name': 'Transcript'},
-            'content': ('main.fields.XHTMLField', [], {}),
+            'content': ('editorsnotes.main.fields.XHTMLField', [], {}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_transcript_set'", 'to': "orm['auth.User']"}),
             'document': ('django.db.models.fields.related.OneToOneField', [], {'related_name': "'_transcript'", 'unique': 'True', 'null': 'True', 'to': "orm['main.Document']"}),

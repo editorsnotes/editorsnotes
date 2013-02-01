@@ -13,7 +13,7 @@ class Migration(SchemaMigration):
             ('last_updated', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
             ('created', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('creator', self.gf('django.db.models.fields.related.ForeignKey')(related_name='created_note_set', to=orm['auth.User'])),
-            ('content', self.gf('main.fields.XHTMLField')()),
+            ('content', self.gf('editorsnotes.main.fields.XHTMLField')()),
             ('last_updater', self.gf('django.db.models.fields.related.ForeignKey')(related_name='last_to_update_note_set', to=orm['auth.User'])),
             ('type', self.gf('django.db.models.fields.CharField')(default='N', max_length=1)),
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -24,7 +24,7 @@ class Migration(SchemaMigration):
         db.create_table('main_reference', (
             ('created', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('url', self.gf('django.db.models.fields.URLField')(max_length=200, blank=True)),
-            ('citation', self.gf('main.fields.XHTMLField')()),
+            ('citation', self.gf('editorsnotes.main.fields.XHTMLField')()),
             ('note', self.gf('django.db.models.fields.related.ForeignKey')(related_name='references', to=orm['main.Note'])),
             ('creator', self.gf('django.db.models.fields.related.ForeignKey')(related_name='created_reference_set', to=orm['auth.User'])),
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -139,7 +139,7 @@ class Migration(SchemaMigration):
         },
         'main.note': {
             'Meta': {'object_name': 'Note'},
-            'content': ('main.fields.XHTMLField', [], {}),
+            'content': ('editorsnotes.main.fields.XHTMLField', [], {}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_note_set'", 'to': "orm['auth.User']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -150,7 +150,7 @@ class Migration(SchemaMigration):
         },
         'main.reference': {
             'Meta': {'object_name': 'Reference'},
-            'citation': ('main.fields.XHTMLField', [], {}),
+            'citation': ('editorsnotes.main.fields.XHTMLField', [], {}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_reference_set'", 'to': "orm['auth.User']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),

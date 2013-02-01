@@ -595,8 +595,8 @@ class Project(models.Model, URLAccessible, PermissionsMixin):
                         action, slug, model._meta.verbose_name_plural.lower())
                 )
                 editors.permissions.add(perm)
-    def save(self):
-        super(Project, self).save()
+    def save(self, *args, **kwargs):
+        super(Project, self).save(*args, **kwargs)
         self.get_or_create_project_roles()
         
 class UserProfile(models.Model, URLAccessible):
@@ -636,14 +636,14 @@ class UserProfile(models.Model, URLAccessible):
             return role.name[role.name.index('_') + 1:-1]
         except Group.DoesNotExist:
             return None
-    def save(self):
+    def save(self, *args, **kwargs):
         if self.affiliation:
             project_groups = self.user.groups.filter(
                 user = self.user,
                 name__startswith=self.affiliation.slug)
             if len(project_groups) > 1:
                 raise Exception("Only one project role allowed")
-        super(UserProfile, self).save()
+        super(UserProfile, self).save(*args, **kwargs)
         if self.affiliation and not self.get_project_role(self.affiliation):
             if self.user.groups.filter(name='Editors'):
                 g = Group.objects.get(name='%s_editors' % self.affiliation.slug)

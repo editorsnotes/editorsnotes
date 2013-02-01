@@ -1,25 +1,78 @@
-# Django settings for editorsnotes project.
+###################
+# Locale settings #
+###################
 
-ADMINS = (
-    ('Ryan Shaw', 'ryanshaw@unc.edu'),
-    ('Patrick Golden', 'ptgolden@berkeley.edu'),
-)
-SERVER_EMAIL = 'django@localhost'
-
-MANAGERS = ADMINS
-
+# These settings are defaults: change in settings_local.py if desired
 TIME_ZONE = 'America/Los_Angeles'
 LANGUAGE_CODE = 'en-us'
 DATETIME_FORMAT = 'N j, Y, P'
-
-SITE_ID = 1
-
 USE_L10N = False
 USE_I18N = False
 
+
+########################
+# Datebase information #
+########################
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2'
+        # The rest of the DB configuration is done in settings_local.py
+    }
+}
+SOUTH_DATABASE_ADAPTERS = {
+    'default': 'south.db.postgresql_psycopg2'
+}
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'zotero_cache'
+    }
+}
+
+
+#################
+# Site settings #
+#################
+
+SITE_ID = 1
 MEDIA_URL = '/media/'
 STATIC_URL = '/static/'
+ROOT_URLCONF = 'editorsnotes.urls'
+AUTH_PROFILE_MODULE = 'main.UserProfile'
 
+HAYSTACK_SITECONF = 'editorsnotes.search_sites'
+HAYSTACK_SEARCH_ENGINE = 'xapian'
+
+
+#################
+# Path settings #
+#################
+import os
+
+EN_PROJECT_PATH = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
+
+TEMPLATE_DIRS = (
+    os.path.abspath(os.path.join(EN_PROJECT_PATH, 'editorsnotes', 'templates')),
+)
+STATICFILES_DIRS = (
+    os.path.abspath(os.path.join(EN_PROJECT_PATH, 'editorsnotes', 'static')),
+)
+
+# Override these variables in settings_local.py if desired
+try:
+    from settings_local import STORAGE_PATH
+except ImportError:
+    STORAGE_PATH = EN_PROJECT_PATH
+
+HAYSTACK_XAPIAN_PATH = os.path.abspath(os.path.join(STORAGE_PATH, 'searchindex'))
+MEDIA_ROOT = os.path.abspath(os.path.join(STORAGE_PATH, 'uploads'))
+STATIC_ROOT = os.path.abspath(os.path.join(STORAGE_PATH, 'static'))
+
+
+###################
+# Everything else #
+###################
 
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
@@ -45,27 +98,6 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
 )
 
-ROOT_URLCONF = 'editorsnotes.urls'
-
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': '/tmp/zotero_api_cache',
-    }
-}
-
-import os.path
-
-path = os.path.dirname(__file__)
-
-TEMPLATE_DIRS = (
-    os.path.abspath(os.path.join(path, 'templates')),
-)
-STATICFILES_DIRS = (
-    os.path.abspath(os.path.join(path, 'static')),
-)
-
-
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -83,15 +115,10 @@ INSTALLED_APPS = (
     'editorsnotes.admin',
 )
 
-FIXTURE_DIRS = ( 'fixtures', )
 
-HAYSTACK_SITECONF = 'editorsnotes.search_sites'
-HAYSTACK_SEARCH_ENGINE = 'xapian'
-
-AUTH_PROFILE_MODULE = 'main.UserProfile'
-
+# Add in local settings
 from settings_local import *
-
+DATABASES['default'].update(POSTGRES_DB)
 try:
     INSTALLED_APPS = INSTALLED_APPS + LOCAL_APPS
 except NameError:

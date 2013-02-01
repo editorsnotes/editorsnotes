@@ -30,22 +30,22 @@ class Migration(SchemaMigration):
     def backwards(self, orm):
         
         # Changing field 'Transcript.content'
-        db.alter_column('main_transcript', 'content', self.gf('main.fields.XHTMLField')())
+        db.alter_column('main_transcript', 'content', self.gf('editorsnotes.main.fields.XHTMLField')())
 
         # Changing field 'Footnote.content'
-        db.alter_column('main_footnote', 'content', self.gf('main.fields.XHTMLField')())
+        db.alter_column('main_footnote', 'content', self.gf('editorsnotes.main.fields.XHTMLField')())
 
         # Changing field 'Note.content'
-        db.alter_column('main_note', 'content', self.gf('main.fields.XHTMLField')())
+        db.alter_column('main_note', 'content', self.gf('editorsnotes.main.fields.XHTMLField')())
 
         # Deleting field 'Citation.notes'
         db.delete_column('main_citation', 'notes')
 
         # Changing field 'Topic.summary'
-        db.alter_column('main_topic', 'summary', self.gf('main.fields.XHTMLField')())
+        db.alter_column('main_topic', 'summary', self.gf('editorsnotes.main.fields.XHTMLField')())
 
         # Changing field 'Document.description'
-        db.alter_column('main_document', 'description', self.gf('main.fields.XHTMLField')())
+        db.alter_column('main_document', 'description', self.gf('editorsnotes.main.fields.XHTMLField')())
 
 
     models = {

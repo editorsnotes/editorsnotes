@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime
+from django.core.exceptions import ObjectDoesNotExist
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
@@ -9,6 +10,16 @@ class Migration(DataMigration):
 
     def forwards(self, orm):
 
+        # See previous migration (0079). These contenttypes do not exist when a
+        # user is performing migrations sequentially from the beginning.
+        try:
+            note_ct = orm['contenttypes.contenttype'].objects.get(
+                app_label='main', model='note')
+            citation_ct = orm['contenttypes.contenttype'].objects.get(
+                app_label='main', model='citation')
+        except ObjectDoesNotExist:
+            return
+
         # Disable auto_now* so we can set timestamps ourselves
         created = [f for f in orm['main.citation']._meta.local_fields \
                    if f.name == 'created'][0]
@@ -16,11 +27,6 @@ class Migration(DataMigration):
                  if f.name == 'last_updated'][0]
         created.auto_now_add = False
         updated.auto_now = False
-
-        note_ct = orm['contenttypes.contenttype'].objects.get(
-            app_label='main', model='note')
-        citation_ct = orm['contenttypes.contenttype'].objects.get(
-            app_label='main', model='citation')
 
         for ns in orm['main.notesection'].objects.select_related('note'):
 

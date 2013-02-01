@@ -14,7 +14,7 @@ class Migration(SchemaMigration):
             ('creator', self.gf('django.db.models.fields.related.ForeignKey')(related_name='created_transcript_set', to=orm['auth.User'])),
             ('created', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('source', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['main.Source'], unique=True)),
-            ('content', self.gf('main.fields.XHTMLField')()),
+            ('content', self.gf('editorsnotes.main.fields.XHTMLField')()),
         ))
         db.send_create_signal('main', ['Transcript'])
 
@@ -24,7 +24,7 @@ class Migration(SchemaMigration):
             ('creator', self.gf('django.db.models.fields.related.ForeignKey')(related_name='created_footnote_set', to=orm['auth.User'])),
             ('created', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('transcript', self.gf('django.db.models.fields.related.ForeignKey')(related_name='footnotes', to=orm['main.Transcript'])),
-            ('content', self.gf('main.fields.XHTMLField')()),
+            ('content', self.gf('editorsnotes.main.fields.XHTMLField')()),
         ))
         db.send_create_signal('main', ['Footnote'])
 
@@ -94,7 +94,7 @@ class Migration(SchemaMigration):
         },
         'main.footnote': {
             'Meta': {'object_name': 'Footnote'},
-            'content': ('main.fields.XHTMLField', [], {}),
+            'content': ('editorsnotes.main.fields.XHTMLField', [], {}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_footnote_set'", 'to': "orm['auth.User']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -102,7 +102,7 @@ class Migration(SchemaMigration):
         },
         'main.note': {
             'Meta': {'object_name': 'Note'},
-            'content': ('main.fields.XHTMLField', [], {}),
+            'content': ('editorsnotes.main.fields.XHTMLField', [], {}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_note_set'", 'to': "orm['auth.User']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -115,7 +115,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'Source'},
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_source_set'", 'to': "orm['auth.User']"}),
-            'description': ('main.fields.XHTMLField', [], {}),
+            'description': ('editorsnotes.main.fields.XHTMLField', [], {}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'ordering': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             'type': ('django.db.models.fields.CharField', [], {'default': "'S'", 'max_length': '1'}),
@@ -139,7 +139,7 @@ class Migration(SchemaMigration):
         },
         'main.transcript': {
             'Meta': {'object_name': 'Transcript'},
-            'content': ('main.fields.XHTMLField', [], {}),
+            'content': ('editorsnotes.main.fields.XHTMLField', [], {}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_transcript_set'", 'to': "orm['auth.User']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),

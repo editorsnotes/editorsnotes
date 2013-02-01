@@ -16,6 +16,7 @@ build
 dev.db
 include
 lib
+local
 secret.txt
 settings_local.py
 settings-*.py

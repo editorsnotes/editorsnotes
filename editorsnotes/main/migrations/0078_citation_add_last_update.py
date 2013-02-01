@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime
+from django.core.exceptions import ObjectDoesNotExist
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
@@ -7,8 +8,15 @@ from django.db import models
 class Migration(DataMigration):
 
     def forwards(self, orm):
-        citation_ct = orm['contenttypes.ContentType'].objects.get(
-            app_label='main', model='citation')
+
+        # This content_type does not exist if this migration is being
+        # performed sequentially from the beginning. In that case, we don't 
+        # care about changing existing data, so we can just return.
+        try:
+            citation_ct = orm['contenttypes.ContentType'].objects.get(
+                app_label='main', model='citation')
+        except ObjectDoesNotExist:
+            return
 
         # Turn off auto_now from the last_updated field so that we can manually
         # set it next

@@ -1,210 +1,115 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-import os
-from time import sleep
-from fabric.api import *
-from fabric.contrib.console import confirm
-from fabric.contrib.files import exists
+from fabric.api import env, local, lcd
+from fabric.colors import red
+from fabric.decorators import task, runs_once
 from fabric.utils import abort
-from fabfile_local import *
-from subprocess import call
-from datetime import datetime
 
-# Globals
+import fileinput
+import importlib
+import os
+import random
+import sys
 
+PROJ_ROOT = os.path.dirname(env.real_fabfile)
 env.project_name = 'editorsnotes'
 
-# Environments
-
-def beta():
-    "Use the beta-testing webserver."
-    env.hosts = ['beta.editorsnotes.org']
-    env.path = '/db/projects/%(project_name)s-beta' % env
-    env.vhosts_path = '/etc/httpd/sites.d'
-    env.python = '/usr/bin/python2.7'
-    env.site_packages = ['/usr/lib64/python2.7/site-packages',
-                         '/usr/lib/python2.7/site-packages']
-
-def pro():
-    "Use the production webserver."
-    env.hosts = ['editorsnotes.org']
-    env.path = '/db/projects/%(project_name)s' % env
-    env.vhosts_path = '/etc/httpd/sites.d'
-    env.python = '/usr/bin/python2.7'
-    env.site_packages = ['/usr/lib64/python2.7/site-packages',
-                         '/usr/lib/python2.7/site-packages']
-
-# Tasks
-
-def test():
-    "Run the test suite locally."
-    local("python manage.py test" % env)
-    
-def test_remote():
-    "Run the test suite remotely."
-    require('hosts', provided_by=[dev])
-    require('path')
-    run('cd %(path)s/releases/current;  ../../bin/python manage.py test' % env)
-    
+@task
 def setup():
     """
-    Setup a fresh virtualenv as well as a few useful directories, then
-    run a full deployment.
+    Set up a local development environment
+
+    This command must be run with Fabric installed globally (not inside a
+    virtual environment)
     """
-    require('hosts', provided_by=[dev])
-    require('path')
-    run('mkdir -p %(path)s' % env)
-    with cd(env.path):
-        run('virtualenv -p %(python)s --no-site-packages .' % env)
-        run('mkdir -p logs; mkdir -p releases; mkdir -p shared; mkdir -p packages' % env)
-        run('cd releases; touch none; ln -sf none current; ln -sf none previous')
-    deploy()
-    
-def deploy():
-    """
-    Deploy the latest version of the site to the servers, install any
-    required third party modules, install the virtual host and then
-    restart the webserver.
-    """
-    require('hosts', provided_by=[dev])
-    require('path')
-    import time
-    env.release = time.strftime('%Y%m%d%H%M%S')
-    upload_tar_from_git()
-    upload_local_settings()
-    upload_deploy_info()
-    symlink_system_packages()
-    install_requirements()
-    install_site()
-    symlink_current_release()
-    migrate()
+    if os.getenv('VIRTUAL_ENV') or hasattr(sys, 'real_prefix'):
+        abort(red('Deactivate any virtual environments before continuing.'))
+    make_settings()
+    make_virtual_env()
+    symlink_packages()
     collect_static()
-    restart_webserver()
-    sleep(2)
-    try:
-        type(env.gnome)
-        local('gnome-open http://%(host)s/' % env)
-    except:
-        local('open http://%(host)s/' % env)
-    
-def deploy_version(version):
-    "Specify a specific version to be made live."
-    require('hosts', provided_by=[dev])
-    require('path')
-    env.version = version
-    with cd(env.path):
-        run('rm releases/previous; mv releases/current releases/previous')
-        run('ln -s %(version)s releases/current' % env)
-    restart_webserver()
-    
-def rollback():
+    print ('\nDevelopment environment successfully created.\n' +
+           'Create a Postgres database, enter its information into ' +
+           'editorsnotes/settings_local.py, and run `fab sync_database` to finish.')
+
+@task
+def test():
+    "Run the test suite locally."
+    with lcd(PROJ_ROOT):
+        local('./bin/python manage.py test' % env)
+
+@task
+def sync_database():
+    "Sync db, make cache tables, and run South migrations"
+    with lcd(PROJ_ROOT):
+        local('./bin/python manage.py syncdb')
+        create_cache_tables()
+        local('./bin/python manage.py migrate')
+
+@task
+def runserver():
+    "Run the development server"
+    with lcd(PROJ_ROOT):
+        local('./bin/python manage.py runserver')
+
+@task
+@runs_once
+def make_settings():
     """
-    Limited rollback capability. Simple loads the previously current
-    version of the code. Rolling back again will swap between the two.
+    Generate a local settings file.
+
+    Without any arguments, this file will go in editorsnotes/settings_local.py.
+    If the function is passed an argument that defines env.hosts, this file will
+    be placed in the deploy directory with the name settings-{host}.py
     """
-    require('hosts', provided_by=[dev])
-    require('path')
-    with cd(env.path):
-        run('mv releases/current releases/_previous;')
-        run('mv releases/previous releases/current;')
-        run('mv releases/_previous releases/previous;')
-    restart_webserver()
+    to_create = (['deploy/settings-{}.py'.format(host) for host in env.hosts]
+                 or ['editorsnotes/settings_local.py'])
 
-def clean():
-    "Clean out old packages and releases."
-    require('hosts', provided_by=[dev])
-    require('path')
-    if (confirm('Are you sure you want to delete everything on %(host)s?' % env, 
-                default=False)):
-        with cd(env.path):
-            run('rm -rf packages; rm -rf releases')
-            run('mkdir -p packages; mkdir -p releases')
-            run('cd releases; touch none; ln -sf none current; ln -sf none previous')
-    
-# Helpers. These are called by other functions rather than directly.
+    for settings_file in to_create:
+        secret_key = generate_secret_key()
+        with lcd(PROJ_ROOT):
+            local('if [ ! -f {0} ]; then cp {1} {0}; fi'.format(
+                settings_file, 'editorsnotes/example-settings_local.py'))
+            for line in fileinput.input(settings_file, inplace=True):
+                print line.replace("SECRET_KEY = ''",
+                                   "SECRET_KEY = '{}'".format(secret_key)),
 
-def upload_tar_from_git():
-    "Create an archive from the current Git branch and upload it."
-    require('release', provided_by=[deploy, setup])
-    local('git archive --format=tar HEAD | gzip > %(release)s.tar.gz' % env)
-    run('mkdir -p %(path)s/releases/%(release)s' % env)
-    put('%(release)s.tar.gz' % env, '%(path)s/packages/' % env)
-    run('cd %(path)s/releases/%(release)s && tar zxf ../../packages/%(release)s.tar.gz' % env)
-    local('rm %(release)s.tar.gz' % env)
+@task
+def create_cache_tables():
+    caches = ['zotero_cache']
+    tables = local('./bin/python manage.py inspectdb | grep "db_table ="', capture=True)
+    for cache in caches:
+        if "'{}'".format(cache) in tables:
+            continue
+        with lcd(PROJ_ROOT):
+            local('./bin/python manage.py createcachetable {}'.format(cache))
 
-def upload_local_settings():
-    "Upload the appropriate local settings file."
-    require('release', provided_by=[deploy, setup])
-    put('deploy/settings-%(host)s.py' % env, 
-        '%(path)s/releases/%(release)s/%(project_name)s/settings_local.py' % env)
 
-def upload_deploy_info():
-    "Upload information about the version and time of deployment."
-    require('release', provided_by=[deploy, setup])
-    with open('%(project_name)s/templates/version.txt' % env, 'wb') as f:
-        call(['git', 'rev-parse', 'HEAD'], stdout=f)
-    with open('%(project_name)s/templates/time-deployed.txt' % env, 'wb') as f:
-        f.write(datetime.now().strftime('%Y-%m-%d %H:%M'))
-    for filename in ['version.txt', 'time-deployed.txt']:
-        put(('%(project_name)s/templates/' % env) + filename,
-            ('%(path)s/releases/%(release)s/%(project_name)s/templates/' % env) + filename)
+def make_virtual_env():
+    "Make a virtual environment for local dev use"
+    with lcd(PROJ_ROOT):
+        local('virtualenv .')
+        local('./bin/pip install -r requirements.txt')
 
-def install_requirements():
-    "Install the required packages from the requirements file using pip"
-    require('release', provided_by=[deploy, setup])
-    run('export SAVED_PIP_VIRTUALENV_BASE=$PIP_VIRTUALENV_BASE; unset PIP_VIRTUALENV_BASE; ' +
-        'cd %(path)s; ./bin/pip install -E . -r ./releases/%(release)s/requirements.txt; ' % env +
-        'export PIP_VIRTUALENV_BASE=$SAVED_PIP_VIRTUALENV_BASE; unset SAVED_PIP_VIRTUALENV_BASE')
-
-def symlink_system_packages():
-    "Create symlinks to system site-packages."
-    require('site_packages', provided_by=[dev])
-    require('path')
-    site_packages = env.path + '/lib/python2.7/site-packages'
-    with cd(site_packages):
-        with open('requirements.txt') as reqs:
-            for line in reqs:
-                if line.startswith('# symlink: '):
-                    found = False
-                    for sys_site_packages in env.site_packages:
-                        target = sys_site_packages + '/' + line[11:-1]
-                        if exists(target):
-                            run('ln -f -s %s' % target)
-                            found = True
-                    if not found:
-                        abort('Missing %s' % target)
-
-def install_site():
-    "Add the virtualhost file to apache."
-    require('release', provided_by=[deploy, setup])
-    put('deploy/vhost-%(host)s.conf' % env,
-        '%(path)s/vhost-%(host)s.conf.tmp' % env)
-    sudo('cd %(path)s; mv -f vhost-%(host)s.conf.tmp %(vhosts_path)s/vhost-%(host)s.conf' % env, pty=True)
-
-def symlink_current_release():
-    "Symlink our current release."
-    require('release', provided_by=[deploy, setup])
-    with cd(env.path):
-        run('rm releases/previous; mv releases/current releases/previous;')
-        run('ln -s %(release)s releases/current' % env)
-    
-def migrate():
-    "Update the database"
-    require('hosts', provided_by=[dev])
-    require('path')
-    with cd('%(path)s/releases/current' % env):
-        run('../../bin/python manage.py syncdb --noinput')
-        for app in [ 'main', 'djotero', 'refine', 'reversion' ]:
-            run('../../bin/python manage.py migrate --noinput %s' % app)
+def symlink_packages():
+    "Symlink python packages not installed with pip"
+    missing = []
+    requirements = (req.rstrip().replace('# symlink: ', '')
+                    for req in open('requirements.txt', 'r')
+                    if req.startswith('# symlink: '))
+    for req in requirements:
+        try:
+            module = importlib.import_module(req)
+        except ImportError:
+            missing.append(req)
+            continue
+        with lcd(os.path.join(PROJ_ROOT, 'lib', 'python2.7', 'site-packages')):
+            local('ln -f -s {}'.format(os.path.dirname(module.__file__)))
+    if missing:
+        abort('Missing python packages: {}'.format(', '.join(missing)))
 
 def collect_static():
-    "Collect static files"
-    require('hosts', provided_by=[dev])
-    require('path')
-    with cd('%(path)s/releases/current' % env):
-        run('../../bin/python manage.py collectstatic --noinput')
-    
-def restart_webserver():
-    "Restart the web server."
-    sudo('apachectl restart', pty=True)
+    with lcd(PROJ_ROOT):
+        local('./bin/python manage.py collectstatic --noinput -v0')
+
+def generate_secret_key():
+    SECRET_CHARS = 'abcdefghijklmnopqrstuvwxyz1234567890-=!@#$$%^&&*()_+'
+    return ''.join([random.choice(SECRET_CHARS) for i in range(50)])

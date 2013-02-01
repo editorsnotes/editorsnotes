@@ -82,7 +82,7 @@ class Migration(DataMigration):
         },
         'main.note': {
             'Meta': {'object_name': 'Note'},
-            'content': ('main.fields.XHTMLField', [], {}),
+            'content': ('editorsnotes.main.fields.XHTMLField', [], {}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_note_set'", 'to': "orm['auth.User']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -93,7 +93,7 @@ class Migration(DataMigration):
         },
         'main.reference': {
             'Meta': {'object_name': 'Reference'},
-            'citation': ('main.fields.XHTMLField', [], {}),
+            'citation': ('editorsnotes.main.fields.XHTMLField', [], {}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_reference_set'", 'to': "orm['auth.User']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -106,7 +106,7 @@ class Migration(DataMigration):
             'Meta': {'object_name': 'Source'},
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_source_set'", 'to': "orm['auth.User']"}),
-            'description': ('main.fields.XHTMLField', [], {}),
+            'description': ('editorsnotes.main.fields.XHTMLField', [], {}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'ordering': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             'type': ('django.db.models.fields.CharField', [], {'default': "'S'", 'max_length': '1'}),
