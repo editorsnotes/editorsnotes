@@ -1,30 +1,113 @@
 {% extends "base.html" %}
 
+{% load static %}
+
 {% block title %}: Login{% endblock %}
 
-{% block content %}
-<div id="login">
-    {% if form.errors %}
-    <div class="error">Your username and password didn't match. Please try again.</div>
-    {% endif %}
+{% block css %}
+<style type="text/css">
 
+  .center {
+    text-align: center;
+  }
+
+  .browserid-login-container, hr {
+    margin-bottom: 2em;
+  }
+  p {
+    font-size: 12px;
+    margin-bottom: 1.5em;
+  }
+
+  #invitation-notice {
+    font-family: "Open Sans", sans-serif;
+    font-size: 20px;
+    line-height: 28px;
+  }
+
+  #name-pass-login input {
+    margin-bottom: 0px;
+  }
+
+</style>
+{% endblock %}
+
+{% block css_nocompress %}
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+{% endblock %}
+
+{% block content %}
+<div id="login" class="row">
+
+  <div class="span8 offset2">
+
+  {% if request.GET.bid_login_failed %}
+    <p>
+    Attempting to log in
+    </p>
+  {% else %}
+
+  {% if form.errors %}
+  <div class="alert alert-error">
+    Your username and password didn't match. Please try again.
+  </div>
+  {% endif %}
+
+  {% if request.GET.bad_email %}
+  <div class="alert alert-error">
+    Failed to log in with given email.
+  </div>
+  {% endif %}
+
+  <p id="invitation-notice" class="center">
+   Accounts are currently open only via invitation. If you have not received an invitation, <a href="/about/">send us a message</a> to request one.
+  </p>
+
+  <hr />
+
+  <div class="center" id="persona-login">
+    <p>
+      Use the button below to sign in using your email with <a href="https://login.persona.org/about">Mozilla Persona</a>.
+    </p>
+    <div class="browserid-login-container">
+      <a class="browserid-login" href="{% url django.contrib.auth.views.login %}">
+        <img src="{% static "style/icons/plain_sign_in_black.png" %}">
+      </a>
+      <form method="post" action="{% url browserid_verify %}">
+        {% csrf_token %}
+        {{ browserid_form.as_p }}
+      </form>
+    </div>
+  </div>
+
+  <hr />
+
+  <div class="center" id="name-pass-login">
+    <p>
+    Alternatively, sign in with your username and password.
+    </p>
     <form method="post" action="{% url django.contrib.auth.views.login %}">
+      {% csrf_token %}
       <fieldset>
-        <legend>Login</legend>
         <p>
-          {{ form.username.label_tag }}<br/>
-          {{ form.username }}
+          <label>Username</label> {{ form.username }}
         </p>
+
         <p>
-          {{ form.password.label_tag }}<br/>
-          {{ form.password }}
+          <label>Password</label> {{ form.password }}
         </p>
+
         <p>
           <button type="submit">Login</button>
         </p>
       </fieldset>
       <input type="hidden" name="next" value="{{ next }}" />
-      {% csrf_token %}
     </form>  
+  </div>
+
+  {% endif %}
+
+  </div>
+
 </div>
 {% endblock %}

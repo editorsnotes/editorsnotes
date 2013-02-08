@@ -44,7 +44,12 @@ SITE_ID = 1
 MEDIA_URL = '/media/'
 STATIC_URL = '/static/'
 ROOT_URLCONF = 'editorsnotes.urls'
+
 AUTH_PROFILE_MODULE = 'main.UserProfile'
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'django_browserid.auth.BrowserIDBackend',
+)
 
 HAYSTACK_SITECONF = 'editorsnotes.search_sites'
 HAYSTACK_SEARCH_ENGINE = 'xapian'
@@ -85,6 +90,7 @@ TEMPLATE_LOADERS = (
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = (
+    'editorsnotes.main.context_processors.browserid',
     'django.contrib.auth.context_processors.auth',
     'django.core.context_processors.debug',
     'django.core.context_processors.i18n',
@@ -105,6 +111,7 @@ MIDDLEWARE_CLASSES = (
 
 INSTALLED_APPS = (
     'django.contrib.auth',
+    'django_browserid',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
@@ -126,6 +133,7 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
     'compressor.finders.CompressorFinder',
 )
+BROWSERID_CREATE_USER = 'editorsnotes.main.views.create_invited_user'
 
 LESSC_BINARY = 'lessc'
 

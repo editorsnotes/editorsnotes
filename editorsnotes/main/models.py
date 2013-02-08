@@ -524,6 +524,10 @@ class NoteSection(LastUpdateMetadata):
         return set( [ta.topic for ta in self.note.topics.all()] +
                     [ta.topic for ta in self.topics.all()] )
 
+PROJECT_ROLES = (
+    ('editor', 'Editor'),
+    ('researcher', 'Researcher')
+)
 
 class Project(models.Model, URLAccessible, PermissionsMixin):
     name = models.CharField(max_length='80')
@@ -598,6 +602,12 @@ class Project(models.Model, URLAccessible, PermissionsMixin):
     def save(self, *args, **kwargs):
         super(Project, self).save(*args, **kwargs)
         self.get_or_create_project_roles()
+
+class ProjectInvitation(CreationMetadata):
+    project = models.ForeignKey(Project)
+    email = models.EmailField()
+    role = models.CharField(
+        max_length=10, choices=PROJECT_ROLES, default='researcher')
         
 class UserProfile(models.Model, URLAccessible):
     user = models.ForeignKey(User, unique=True)

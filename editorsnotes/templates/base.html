@@ -31,7 +31,15 @@
     <script type="text/javascript" src="{% static "function/jquery/jquery.ba-bbq.min.js" %}"></script>
     <script type="text/javascript" src="{% static "function/base.js" %}"></script>
     <script type="text/javascript" src="{% static "function/bootstrap.min.js" %}"></script>
+    {% if request.user.is_authenticated and request.user.email %}
+    <script type="text/javascript">
+      EditorsNotes.loggedInUser = '{{ request.user.email }}';
+    </script>
+    {% endif %}
     {% endcompress %}
+
+    <script type="text/javascript" src="https://login.persona.org/include.js"></script>
+    <script type="text/javascript" src="{% static "function/browserid.js" %}"></script>
 
     {% compress js %}{% block js %}{% endblock %}{% endcompress %}
     {% block js_nocompress %}{% endblock %}
@@ -55,6 +63,9 @@
 
             {% if user.is_authenticated %}
             {% with profile=user.get_profile %}
+            {% if user.email %}
+            <input type="hidden" id="logged-in-user-email" value="{{ user.email }}" />
+            {% endif %}
             <ul class="nav pull-right">
               <li class="dropdown">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown">
@@ -63,7 +74,7 @@
                 </a>
                 <ul class="dropdown-menu">
                   <li><a href="{{ profile.get_absolute_url }}">My profile</a></li>
-                  <li><a href="{% url user_logout_view %}">Log out</a></li>
+                  <li><a {% if browserid_authenticated %}class="browserid-logout" {% endif %}href="{% url user_logout_view %}">Log out</a></li>
                 </ul>
               </li>
               <li>
@@ -104,5 +115,6 @@
       <div id="main" class="container">
         {% block content %}{% endblock %}
       </div>
+
     </body>
 </html>

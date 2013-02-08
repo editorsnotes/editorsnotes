@@ -15,6 +15,9 @@ import forms as admin_forms
 import reversion
 import json
 
+VIEW_ERROR_MSG = 'You do not have permission to view {}.'
+CHANGE_ERROR_MSG = 'You do not have permission to change {}.'
+
 ###########################################################################
 # Note, topic, document admin
 ###########################################################################
@@ -73,14 +76,12 @@ class BaseAdminView(ProcessInlineFormsetsView, ModelFormMixin, TemplateResponseM
     def get(self, request, *args, **kwargs):
         self.object = self.get_object(**kwargs)
         if self.object and not self.object.attempt('change', self.request.user):
-            return http.HttpResponseForbidden(
-                'You do not have permission to change this object')
+            return http.HttpResponseForbidden(CHANGE_ERROR_MSG.format(object))
         return super(BaseAdminView, self).get(request, *args, **kwargs)
     def post(self, request, *args, **kwargs):
         self.object = self.get_object(**kwargs)
         if self.object and not self.object.attempt('change', self.request.user):
-            return http.HttpResponseForbidden(
-                'You do not have permission to change this object')
+            return http.HttpResponseForbidden(CHANGE_ERROR_MSG.format(object))
         return super(BaseAdminView, self).post(request, *args, **kwargs)
 
     def get_object(self):
@@ -309,48 +310,46 @@ def note_sections(request, note_id):
 @reversion.revision.create_on_success
 def project_roster(request, project_id):
     o = {}
-    project = get_object_or_404(main_models.Project, id=project_id)
     user = request.user
-
-    # Test user permissions
+    project = get_object_or_404(main_models.Project, id=project_id)
+    can_change = project.attempt('change', user)
+    ProjectRosterFormSet = admin_forms.make_project_roster_formset(project)
+    ProjectInvitationFormSet = admin_forms.make_project_invitation_formset(project)
     if not project.attempt('view', user):
-        return http.HttpResponseForbidden(
-            content='You do not have permission to view the roster of %s' % project.name)
-    o['can_change'] = project.attempt('change', user)
+        return http.HttpResponseForbidden(VIEW_ERROR_MSG.format(project))
 
-    # Save project roster
     if request.method == 'POST':
-        if not o['can_change']:
-            messages.add_message(request, messages.ERROR,
-                                 'Cannot edit project roster')
-        else:
-            formset = admin_forms.ProjectUserFormSet(request.POST)
-            if formset.is_valid():
-                for form in formset:
-                    form.project = project
-                formset.save()
-                messages.add_message(request, messages.SUCCESS,
-                                     'Roster for %s saved.' % (project.name))
-                return http.HttpResponseRedirect(request.path)
-            else:
-                #TODO
-                pass
+        if not can_change:
+            return http.HttpResponseForbidden(CHANGE_ERROR_MSG.format(project))
+        o['roster_formset'] = ProjectRosterFormSet(
+            request.POST, prefix='roster')
+        o['invitation_formset'] = ProjectInvitationFormSet(
+            request.POST, prefix='invitation')
+        if o['roster_formset'].is_valid() and o['invitation_formset'].is_valid():
+            o['roster_formset'].save()
+            for form in o['invitation_formset']:
+                if form.cleaned_data.get('DELETE', False):
+                    if form.instance:
+                        form.instance.delete()
+                    continue
+                obj = form.save(commit=False)
+                if not obj.id:
+                    if not form.cleaned_data.has_key('email'):
+                        continue
+                    obj.creator = request.user
+                    obj.project = project
+                obj.save()
+            messages.add_message(request, messages.SUCCESS,
+                                 'Roster for {} saved.'.format(project.name))
+            return http.HttpResponseRedirect(request.path)
+    elif can_change:
+        o['roster_formset'] = ProjectRosterFormSet(prefix='roster')
+        o['invitation_formset'] = ProjectInvitationFormSet(prefix='invitation')
 
-    # Render project form, disabling inputs if user can't change them
-    project_roster = User.objects.filter(userprofile__affiliation=project)\
-            .order_by('-is_active', '-last_login')
-    o['formset'] = admin_forms.ProjectUserFormSet(queryset=project_roster)
-    for form in o['formset']:
-        u = form.instance
-        if not o['can_change']:
-            for field in form.fields:
-                f = form.fields[field]
-                f.widget.attrs['disabled'] = 'disabled'
-        elif u == request.user:
-            for field in form.fields:
-                f = form.fields[field]
-                f.widget.attrs['readonly'] = 'readonly'
-        form.initial['project_role'] = u.get_profile().get_project_role(project)
+    o['project'] = project
+    o['roster'] = [(u, u.get_project_role(project))
+                   for u in project.members.order_by('-user__last_login')]
+
     return render_to_response(
         'project_roster.html', o, context_instance=RequestContext(request))
 

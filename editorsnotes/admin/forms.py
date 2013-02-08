@@ -1,55 +1,112 @@
 from django import forms
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.generic import generic_inlineformset_factory
-from django.forms.models import inlineformset_factory, modelformset_factory, ModelForm
+from django.forms.models import (
+    inlineformset_factory, modelformset_factory, ModelForm, BaseModelFormSet)
 from django.shortcuts import get_object_or_404
 from django.utils.safestring import mark_safe
 
 from editorsnotes.djotero.widgets import ZoteroWidget
 from editorsnotes.djotero.models import ZoteroLink
-from editorsnotes.djotero.utils import validate_zotero_data
 from editorsnotes.main import models as main_models
 from fields import MultipleFileInput
 
-from collections import OrderedDict
-import json
 
 ################################################################################
 # Project forms
 ################################################################################
 
-class ProjectUserForm(ModelForm):
-    project_roles = ['editor', 'researcher']
-    project_role = forms.ChoiceField(
-        choices=tuple([(r, r.title()) for r in project_roles]))
-    class Meta:
-        model = User
-    def __init__(self, *args, **kwargs):
-        super(ProjectUserForm, self).__init__(*args, **kwargs)
-        if kwargs.has_key('instance'):
-            u = kwargs['instance']
-            self.user_object = u
-            self.user_display_name = u.get_full_name() or u.username
-    def save(self, commit=True):
-        model = super(ProjectUserForm, self).save(commit=False)
-        existing_role = model.get_profile().get_project_role(self.project)
-        if existing_role != self.cleaned_data['project_role']:
-            old_role = model.groups.get(name__startswith='%s_' % (
-                self.project.slug))
-            new_role = Group.objects.get(name__startswith="%s_%s" % (
-                self.project.slug, self.cleaned_data['project_role']))
-            model.groups.remove(old_role)
-            model.groups.add(new_role)
-        if commit:
-            model.save()
-        return model
+def make_project_invitation_formset(project):
+    if not isinstance(project, main_models.Project):
+        raise ValueError('{} is not a project.'.format(project))
 
-ProjectUserFormSet = modelformset_factory(
-    User,
-    form=ProjectUserForm,
-    extra=0,
-    fields=('is_active',),
-)
+    project_invitations = main_models.ProjectInvitation.objects\
+            .select_related('project')\
+            .filter(project__id=project.id)
+
+    class ProjectInvitationFormSet(BaseModelFormSet):
+        def __init__(self, *args, **kwargs):
+            kwargs['queryset'] = project_invitations
+            super(ProjectInvitationFormSet, self).__init__(*args, **kwargs)
+
+    class ProjectInvitationForm(ModelForm):
+        class Meta:
+            model = main_models.ProjectInvitation
+            fields = ('email', 'role',)
+        def __init__(self, *args, **kwargs):
+            super(ProjectInvitationForm, self).__init__(*args, **kwargs)
+            self.fields['email'].widget.attrs['placeholder'] = 'Email to invite'
+        def clean_email(self):
+            data = self.cleaned_data['email']
+            user = User.objects.filter(email=data)
+            if user.count() > 1:
+                msg = 'Multiple users with this email address.'
+                raise forms.ValidationError(msg)
+            elif user.count() == 1 and user[0].get_profile().affiliation == project:
+                msg = 'User with email {} already in project'.format(data)
+                raise forms.ValidationError(msg)
+            existing_invite = main_models.ProjectInvitation.objects.filter(
+                email=data, project=project)
+            if not self.instance.id and existing_invite.count():
+                msg = 'User with email {} already invited.'.format(data)
+                raise forms.ValidationError(msg)
+            return data
+    return modelformset_factory(
+        main_models.ProjectInvitation,
+        formset=ProjectInvitationFormSet,
+        form=ProjectInvitationForm,
+        can_delete=True,
+        extra=1
+    )
+
+
+def make_project_roster_formset(project):
+    """
+    Returns a formset for editing project roles.
+    """
+    if not isinstance(project, main_models.Project):
+        raise ValueError('{} is not a project.'.format(project))
+
+    project_roster = main_models.User.objects\
+            .select_related('userprofile')\
+            .filter(userprofile__affiliation=project)\
+            .order_by('-last_login')
+
+    class ProjectRosterFormSet(BaseModelFormSet):
+        def __init__(self, *args, **kwargs):
+            kwargs['queryset'] = project_roster
+            super(ProjectRosterFormSet, self).__init__(*args, **kwargs)
+
+    class ProjectMemberForm(ModelForm):
+        project_role = forms.ChoiceField(choices=main_models.PROJECT_ROLES)
+        class Meta:
+            model = User
+        def __init__(self, *args, **kwargs):
+            super(ProjectMemberForm, self).__init__(*args, **kwargs)
+            if not self.instance.pk:
+                return
+            profile = self.instance.get_profile()
+            self.initial['project_role'] = profile.get_project_role(project)
+        def save(self, commit=True):
+            user = self.instance
+            existing_role = user.get_profile().get_project_role(project)
+            if existing_role != self.cleaned_data['project_role']:
+                old_role = user.groups.get(name__startswith='{}_'.format(
+                    project.slug))
+                new_role = Group.objects.get(name__startswith='{}_{}'.format(
+                    project.slug, self.cleaned_data['project_role']))
+                user.groups.remove(old_role)
+                user.groups.add(new_role)
+            user.save()
+            return user
+
+    return modelformset_factory(
+        User,
+        formset=ProjectRosterFormSet,
+        form=ProjectMemberForm,
+        fields=(),
+        extra=0
+    )
 
 class ProjectForm(ModelForm):
     class Meta:
