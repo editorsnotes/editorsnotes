@@ -2,48 +2,71 @@
 
 {% load static %}
 
-{% block title %}: Login{% endblock %}
+{% block title %}: Sign in{% endblock %}
 
 {% block css %}
 <style type="text/css">
 
-  .center {
-    text-align: center;
+  form {
+    margin-bottom: 0px;
   }
 
-  .browserid-login-container, hr {
-    margin-bottom: 2em;
-  }
-  p {
-    font-size: 12px;
-    margin-bottom: 1.5em;
+  #login > .row {
+    border-color: #ccc;
+    border-width: 1px 0 1px;
+    border-style: solid;
   }
 
-  #invitation-notice {
-    font-family: "Open Sans", sans-serif;
+  #all-login-methods {
+    margin-left: 18px;
+    border-left: 1px solid #ccc
+  }
+
+  #invitation-notice p {
+    font-family: "Source Sans Pro", sans-serif;
     font-size: 20px;
     line-height: 28px;
+    margin-bottom: 1em;
+    margin: 0 16px 0 0;
+    position: relative;
+    top: 116px;
+    left: 2px;
+  }
+
+  .login-method {
+    padding: 28px;
+    font-size: 12px;
+  }
+  .login-method > p {
+    font-family: "Source Sans Pro", sans-serif;
+    font-size: 16px;
+    margin-bottom: 1.25em;
+  }
+
+  #persona-login {
+    border-bottom: 1px solid #ccc;
   }
 
   #name-pass-login input {
     margin-bottom: 0px;
+  }
+  #name-pass-login button {
+    margin-top: 4px;
   }
 
 </style>
 {% endblock %}
 
 {% block css_nocompress %}
-<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400' rel='stylesheet' type='text/css'>
 {% endblock %}
 
 {% block content %}
-<div id="login" class="row">
-
-  <div class="span8 offset2">
+<div id="login">
 
   {% if request.GET.bid_login_failed %}
     <p>
-    Attempting to log in
+    Attempting to sign in...
     </p>
   {% else %}
 
@@ -59,55 +82,56 @@
   </div>
   {% endif %}
 
-  <p id="invitation-notice" class="center">
-   Accounts are currently open only via invitation. If you have not received an invitation, <a href="/about/">send us a message</a> to request one.
-  </p>
+  <h3>Sign in</h3>
 
-  <hr />
+  <div class="row">
 
-  <div class="center" id="persona-login">
-    <p>
-      Use the button below to sign in using your email with <a href="https://login.persona.org/about">Mozilla Persona</a>.
-    </p>
-    <div class="browserid-login-container">
-      <a class="browserid-login" href="{% url django.contrib.auth.views.login %}">
-        <img src="{% static "style/icons/plain_sign_in_black.png" %}">
-      </a>
-      <form method="post" action="{% url browserid_verify %}">
-        {% csrf_token %}
-        {{ browserid_form.as_p }}
-      </form>
+    <div id="invitation-notice" class="span6">
+      <p>New accounts are currently open only via invitation. If you have not received an invitation, <a href="/about/">send us a message</a> to request one.</p>
     </div>
-  </div>
 
-  <hr />
-
-  <div class="center" id="name-pass-login">
-    <p>
-    Alternatively, sign in with your username and password.
-    </p>
-    <form method="post" action="{% url django.contrib.auth.views.login %}">
-      {% csrf_token %}
-      <fieldset>
+    <div id="all-login-methods" class="span6">
+      <div class="login-method" id="persona-login">
         <p>
-          <label>Username</label> {{ form.username }}
+          Sign in using your email with <a href="https://login.persona.org/about">Mozilla Persona</a>.
         </p>
-
+        <div class="browserid-login-container">
+          <a class="browserid-login" href="{% url django.contrib.auth.views.login %}">
+            <img src="{% static "style/icons/plain_sign_in_black.png" %}">
+          </a>
+          <form method="post" action="{% url browserid_verify %}">
+            {% csrf_token %}
+            {{ browserid_form.as_p }}
+          </form>
+        </div>
+      </div>
+      <div class="login-method" id="name-pass-login">
         <p>
-          <label>Password</label> {{ form.password }}
+        Alternatively, use your username and password.
         </p>
+        <form method="post" action="{% url django.contrib.auth.views.login %}">
+          {% csrf_token %}
+          <fieldset>
+            <p>
+              <label>Username</label> {{ form.username }}
+            </p>
 
-        <p>
-          <button type="submit">Login</button>
-        </p>
-      </fieldset>
-      <input type="hidden" name="next" value="{{ next }}" />
-    </form>  
+            <p>
+              <label>Password</label> {{ form.password }}
+            </p>
+
+            <p>
+              <button type="submit">Submit</button>
+            </p>
+          </fieldset>
+          <input type="hidden" name="next" value="{{ next }}" />
+        </form>  
+      </div>
+    </div>
+
   </div>
 
   {% endif %}
-
-  </div>
 
 </div>
 {% endblock %}
