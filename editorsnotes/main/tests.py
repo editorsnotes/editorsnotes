@@ -82,35 +82,6 @@ class TopicTestCase(TestCase):
             related = t.related_topics.all()
             self.assertEquals(len(related), 1)
             self.assertEquals(related[0], self.topics[0])
-    def testDuplicateSlug(self):
-        Topic.objects.create(
-            preferred_name=u'Doe, John', 
-            summary='Yoyoyo!',
-            creator=self.user, last_updater=self.user)
-        self.assertTrue(self.client.login(username='testuser', password='testuser'))
-        response = self.client.post('/admin/main/topic/add/', 
-                                     { 'preferred_name': u'Doe, John',
-                                       'summary': u'John Doe was a great man.',
-                                       'aliases-TOTAL_FORMS': 0,
-                                       'aliases-INITIAL_FORMS': 0,
-                                       'aliases-MAX_NUM_FORMS': 0,
-                                       'main-citation-content_type-object_id-TOTAL_FORMS': 0,
-                                       'main-citation-content_type-object_id-INITIAL_FORMS': 0,
-                                       'main-citation-content_type-object_id-MAX_NUM_FORMS': 0 })
-        self.assertEquals(len(response.context['errors']), 1)
-        self.assertEquals(response.context['errors'][0][0], 
-                          u'Topic with this Preferred name already exists.')
-        response = self.client.post('/admin/main/topic/add/', 
-                                     { 'preferred_name': u'Doe John',
-                                       'summary': u'John Doe was a great man.',
-                                       'aliases-TOTAL_FORMS': 0,
-                                       'aliases-INITIAL_FORMS': 0,
-                                       'aliases-MAX_NUM_FORMS': 0,
-                                       'main-citation-content_type-object_id-TOTAL_FORMS': 0,
-                                       'main-citation-content_type-object_id-INITIAL_FORMS': 0,
-                                       'main-citation-content_type-object_id-MAX_NUM_FORMS': 0 })
-        self.assertEquals(response.context['errors'][0][0], 
-                          u'Topic with a very similar Preferred name already exists.')
 
 class NoteTestCase(TestCase):
     def setUp(self):
@@ -131,7 +102,7 @@ class NoteTestCase(TestCase):
             description='Ryan Shaw, <em>My Big Book of Cool Stuff</em>, 2010.', 
             creator=self.user, last_updater=self.user)
         note.citations.create(
-            document=document, creator=self.user)
+            document=document, creator=self.user, last_updater=self.user)
         self.assertEquals(1, len(note.citations.all()))
         self.assertEquals(document, note.citations.all()[0].document)
         note.delete()

@@ -12,7 +12,7 @@ urlpatterns = patterns('',
 )
 
 urlpatterns += patterns('',
-    (r'^admin/', include('editorsnotes.admin.urls')),
+    (r'^admin/', include('editorsnotes.admin_custom.urls')),
 )
 
 urlpatterns += patterns('',
