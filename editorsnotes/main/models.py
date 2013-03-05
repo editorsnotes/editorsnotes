@@ -6,7 +6,6 @@ import fields
 import json
 from copy import deepcopy
 from lxml import etree
-from unaccent import unaccent
 from django.db import models
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth.models import User, Group, Permission
@@ -16,10 +15,13 @@ from django.core import urlresolvers
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.urlresolvers import NoReverseMatch
 from django.dispatch import receiver
+from django.utils.encoding import smart_text
 from django.utils.html import conditional_escape, escape
+from django.utils.http import urlquote_plus
 from django.utils.safestring import mark_safe
 from io import StringIO
 import reversion
+import unicodedata
 
 # -------------------------------------------------------------------------------
 # Abstract base classes and interfaces.
@@ -435,9 +437,7 @@ class Topic(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
             self.slug = Topic.make_slug(kwargs['preferred_name'])
     @staticmethod
     def make_slug(preferred_name):
-        return '-'.join(
-            [ x for x in re.split('\W+', unaccent(unicode(preferred_name)))
-              if len(x) > 0 ]).lower()
+        return utils.unicode_slugify(preferred_name)
     def __setattr__(self, key, value):
         super(Topic, self).__setattr__(key, value)
         if key == 'preferred_name':
@@ -448,7 +448,7 @@ class Topic(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
         return u' '.join([ a.name for a in self.aliases.all() ])
     @models.permalink
     def get_absolute_url(self):
-        return ('topic_view', [str(self.slug)])
+        return ('topic_view', [self.slug])
     def as_text(self):
         return self.preferred_name
     def validate_unique(self, exclude=None):

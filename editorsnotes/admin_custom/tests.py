@@ -50,7 +50,7 @@ class TopicAdminTestCase(TestCase):
 
         data = self.blank_form_data.copy()
         data.update({
-            'preferred_name': u'Doe John',
+            'preferred_name': u'Doe,* John',
             'summary': u'pppppppp'
         })
         response = self.client.post('/admin/main/topic/add/', data)
@@ -64,6 +64,7 @@ class TopicAdminTestCase(TestCase):
             summary=u'Также мужчина; также коммунисть.',
             creator=self.user, last_updater=self.user)
         data = self.blank_form_data.copy()
+
         data.update({
             'preferred_name': topic.preferred_name,
             'summary': topic.summary,

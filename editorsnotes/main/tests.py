@@ -69,11 +69,11 @@ class TopicTestCase(TestCase):
             t.delete()
     def testSlugGeneration(self):
         self.assertEquals(self.topics[0].slug,
-                          u'foote-edward-b-edward-bliss-1829-1906')
+                          u'Foote,_Edward_B_Edward_Bliss_1829-1906')
         self.assertEquals(self.topics[1].slug,
-                          u'raggler-a-paschaser-pa-vara-mal-ta-en-bonne')
+                          u'Räggler_å_paschaser_på_våra_mål_tå_en_bonne')
         self.assertEquals(self.topics[2].slug,
-                          u'not-unicode')
+                          u'Not_unicode')
     def testRelatedTopics(self):
         self.topics[0].related_topics.add(self.topics[1])
         self.topics[0].related_topics.add(self.topics[2])
