@@ -427,6 +427,7 @@ class Topic(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
     slug = models.CharField(max_length='80', unique=True, editable=False, db_index=True)
     type = models.CharField(max_length=3, choices=TYPE_CHOICES, blank=True)
     related_topics = models.ManyToManyField('self', blank=True)
+    topics = generic.GenericRelation('TopicAssignment', related_name='parent_topic')
     summary = fields.XHTMLField(verbose_name='article', blank=True, null=True)
     summary_citations = generic.GenericRelation('Citation')
     has_candidate_facts = models.BooleanField(default=False)
