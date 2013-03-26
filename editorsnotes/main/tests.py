@@ -2,7 +2,6 @@
 
 from django.test import TestCase, TransactionTestCase
 from django.contrib.auth.models import User
-from django.forms.formsets import formset_factory
 from django.db import IntegrityError, transaction
 from lxml import etree
 from models import *

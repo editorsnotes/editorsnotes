@@ -1,38 +1,36 @@
+import os
+import re
+from itertools import chain
+from random import randint
+from urllib import urlopen
+from PIL import Image, ImageFont, ImageDraw
+
 from django.conf import settings
 from django.contrib import auth
 from django.contrib import messages
-from django.contrib.admin.models import LogEntry
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core.mail import mail_admins
-from django.db.models import Q
-from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequest, HttpResponseRedirect
-from django.shortcuts import render_to_response, get_object_or_404, redirect
+from django.http import (HttpResponse, HttpResponseForbidden,
+                         HttpResponseBadRequest, HttpResponseRedirect)
+from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 
-from django_browserid import verify, get_audience
-from django_browserid.views import Verify
-
-from haystack.query import SearchQuerySet, EmptySearchQuerySet
-from itertools import chain
 import reversion
-from urllib import urlopen
-from models import *
+from django_browserid.views import Verify
+from haystack.query import SearchQuerySet, EmptySearchQuerySet
+
+import utils
+import forms as main_forms
+import models as main_models
+
 from editorsnotes.djotero.utils import as_readable, type_map
 from editorsnotes.refine.models import TopicCluster
-import forms as main_forms
-from PIL import Image, ImageFont, ImageDraw
-from random import randint
-import utils
-import json
-import os
-import re
 
 def _sort_citations(instance):
     cites = { 'all': [] }
-    for c in Citation.objects.filter(
+    for c in main_models.Citation.objects.filter(
         content_type=ContentType.objects.get_for_model(instance), 
         object_id=instance.id):
         cites['all'].append(c)
@@ -55,7 +53,7 @@ def proxy(request):
 
 @reversion.create_revision()
 def create_invited_user(email):
-    invitation = ProjectInvitation.objects.filter(email=email)
+    invitation = main_models.ProjectInvitation.objects.filter(email=email)
     if not invitation:
         return None
 
@@ -64,7 +62,7 @@ def create_invited_user(email):
     new_user = User(username=email, email=email)
     new_user.set_unusable_password()
     new_user.save()
-    profile = UserProfile.objects.create(user=new_user)
+    profile = main_models.UserProfile.objects.create(user=new_user)
     project.members.add(profile)
 
     invitation[0].delete()
@@ -90,8 +88,8 @@ def user(request, username=None):
         user = get_object_or_404(User, username=username)
         o['own_profile'] = user == request.user
 
-    o['profile'] = UserProfile.get_for(user)
-    o['log_entries'], ignored = UserProfile.get_activity_for(user, max_count=20)
+    o['profile'] = main_models.UserProfile.get_for(user)
+    o['log_entries'], ignored = main_models.UserProfile.get_activity_for(user, max_count=20)
     o['affiliation'] = o['profile'].affiliation
     o['project_role'] = (o['profile'].get_project_role(o['affiliation'])
                          if o['affiliation'] else None)
@@ -121,14 +119,14 @@ def index(request):
 def browse(request):
     max_count = 6
     o = {}
-    for model in [Topic, Note, Document]:
+    for model in [main_models.Topic, main_models.Note, main_models.Document]:
         model_name = model._meta.module_name
         listname = '%s_list' % model_name
         query_set = model.objects.order_by('-last_updated')
 
         items = list(query_set[:max_count])
         o[listname] = items
-    o['projects'] = Project.objects.all().order_by('name')
+    o['projects'] = main_models.Project.objects.all().order_by('name')
     return render_to_response(
         'browse.html', o, context_instance=RequestContext(request))
 
@@ -230,8 +228,8 @@ def about(request):
 
 def project(request, project_slug):
     o = {}
-    o['project'] = get_object_or_404(Project, slug=project_slug)
-    o['log_entries'], ignored = Project.get_activity_for(o['project'], max_count=10)
+    o['project'] = get_object_or_404(main_models.Project, slug=project_slug)
+    o['log_entries'], ignored = main_models.Project.get_activity_for(o['project'], max_count=10)
     if request.user.is_authenticated():
         o['can_change'] = o['project'].attempt('change', request.user)
         o['project_role'] = request.user.get_profile().get_project_role(o['project'])
@@ -240,21 +238,21 @@ def project(request, project_slug):
 
 def topic(request, topic_slug):
     o = {}
-    o['topic'] = get_object_or_404(Topic, slug=topic_slug)
+    o['topic'] = get_object_or_404(main_models.Topic, slug=topic_slug)
     o['contact'] = { 'name': settings.ADMINS[0][0], 
                      'email': settings.ADMINS[0][1] }
     o['related_topics'] = o['topic'].related_topics.all()
     o['summary_cites'] = _sort_citations(o['topic'])
 
-    notes = o['topic'].related_objects(Note)
+    notes = o['topic'].related_objects(main_models.Note)
     note_topics = [ [ ta.topic for ta in n.topics.exclude(topic=o['topic']).select_related('topic') ] for n in notes ]
-    note_sections = NoteSection.objects.filter(note__in=[n.id for n in notes])
+    note_sections = main_models.NoteSection.objects.filter(note__in=[n.id for n in notes])
 
     o['notes'] = zip(notes, note_topics)
 
     o['documents'] = set(chain(
-        o['topic'].related_objects(Document),
-        Document.objects.filter(notesection__in=note_sections)))
+        o['topic'].related_objects(main_models.Document),
+        main_models.Document.objects.filter(notesection__in=note_sections)))
 
     o['thread'] = { 'id': 'topic-%s' % o['topic'].id, 'title': o['topic'].preferred_name }
     o['alpha'] = (request.user.groups.filter(name='Alpha').count() == 1)
@@ -264,16 +262,16 @@ def topic(request, topic_slug):
 
 def note(request, note_id):
     o = {}
-    o['note'] = get_object_or_404(Note, id=note_id)
+    o['note'] = get_object_or_404(main_models.Note, id=note_id)
     o['history'] = reversion.get_unique_for_object(o['note'])
     o['topics'] = [ ta.topic for ta in o['note'].topics.all() ]
-    o['cites'] = Citation.objects.get_for_object(o['note'])
+    o['cites'] = main_models.Citation.objects.get_for_object(o['note'])
     return render_to_response(
         'note.html', o, context_instance=RequestContext(request))
 
 def footnote(request, footnote_id):
     o = {}
-    o['footnote'] = get_object_or_404(Footnote, id=footnote_id)
+    o['footnote'] = get_object_or_404(main_models.Footnote, id=footnote_id)
     o['thread'] = { 'id': 'footnote-%s' % o['footnote'].id, 
                     'title': o['footnote'].footnoted_text() }
     return render_to_response(
@@ -281,15 +279,15 @@ def footnote(request, footnote_id):
 
 def document(request, document_id):
     o = {}
-    o['document'] = get_object_or_404(Document, id=document_id)
+    o['document'] = get_object_or_404(main_models.Document, id=document_id)
     o['topics'] = (
         [ ta.topic for ta in o['document'].topics.all() ] +
         [ c.content_object for c in o['document'].citations.filter(
-                content_type=ContentType.objects.get_for_model(Topic)) ])
+                content_type=ContentType.objects.get_for_model(main_models.Topic)) ])
     o['scans'] = o['document'].scans.all()
     o['domain'] = Site.objects.get_current().domain
 
-    notes = Note.objects.filter(sections__document=o['document'])
+    notes = main_models.Note.objects.filter(sections__document=o['document'])
     note_topics = [ [ ta.topic for ta in n.topics.all() ] for n in notes ]
     o['notes'] = zip(notes, note_topics)
 
@@ -308,7 +306,7 @@ def document(request, document_id):
 def all_topics(request, project_slug=None):
     o = {}
     if project_slug:
-        o['project'] = get_object_or_404(Project, slug=project_slug)
+        o['project'] = get_object_or_404(main_models.Project, slug=project_slug)
     if 'type' in request.GET:
         o['type'] = request.GET['type']
         o['fragment'] = ''
@@ -317,11 +315,11 @@ def all_topics(request, project_slug=None):
         o['type'] = 'PER'
         template = 'all-topics.html'
     if project_slug:
-        query_set = set([ ta.topic for ta in TopicAssignment.objects.filter(
+        query_set = set([ ta.topic for ta in main_models.TopicAssignment.objects.filter(
             creator__userprofile__affiliation=o['project'],
             topic__type=o['type']) ])
     else:
-        query_set = Topic.objects.filter(type=o['type'])
+        query_set = main_models.Topic.objects.filter(type=o['type'])
     [o['topics_1'], o['topics_2'], o['topics_3']] = utils.alpha_columns(
         query_set, 'slug', itemkey='topic')
     return render_to_response(
@@ -337,7 +335,7 @@ def all_documents(request, project_slug=None):
         o['filtered'] = True
 
     # Narrow search query according to GET parameters
-    qs = SearchQuerySet().models(Document)
+    qs = SearchQuerySet().models(main_models.Document)
 
     query = []
     params = [p for p in request.GET.keys() if p[-2:] == '[]']
@@ -380,11 +378,11 @@ def all_documents(request, project_slug=None):
         # Specific actions for individual facets.
         # Tuple represents one input: value, label, count
         if facet == 'project_id':
-            o['facets']['project_id'] = [ (p_id, Project.objects.get(id=p_id), count)
+            o['facets']['project_id'] = [ (p_id, main_models.Project.objects.get(id=p_id), count)
                                       for p_id, count in sorted_facets ]
         elif facet == 'related_topic_id':
             o['facets']['related_topic_id'] = \
-                    [ (t_id, Topic.objects.get(id=t_id), count)
+                    [ (t_id, main_models.Topic.objects.get(id=t_id), count)
                      for t_id, count in sorted_facets ]
         elif facet =='itemType':
             o['facets']['itemType'] = [ (item, type_map['readable'].get(item), count)
@@ -407,7 +405,7 @@ def all_notes(request, project_slug=None):
         template = 'filtered-notes.html'
         o['filtered'] = True
 
-    qs = SearchQuerySet().models(Note)
+    qs = SearchQuerySet().models(main_models.Note)
     query = []
     if request.GET.get('topic'):
         query += [ ' AND '.join([ 'related_topic_id:%s' % topic for topic
@@ -424,12 +422,12 @@ def all_notes(request, project_slug=None):
     project_facets = sorted(facet_fields['project_id'],
                             key=lambda p: p[1], reverse=True)
 
-    topic_facets = [ (Topic.objects.get(id=t_id), t_count)
+    topic_facets = [ (main_models.Topic.objects.get(id=t_id), t_count)
                          for t_id, t_count in topic_facets[:16] ]
     o['topic_facets_1'] = topic_facets[:8]
     o['topic_facets_2'] = topic_facets[8:] if (len(topic_facets) > 8) else []
 
-    o['project_facets'] = [ (Project.objects.get(id=p_id), p_count)
+    o['project_facets'] = [ (main_models.Project.objects.get(id=p_id), p_count)
                            for p_id, p_count in project_facets ]
     o['notes'] = qs
 

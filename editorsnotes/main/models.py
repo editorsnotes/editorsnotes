@@ -1,27 +1,23 @@
 # -*- coding: utf-8 -*-
 
-import re
-import utils
 import fields
 import json
-from copy import deepcopy
+import re
+import utils
+
 from lxml import etree
+
 from django.db import models
-from django.contrib.admin.models import LogEntry
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.core import urlresolvers
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ValidationError
 from django.core.urlresolvers import NoReverseMatch
-from django.dispatch import receiver
-from django.utils.encoding import smart_text
 from django.utils.html import conditional_escape, escape
-from django.utils.http import urlquote_plus
 from django.utils.safestring import mark_safe
-from io import StringIO
+
 import reversion
-import unicodedata
 
 # -------------------------------------------------------------------------------
 # Abstract base classes and interfaces.
