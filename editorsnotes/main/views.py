@@ -17,7 +17,7 @@ from django_browserid.views import Verify
 
 from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from itertools import chain
-from reversion import get_unique_for_object, revision
+import reversion
 from urllib import urlopen
 from models import *
 from editorsnotes.djotero.utils import as_readable, type_map
@@ -53,7 +53,7 @@ def proxy(request):
 # Auth
 # ------------------------------------------------------------------------------
 
-@revision.create_on_success
+@reversion.create_revision()
 def create_invited_user(email):
     invitation = ProjectInvitation.objects.filter(email=email)
     if not invitation:
@@ -265,7 +265,7 @@ def topic(request, topic_slug):
 def note(request, note_id):
     o = {}
     o['note'] = get_object_or_404(Note, id=note_id)
-    o['history'] = get_unique_for_object(o['note'])
+    o['history'] = reversion.get_unique_for_object(o['note'])
     o['topics'] = [ ta.topic for ta in o['note'].topics.all() ]
     o['cites'] = Citation.objects.get_for_object(o['note'])
     return render_to_response(

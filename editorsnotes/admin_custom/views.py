@@ -268,7 +268,7 @@ class TranscriptAdminView(BaseAdminView):
             transcript.save()
 
 
-@reversion.revision.create_on_success
+@reversion.create_revision()
 def note_sections(request, note_id):
     note = get_object_or_404(main_models.Note, id=note_id)
     o = {}
@@ -307,7 +307,7 @@ def note_sections(request, note_id):
 ###########################################################################
 
 @login_required
-@reversion.revision.create_on_success
+@reversion.create_revision()
 def project_roster(request, project_id):
     o = {}
     user = request.user
@@ -354,7 +354,7 @@ def project_roster(request, project_id):
         'project_roster.html', o, context_instance=RequestContext(request))
 
 @login_required
-@reversion.revision.create_on_success
+@reversion.create_revision()
 def change_project(request, project_id):
     o = {}
     project = get_object_or_404(main_models.Project, id=project_id)
@@ -380,7 +380,7 @@ def change_project(request, project_id):
         'project_change.html', o, context_instance=RequestContext(request))
 
 @login_required
-@reversion.revision.create_on_success
+@reversion.create_revision()
 def change_featured_items(request, project_id):
     o = {}
     project = get_object_or_404(main_models.Project, id=project_id)
