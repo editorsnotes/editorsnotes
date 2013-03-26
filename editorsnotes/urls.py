@@ -1,6 +1,7 @@
 from django.conf.urls import patterns, url, include
 from django.contrib import admin
 from django.conf import settings
+from django.views.generic.base import RedirectView
 from editorsnotes.main.views import CustomBrowserIDVerify
 
 admin.autodiscover()
@@ -20,12 +21,9 @@ urlpatterns += patterns('',
     (r'^comments/', include('django.contrib.comments.urls')),
 
     # The following won't actually be called in production, since Apache will intercept them.
-    (r'^favicon.ico$', 'django.views.generic.simple.redirect_to', 
-     { 'url': '/static/style/icons/favicon.ico' }),
-    (r'^media/(?P<path>.*)$', 'django.views.static.serve',
-     { 'document_root': settings.MEDIA_ROOT }),
-    (r'^static/(?P<path>.*)$', 'django.views.static.serve',
-     { 'document_root': settings.STATIC_ROOT }),
+    (r'^favicon.ico$', RedirectView.as_view(url='/static/style/icons/favicon.ico')),
+    (r'^media/(?P<path>.*)$', 'django.views.static.serve', { 'document_root': settings.MEDIA_ROOT }),
+    (r'^static/(?P<path>.*)$', 'django.views.static.serve', { 'document_root': settings.STATIC_ROOT }),
     (r'^proxy$', 'editorsnotes.main.views.proxy'),
 )
 
@@ -58,12 +56,9 @@ index_patterns = patterns('editorsnotes.main.views',
     url(r'^topics/$', 'all_topics', name='all_topics_view'),
     url(r'^notes/$', 'all_notes', name='all_notes_view'),
 )
-static_patterns = patterns('django.views.generic.simple',
-    url(r'^help/$', 'direct_to_template', {'template' : 'help.html'}),
-)
+
 urlpatterns += api_patterns
 urlpatterns += index_patterns
-urlpatterns += static_patterns
 
 urlpatterns += patterns('editorsnotes.djotero.views',
     url(r'^document/upload/$', 'import_zotero', name='import_zotero_view'),
