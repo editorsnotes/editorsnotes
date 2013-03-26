@@ -17,6 +17,7 @@ pytz==2012h
 refine-client==0.2.1
 smartypants==1.6.0.3
 
+ipython==0.13.1
 
 # Symlinks to system packages
 # symlink: xapian
