@@ -58,7 +58,7 @@
     <ul class="unstyled span6" id="note-list-1">
     {% for note in notes %}
     <li class="note" date-modified="{{ note.last_updated|date:"Ymd" }}">
-        <a href="{% url note_view note_id=note.pk %}">
+        <a href="{% url "note_view" note_id=note.pk %}">
           {{ note.title }}
         </a>
       </li>

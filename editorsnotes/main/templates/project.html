@@ -15,21 +15,21 @@
   {% endif %}
   <div>
   {% if can_change %}
-    <a class="btn" href="{% url project_roster_view project_id=project.id %}">
+    <a class="btn" href="{% url "project_roster_view" project_id=project.id %}">
       <i class="icon-user"></i>
       Edit roster
     </a>
-    <a class="btn" href="{% url change_featured_items_view project_id=project.id %}">
+    <a class="btn" href="{% url "change_featured_items_view" project_id=project.id %}">
       <i class="icon-star"></i>
       Select featured items
     </a>
-    <a class="btn" href="{% url project_edit_view project_id=project.id %}?return_to={{ request.path }}">
+    <a class="btn" href="{% url "project_edit_view" project_id=project.id %}?return_to={{ request.path }}">
       <i class="icon-edit"></i>
       Edit project description
     </a>
   {% else %}
     {% if project_role %}
-      <a class="btn" href="{% url project_roster_view project_id=project.id %}">View roster</a>
+      <a class="btn" href="{% url "project_roster_view" project_id=project.id %}">View roster</a>
     {% endif %}
   {% endif %}
   </div>

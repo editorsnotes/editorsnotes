@@ -28,7 +28,7 @@
         <li>{{ topic|as_link|typogrify }}</li>
       {% endfor %}
       </ol>
-      <a href="{% url merge_topic_cluster_view cluster.id %}">Review</a>
+      <a href="{% url "merge_topic_cluster_view" cluster.id %}">Review</a>
     </div>
     {% endfor %}
 {% endblock %}
