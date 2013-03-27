@@ -12,8 +12,8 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core.mail import mail_admins
-from django.http import (HttpResponse, HttpResponseForbidden,
-                         HttpResponseBadRequest, HttpResponseRedirect)
+from django.http import (
+    HttpResponse, HttpResponseForbidden, HttpResponseBadRequest, HttpResponseRedirect)
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 
@@ -24,7 +24,6 @@ from haystack.query import SearchQuerySet, EmptySearchQuerySet
 import utils
 import forms as main_forms
 import models as main_models
-
 from editorsnotes.djotero.utils import as_readable, type_map
 from editorsnotes.refine.models import TopicCluster
 
