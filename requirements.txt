@@ -1,5 +1,5 @@
 # Django-specific packages
-Django==1.5
+Django==1.5.1
 South==0.7.6
 django-browserid==0.7.1
 django_compressor==1.3
