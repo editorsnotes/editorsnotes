@@ -103,8 +103,8 @@ class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific)
         #    content_type=ContentType.objects.get_for_model(Topic))]
 
         # Topic assignments via NoteSection objects
-        for ns in self.notesection_set.all():
-            topics += [ t for t in ns.get_all_related_topics() ]
+        #for ns in self.notesection_set.all():
+        #    topics += [ t for t in ns.get_all_related_topics() ]
 
         return set(topics)
     def get_metadata(self):
