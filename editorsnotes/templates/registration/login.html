@@ -96,10 +96,10 @@
           Sign in using your email with <a href="https://login.persona.org/about">Mozilla Persona</a>.
         </p>
         <div class="browserid-login-container">
-          <a class="browserid-login" href="{% url django.contrib.auth.views.login %}">
+          <a class="browserid-login" href="{% url "django.contrib.auth.views.login" %}">
             <img src="{% static "style/icons/plain_sign_in_black.png" %}">
           </a>
-          <form method="post" action="{% url browserid_verify %}">
+          <form method="post" action="{% url "browserid_verify" %}">
             {% csrf_token %}
             {{ browserid_form.as_p }}
           </form>
@@ -109,7 +109,7 @@
         <p>
         Alternately, use your username and password.
         </p>
-        <form method="post" action="{% url django.contrib.auth.views.login %}">
+        <form method="post" action="{% url "django.contrib.auth.views.login" %}">
           {% csrf_token %}
           <fieldset>
             <p>

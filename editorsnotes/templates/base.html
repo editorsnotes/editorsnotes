@@ -74,7 +74,7 @@
                 </a>
                 <ul class="dropdown-menu">
                   <li><a href="{{ profile.get_absolute_url }}">My profile</a></li>
-                  <li><a {% if browserid_authenticated %}class="browserid-logout" {% endif %}href="{% url user_logout_view %}">Log out</a></li>
+                  <li><a {% if browserid_authenticated %}class="browserid-logout" {% endif %}href="{% url "user_logout_view" %}">Log out</a></li>
                 </ul>
               </li>
               <li>
@@ -85,9 +85,9 @@
                 </a>
                 <ul class="dropdown-menu" style="right: 0; left: auto;">
                   {% block extra_edit_actions %}{% endblock %}
-                  <li><a href="{% url admin:main_note_add %}">Add note</a></li>
-                  <li><a href="{% url admin:main_document_add %}">Add document</a></li>
-                  <li><a href="{% url admin:main_topic_add %}">Add topic</a></li>
+                  <li><a href="{% url "admin:main_note_add" %}">Add note</a></li>
+                  <li><a href="{% url "admin:main_document_add" %}">Add document</a></li>
+                  <li><a href="{% url "admin:main_topic_add" %}">Add topic</a></li>
                 </ul>
               </div>
               </li>

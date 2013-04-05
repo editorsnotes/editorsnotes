@@ -90,8 +90,8 @@
           <div class="row edit-row">
             <div class="span6 edit-button">
               {% if request.user.is_authenticated %}
-              <a class="btn" href="{% url admin:main_note_change note.id %}?return_to={{ note.get_absolute_url }}">Edit note details</a>
-              <a class="btn" href="{% url note_sections note.id %}">Edit note content</a>
+              <a class="btn" href="{% url "admin:main_note_change" note.id %}?return_to={{ note.get_absolute_url }}">Edit note details</a>
+              <a class="btn" href="{% url "note_sections" note.id %}">Edit note content</a>
               {% endif %}
             </div>
             <div class="span6 edit-history">
