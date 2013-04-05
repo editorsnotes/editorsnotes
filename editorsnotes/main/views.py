@@ -200,7 +200,7 @@ def about(request):
         o['form'] = main_forms.FeedbackForm(request.POST)
         if o['form'].is_valid():
 
-            test_answer = request.POST.get('testanswer')
+            test_answer = request.POST.get('testanswer', '')
             if test_answer.isdigit() and int(test_answer) == request.session['test_answer']:
                 request.session.pop('bad_answers')
 
