@@ -46,7 +46,7 @@ class NoteSection(LastUpdateMetadata):
     class Meta:
         app_label = 'main'
         ordering = ['ordering', 'note_section_id']
-        #unique_together = ['note', 'note_section_id']
+        unique_together = ['note', 'note_section_id']
     def save(self, *args, **kwargs):
         n = self.note
         save_note = False
