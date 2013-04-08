@@ -47,7 +47,7 @@ class NoteSection(LastUpdateMetadata):
     class Meta:
         app_label = 'main'
         ordering = ['ordering', 'note_section_id']
-        #unique_together = ['note', 'note_section_id']
+        unique_together = ['note', 'note_section_id']
     def _get_section_subclass(self):
         """
         Get the subclass of this note section, used for caching.
