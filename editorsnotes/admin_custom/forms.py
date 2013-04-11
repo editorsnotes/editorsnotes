@@ -263,12 +263,12 @@ class NoteForm(ModelForm):
 
 class NoteSectionForm(ModelForm):
     class Meta:
-        model = main_models.NoteSection
+        model = main_models.notes.CitationNS
         fields = ('document', 'content',)
         widgets = {'document' : forms.widgets.HiddenInput()}
 
 NoteSectionFormset = inlineformset_factory(
-    main_models.Note, main_models.NoteSection, form=NoteSectionForm, extra=1)
+    main_models.Note, main_models.notes.CitationNS, form=NoteSectionForm, extra=1)
 
 
 ################################################################################
