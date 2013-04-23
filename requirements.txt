@@ -5,6 +5,7 @@ django-browserid==0.7.1
 django_compressor==1.3
 django-haystack==1.2.7
 xapian-haystack==1.1.5beta
+django-model-utils==1.3.0
 django-reversion==1.7
 
 BeautifulSoup<4.0
