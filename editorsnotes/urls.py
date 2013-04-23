@@ -46,7 +46,9 @@ api_patterns = patterns('editorsnotes.main.api_views',
     url(r'^api/notes/$', 'api_notes', name='api_notes_view'),
     url(r'^api/transcripts/$', 'api_transcripts', name='api_transcripts_view'),
     url(r'^api/transcripts/(?P<transcript_id>\d+)/$', 'api_transcript', name='api_transcript_view'),
+    url('^api2/', include('editorsnotes.api.urls')),
 )
+
 index_patterns = patterns('editorsnotes.main.views',
     url(r'^$', 'index', name='index_view'),
     url(r'^about/$', 'about', name='about_view'),
