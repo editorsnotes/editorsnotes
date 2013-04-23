@@ -3,9 +3,11 @@ from fields import XHTMLField, ReadonlyXHTMLWidget
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
+from django.db import models
 from django.db.models.fields import FieldDoesNotExist
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.encoding import force_unicode
