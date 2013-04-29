@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.db import IntegrityError, transaction
 from lxml import etree
 from models import *
+from views import create_invited_user
 import utils
 import unittest
 
@@ -142,3 +143,29 @@ class NoteTransactionTestCase(TransactionTestCase):
         transaction.rollback()
         note.delete()
         topic.delete()
+
+class NewUserTestCase(TestCase):
+    def setUp(self):
+        self.user = create_test_user()
+    def test_create_new_user(self):
+        new_user_email = 'fakeperson@example.com'
+
+        test_project = Project.objects.create(
+            name='Editors\' Notes\' Idiot Brigade',
+            slug='ENIB',
+        )
+
+        # We haven't invited this person yet, so this shouldn't make an account
+        self.assertEqual(create_invited_user(new_user_email), None)
+        
+        invitation = ProjectInvitation.objects.create(
+            project=test_project,
+            email=new_user_email,
+            role='editor',
+            creator=self.user
+        )
+        new_user = create_invited_user(new_user_email)
+
+        self.assertTrue(isinstance(new_user, User))
+        self.assertEqual(ProjectInvitation.objects.count(), 0)
+        self.assertEqual(new_user.username, 'fakeperson')

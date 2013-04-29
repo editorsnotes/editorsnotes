@@ -58,7 +58,15 @@ def create_invited_user(email):
 
     project = invitation[0].project
 
-    new_user = User(username=email, email=email)
+    username = re.sub(r'[^\w\-.]', '', email[:email.rindex('@')])[:29]
+    if User.objects.filter(username=username).exists():
+        existing_names = [
+            u.username[len(username):] for u in
+            User.objects.filter(username__startswith=username)]
+        username += str([
+            i for i in range(0, 10) if str(i) not in existing_names][0])
+
+    new_user = User(username=username, email=email)
     new_user.set_unusable_password()
     new_user.save()
     profile = main_models.UserProfile.objects.create(user=new_user)
