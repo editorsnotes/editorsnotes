@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from django.test import TestCase, TransactionTestCase
+import unittest
+
 from django.contrib.auth.models import User
 from django.db import IntegrityError, transaction
+from django.test import TestCase, TransactionTestCase
 from lxml import etree
-from models import *
-from views import create_invited_user
+
+import models as main_models
 import utils
-import unittest
+from views import create_invited_user
 
 class UtilsTestCase(unittest.TestCase):
     def test_truncate(self):
@@ -52,15 +54,15 @@ class TopicTestCase(TestCase):
     def setUp(self):
         self.user = create_test_user()
         self.topics = []
-        self.topics.append(Topic.objects.create(
+        self.topics.append(main_models.Topic.objects.create(
                 preferred_name=u'Foote, Edward B. (Edward Bliss) 1829-1906', 
                 summary='Foote was the man.',
                 creator=self.user, last_updater=self.user))
-        self.topics.append(Topic.objects.create(
+        self.topics.append(main_models.Topic.objects.create(
                 preferred_name=u'Räggler å paschaser på våra mål tå en bonne', 
                 summary='Weird language!',
                 creator=self.user, last_updater=self.user))
-        self.topics.append(Topic.objects.create(
+        self.topics.append(main_models.Topic.objects.create(
                 preferred_name=u'Not unicode', 
                 summary='Another test topic.',
                 creator=self.user, last_updater=self.user))
@@ -87,7 +89,7 @@ class NoteTestCase(TestCase):
     def setUp(self):
         self.user = create_test_user()
     def testStripStyleElementsFromContent(self):
-        note = Note.objects.create(
+        note = main_models.Note.objects.create(
             content=u'<style>garbage</style><h1>hey</h1><p>this is a <em>note</em></p>', 
             creator=self.user, last_updater=self.user)
         self.assertEquals(
@@ -95,10 +97,10 @@ class NoteTestCase(TestCase):
             '<div><h1>hey</h1><p>this is a <em>note</em></p></div>')
         note.delete()
     def testAddCitations(self):
-        note = Note.objects.create(
+        note = main_models.Note.objects.create(
             content=u'<h1>hey</h1><p>this is a <em>note</em></p>', 
             creator=self.user, last_updater=self.user)
-        document = Document.objects.create(
+        document = main_models.Document.objects.create(
             description='Ryan Shaw, <em>My Big Book of Cool Stuff</em>, 2010.', 
             creator=self.user, last_updater=self.user)
         note.citations.create(
@@ -108,15 +110,15 @@ class NoteTestCase(TestCase):
         note.delete()
         document.delete()
     def testAssignTopics(self):
-        note = Note.objects.create(
+        note = main_models.Note.objects.create(
             content=u'<h1>hey</h1><p>this is a <em>note</em></p>', 
             creator=self.user, last_updater=self.user)
-        topic = Topic.objects.create(
+        topic = main_models.Topic.objects.create(
             preferred_name=u'Example', 
             summary='An example topic',
             creator=self.user, last_updater=self.user)
         self.assertFalse(note.has_topic(topic))
-        TopicAssignment.objects.create(
+        main_models.TopicAssignment.objects.create(
             content_object=note, topic=topic, creator=self.user)
         self.assertTrue(note.has_topic(topic))
         self.assertEquals(1, len(note.topics.all()))
@@ -129,16 +131,17 @@ class NoteTransactionTestCase(TransactionTestCase):
     def setUp(self):
         self.user = create_test_user()
     def testAssignTopicTwice(self):
-        note = Note.objects.create(
+        note = main_models.Note.objects.create(
             content=u'<h1>hey</h1><p>this is a <em>note</em></p>', 
             creator=self.user, last_updater=self.user)
-        topic = Topic.objects.create(
+        topic = main_models.Topic.objects.create(
             preferred_name=u'Example', 
             summary='An example topic',
             creator=self.user, last_updater=self.user)
-        TopicAssignment.objects.create(
+        main_models.TopicAssignment.objects.create(
             content_object=note, topic=topic, creator=self.user)
-        self.assertRaises(IntegrityError, TopicAssignment.objects.create,
+        self.assertRaises(IntegrityError,
+                          main_models.TopicAssignment.objects.create,
                           content_object=note, topic=topic, creator=self.user)
         transaction.rollback()
         note.delete()
@@ -150,7 +153,7 @@ class NewUserTestCase(TestCase):
     def test_create_new_user(self):
         new_user_email = 'fakeperson@example.com'
 
-        test_project = Project.objects.create(
+        test_project = main_models.Project.objects.create(
             name='Editors\' Notes\' Idiot Brigade',
             slug='ENIB',
         )
@@ -158,7 +161,7 @@ class NewUserTestCase(TestCase):
         # We haven't invited this person yet, so this shouldn't make an account
         self.assertEqual(create_invited_user(new_user_email), None)
         
-        invitation = ProjectInvitation.objects.create(
+        main_models.ProjectInvitation.objects.create(
             project=test_project,
             email=new_user_email,
             role='editor',
@@ -167,5 +170,5 @@ class NewUserTestCase(TestCase):
         new_user = create_invited_user(new_user_email)
 
         self.assertTrue(isinstance(new_user, User))
-        self.assertEqual(ProjectInvitation.objects.count(), 0)
+        self.assertEqual(main_models.ProjectInvitation.objects.count(), 0)
         self.assertEqual(new_user.username, 'fakeperson')
