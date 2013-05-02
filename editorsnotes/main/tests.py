@@ -8,6 +8,7 @@ from django.test import TestCase, TransactionTestCase
 from lxml import etree
 
 import models as main_models
+from models.topics import TopicNode
 import utils
 from views import create_invited_user
 
@@ -172,3 +173,55 @@ class NewUserTestCase(TestCase):
         self.assertTrue(isinstance(new_user, User))
         self.assertEqual(main_models.ProjectInvitation.objects.count(), 0)
         self.assertEqual(new_user.username, 'fakeperson')
+
+class ProjectTopicTestCase(TestCase):
+    fixtures = ['projects.json']
+    def setUp(self):
+        self.project = main_models.Project.objects.get(slug='emma')
+        self.user = self.project.members.all()[0].user
+        self.project2 = main_models.Project.objects.get(slug='sanger')
+        self.user2 = self.project2.members.all()[0].user
+
+    def test_create_project_topic(self):
+        new_topic = TopicNode.objects.create_project_topic(
+            self.project, self.user, name=u'Emma Goldman')
+        self.assertTrue(isinstance(new_topic, main_models.topics.TopicNode))
+        new_topic2 = TopicNode.objects.create_project_topic(
+            self.project2, self.user2, topic_node=new_topic)
+        self.assertEqual(new_topic, new_topic2)
+        self.assertEqual(main_models.topics.TopicName.objects.count(), 2)
+        self.assertEqual(new_topic.get_connected_projects().count(), 2)
+
+    def test_merge_topic_nodes(self):
+        good_topic = TopicNode.objects.create_project_topic(
+            self.project, self.user, name='Emma Goldman')
+        bad_topic = TopicNode.objects.create_project_topic(
+            self.project, self.user, name=u'Емма Голдман')
+
+        # No connection between this project & topic, so we should get an
+        # exception
+        self.assertRaises(
+            main_models.topics.TopicMergeError,
+            bad_topic.merge_project_topic_connections,
+            self.project2, good_topic
+        )
+
+        bad_topic.merge_project_topic_connections(self.project, good_topic)
+
+        self.assertEqual(bad_topic.deleted, True)
+        self.assertEqual(bad_topic.merged_into, good_topic)
+        self.assertEqual(good_topic.names.count(), 2)
+
+    def test_delete_topic_nodes(self):
+        topic = TopicNode.objects.create_project_topic(
+            self.project, self.user, name='MISTAKE TOPIC')
+        summary = main_models.topics.TopicSummary.objects.create(
+            project=self.project,
+            creator=self.user,
+            last_updater=self.user,
+            topic=topic,
+            content='WHOOPS'
+        )
+        self.assertEqual(len(topic.get_project_connections(self.project)), 2)
+        topic.delete_project_connections(self.project)
+        self.assertTrue(topic.deleted)

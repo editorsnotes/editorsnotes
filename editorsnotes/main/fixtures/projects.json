@@ -1,0 +1,142 @@
+[
+  {
+      "pk": 1, 
+      "model": "auth.user", 
+      "fields": {
+          "username": "patrick", 
+          "first_name": "Patrick", 
+          "last_name": "Golden", 
+          "is_active": true, 
+          "is_superuser": true, 
+          "is_staff": true, 
+          "last_login": "2013-04-05T11:13:49.329", 
+          "groups": [], 
+          "user_permissions": [], 
+          "password": "patrick",
+          "email": "fake1@example.com", 
+          "date_joined": "2013-04-01T14:26:46"
+      }
+  },
+  {
+      "pk": 2, 
+      "model": "auth.user", 
+      "fields": {
+          "username": "barry", 
+          "first_name": "Barry", 
+          "last_name": "Pateman", 
+          "is_active": true, 
+          "is_superuser": true, 
+          "is_staff": true, 
+          "last_login": "2013-04-05T11:13:49.329", 
+          "groups": [], 
+          "user_permissions": [], 
+          "password": "barry",
+          "email": "fake2@example.com", 
+          "date_joined": "2013-04-01T14:26:46"
+      }
+  },
+  {
+      "pk": 3, 
+      "model": "auth.user", 
+      "fields": {
+          "username": "esther", 
+          "first_name": "Esther", 
+          "last_name": "Katz", 
+          "is_active": true, 
+          "is_superuser": true, 
+          "is_staff": true, 
+          "last_login": "2013-04-05T11:13:49.329", 
+          "groups": [],
+          "user_permissions": [], 
+          "password": "esther",
+          "email": "fake3@example.com", 
+          "date_joined": "2013-04-01T14:26:46"
+      }
+  },
+  {
+      "pk": 4, 
+      "model": "auth.user", 
+      "fields": {
+          "username": "cathy", 
+          "first_name": "Cathy", 
+          "last_name": "Hajo", 
+          "is_active": true, 
+          "is_superuser": true, 
+          "is_staff": true, 
+          "last_login": "2013-04-05T11:13:49.329", 
+          "groups": [], 
+          "user_permissions": [], 
+          "password": "cathy",
+          "email": "fake4@example.com", 
+          "date_joined": "2013-04-01T14:26:46"
+      }
+  },
+  {
+    "pk": 1, 
+    "model": "main.userprofile", 
+    "fields": {
+      "zotero_uid": null, 
+      "affiliation": 1, 
+      "zotero_key": null, 
+      "user": [
+        "patrick"
+      ]
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "main.userprofile", 
+    "fields": {
+      "zotero_uid": null, 
+      "affiliation": 1, 
+      "zotero_key": null, 
+      "user": [
+        "barry"
+      ]
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "main.userprofile", 
+    "fields": {
+      "zotero_uid": null,
+      "affiliation": 2, 
+      "zotero_key": null,
+      "user": [
+        "cathy"
+      ]
+    }
+  }, 
+  {
+    "pk": 4, 
+    "model": "main.userprofile", 
+    "fields": {
+      "zotero_uid": null, 
+      "affiliation": 2, 
+      "zotero_key": null, 
+      "user": [
+        "esther"
+      ]
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "main.project", 
+    "fields": {
+      "image": "", 
+      "description": "We are collecting the papers of Emma Goldman.", 
+      "name": "The Emma Goldman Papers", 
+      "slug": "emma"
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "main.project", 
+    "fields": {
+      "image": "", 
+      "description": "We are collecting the papers of Margaret Sanger", 
+      "name": "The Margaret Sanger Papers", 
+      "slug": "sanger"
+    }
+  }
+]
