@@ -44,7 +44,7 @@ class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific)
     collection = models.ForeignKey('self', related_name='parts', blank=True, null=True)
     ordering = models.CharField(max_length=32, editable=False)
     language = models.CharField(max_length=32, default='English')
-    topics = generic.GenericRelation('TopicAssignment')
+    topics = generic.GenericRelation('TopicNodeAssignment')
     objects = DocumentManager()
     edtf_date = models.TextField(blank=True, null=True)
     class Meta:

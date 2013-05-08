@@ -23,7 +23,7 @@ class Note(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
     content = fields.XHTMLField()
     assigned_users = models.ManyToManyField('UserProfile', blank=True, null=True)
     status = models.CharField(choices=NOTE_STATUS_CHOICES, max_length=1, default='1')
-    topics = generic.GenericRelation('TopicAssignment')
+    topics = generic.GenericRelation('TopicNodeAssignment')
     citations = generic.GenericRelation('Citation')
     sections_counter = models.PositiveIntegerField(default=0)
     def has_topic(self, topic):
@@ -42,7 +42,7 @@ class NoteSection(LastUpdateMetadata):
     note = models.ForeignKey(Note, related_name='sections')
     note_section_id = models.PositiveIntegerField(blank=True, null=True)
     ordering = models.PositiveIntegerField(blank=True, null=True)
-    topics = generic.GenericRelation('TopicAssignment')
+    topics = generic.GenericRelation('TopicNodeAssignment')
     objects = InheritanceManager()
     class Meta:
         app_label = 'main'

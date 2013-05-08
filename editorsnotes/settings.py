@@ -123,9 +123,9 @@ INSTALLED_APPS = (
     'haystack',
     'compressor',
     'editorsnotes.main',
-    'editorsnotes.djotero',
-    'editorsnotes.refine',
-    'editorsnotes.admin_custom',
+    #'editorsnotes.djotero',
+    #'editorsnotes.refine',
+    #'editorsnotes.admin_custom',
 )
 
 STATICFILES_FINDERS = (

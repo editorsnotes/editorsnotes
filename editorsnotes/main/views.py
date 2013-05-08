@@ -12,10 +12,12 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core.mail import mail_admins
+from django.core.urlresolvers import reverse
 from django.http import (
     HttpResponse, HttpResponseForbidden, HttpResponseBadRequest, HttpResponseRedirect)
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
+from django.views.generic.base import RedirectView
 
 import reversion
 from django_browserid.views import Verify
@@ -126,7 +128,7 @@ def index(request):
 def browse(request):
     max_count = 6
     o = {}
-    for model in [main_models.Topic, main_models.Note, main_models.Document]:
+    for model in [main_models.topics.TopicNode, main_models.Note, main_models.Document]:
         model_name = model._meta.module_name
         listname = '%s_list' % model_name
         query_set = model.objects.order_by('-last_updated')
@@ -243,6 +245,13 @@ def project(request, project_slug):
     return render_to_response(
         'project.html', o, context_instance=RequestContext(request))
 
+class LegacyTopicRedirectView(RedirectView):
+    permanent = True
+    query_string = True
+    def get_redirect_url(self, topic_slug):
+        legacy_topic = get_object_or_404(main_models.topics.Topic, slug=topic_slug)
+        return reverse('topicnode_view', args=(legacy_topic.merged_into_id,))
+
 def topic(request, topic_slug):
     o = {}
     o['topic'] = get_object_or_404(main_models.Topic, slug=topic_slug)
@@ -266,6 +275,29 @@ def topic(request, topic_slug):
 
     return render_to_response(
         'topic.html', o, context_instance=RequestContext(request))
+
+def topicnode(request, topicnode_id):
+    o = {}
+    empty_qs = main_models.topics.TopicNode.objects\
+            .select_related(
+                'creator__userprofile',
+                'last_updater__userprofile',
+                'names__project',
+                'summaries__citations__document'
+            ).prefetch_related(
+                'related_topics__topic',
+                'summaries__project',
+                'summaries__citations__document'
+            )
+    o['topic'] = topic = get_object_or_404(empty_qs, id=topicnode_id)
+    o['notes'] = topic.related_objects(main_models.Note)\
+            .prefetch_related('topics__topic')
+    o['documents'] = set(chain(
+        topic.related_objects(main_models.Document),
+        main_models.Document.objects.prefetch_related('citationns_set')\
+            .filter(citationns__note_id__in=[n.id for n in o['notes']])))
+    return render_to_response(
+        'topic2.html', o, context_instance=RequestContext(request))
 
 def note(request, note_id):
     o = {}
@@ -294,7 +326,9 @@ def document(request, document_id):
     o['scans'] = o['document'].scans.all()
     o['domain'] = Site.objects.get_current().domain
 
-    notes = main_models.Note.objects.filter(sections__document=o['document'])
+    notes = [ns.note for ns in main_models.notes.CitationNS.objects\
+            .select_related('note')\
+            .filter(document=o['document'])]
     note_topics = [ [ ta.topic for ta in n.topics.all() ] for n in notes ]
     o['notes'] = zip(notes, note_topics)
 
@@ -321,14 +355,9 @@ def all_topics(request, project_slug=None):
     else:
         o['type'] = 'PER'
         template = 'all-topics.html'
-    if project_slug:
-        query_set = set([ ta.topic for ta in main_models.TopicAssignment.objects.filter(
-            creator__userprofile__affiliation=o['project'],
-            topic__type=o['type']) ])
-    else:
-        query_set = main_models.Topic.objects.filter(type=o['type'])
+    query_set = main_models.topics.TopicNode.objects.filter(type=o['type'])
     [o['topics_1'], o['topics_2'], o['topics_3']] = utils.alpha_columns(
-        query_set, 'slug', itemkey='topic')
+        query_set, 'preferred_name', itemkey='topic')
     return render_to_response(
         template, o, context_instance=RequestContext(request))
 

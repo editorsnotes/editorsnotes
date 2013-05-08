@@ -2,7 +2,7 @@ from django.conf.urls import patterns, url, include
 from django.contrib import admin
 from django.conf import settings
 from django.views.generic.base import RedirectView
-from editorsnotes.main.views import CustomBrowserIDVerify
+from editorsnotes.main.views import CustomBrowserIDVerify, LegacyTopicRedirectView
 
 admin.autodiscover()
 
@@ -30,7 +30,8 @@ urlpatterns += patterns('',
 urlpatterns += patterns('editorsnotes.main.views',
     url(r'^project/(?P<project_slug>[-_a-z0-9]+)/$', 'project', name='project_view'),
     url(r'^document/(?P<document_id>\d+)/$', 'document', name='document_view'),
-    url(r'^topic/(?P<topic_slug>[\w\-,]+)/$', 'topic', name='topic_view'),
+    url(r'^topic/(?P<topic_slug>[\w\-,]+)/$', LegacyTopicRedirectView.as_view(), name='topic_view'),
+    url(r'^topicnode/(?P<topicnode_id>\d+)/$', 'topicnode', name='topicnode_view'),
     url(r'^note/(?P<note_id>\d+)/$', 'note', name='note_view'),
     url(r'^user/(?P<username>[\w@\+\.\-]+)/$', 'user', name='user_view'),
     url(r'^logout/$', 'user_logout', name='user_logout_view'),

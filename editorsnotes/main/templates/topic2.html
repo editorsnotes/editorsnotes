@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load typogrify display %}
+
+{% block title %}: {{ topic.preferred_name }}{% endblock %}
+
+{% block js %}
+<script type="text/javascript" src="{{ STATIC_URL }}function/topic.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/facets.js"></script>
+{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ STATIC_URL }}style/disqus.css" type="text/css"/>
+<link rel="stylesheet" href="{{ STATIC_URL }}style/topic.css" type="text/css"/>
+<link rel="stylesheet" href="{{ STATIC_URL }}style/facets.css" type="text/css" />
+{% endblock %}
+
+{% block content %}
+    <header>
+      <h2 id="topic-name">{{ topic.preferred_name }}</h2>
+      <div class="related-topics">
+        {% if topic.related_topics.count %}
+        <span class="quiet">Related topics:</span> 
+        <ul class="topic-list">
+          {% for related_topic in topic.related_topics.all %}
+          <li>{{ related_topic.topic|as_link }}</a>{% if not forloop.last %} | {% endif %}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+    </header>
+
+    <ul id="tabs" class="nav nav-tabs">
+      <li class="active"><a href="#article-tab">Article</a></li>
+      <li><a href="#notes-tab">Related Notes <span class="alt">&amp;</span> Queries ({{ notes|length }})</a></li>
+      <li><a href="#documents-tab">Related Documents ({{ documents|length }})</a></li>
+    </ul>
+
+    <div class="tab-content">
+      <section id="article-tab" class="tab-pane active">
+        <article id="{{ topic.slug }}-summary" class="note">
+          {% if topic.summaries.count %}
+          {% for summary in topic.summaries.all %}
+          <h5>{{ summary.project }} summary</h5>
+          <div class="note-content">
+            {{ summary.content|as_html }}
+
+            {% if summary.citations.count %}
+            <h4>Sources</h4>
+            <div class="citation-list">
+              {% for cite in summary.citations.all %}
+                {% include "citation.include" %}
+              {% endfor %}
+            </div>
+            {% endif %}
+
+          </div>
+          {% endfor %}
+          {% else %}
+          <div>
+            There is no article about <em>{{ topic.preferred_name }}</em> yet.
+          </div>
+          {% endif %}
+          <div class="row edit-row">
+            <div class="span6 edit-button">
+              {% if request.user.is_authenticated %}
+              <a class="btn" href="{{ topic.get_admin_url }}?return_to={{ topic.get_absolute_url }}">Edit</a>
+              {% endif %}
+            </div>
+            <div class="span6 edit-history">
+              {{ topic|display_edit_history }}
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section id="notes-tab" class="tab-pane">
+        {% if notes %}
+          {% for note in notes %}
+          <div id="note-{{ note.id }}" class="related-note">
+            <div class="note-link">
+              <a href="{{ note.get_absolute_url }}">{{ note.title}}</a>
+            </div>
+            <div class="note-last-modified">
+              <span class="quiet">Last modified: </span><span>{{ note.last_updated|date:"F j, Y" }}</span>
+            </div>
+            {% if note.topics.count %}
+            <div class="note-topics">
+              <span class="quiet">Related topics: </span>
+              <ul class="topic-list unstyled">
+                {% for ta in note.topics.all %}
+                  <li>{{ ta.topic|as_link }}</a>{% if not forloop.last %} | {% endif %}</li>
+                {% endfor %}
+              </ul>
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        {% else %}
+          There are no notes or queries related to <em>{{ topic.preferred_name }}</em>.
+        {% endif %}
+      </section>
+
+      <section id="documents-tab" class="tab-pane">
+        {% if documents %}
+        <ul id="document-list" class="model-list unstyled">
+          {% for document in documents %}
+          <li class="document-list-item">
+            {{ document|as_link|typogrify }}
+          </li>
+          {% endfor %}
+        </ul>
+
+        {% else %}
+          There are no documents related to <em>{{ topic.preferred_name }}</em>.
+            <div id="import-documents">
+              <a class="button" href="/document/upload/?reltopic={{ topic.id }}&return_to={{ topic.get_absolute_url }}">Import documents</a>
+            </div>
+        {% endif %}
+      </section>
+    </div>
+{% endblock %}

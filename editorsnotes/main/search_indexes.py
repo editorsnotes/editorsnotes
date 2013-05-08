@@ -3,7 +3,7 @@
 from haystack import site
 from haystack.indexes import *
 from django.db.models.fields import FieldDoesNotExist
-from models import Document, Transcript, Footnote, Topic, Note
+from models import Document, Transcript, Footnote, TopicNode, Note
 from editorsnotes.djotero.utils import get_creator_name
 import json
 
@@ -69,7 +69,7 @@ class TopicIndex(RealTimeSearchIndex):
     names = CharField(use_template=True)
     project_id = MultiValueField()
     def prepare_project_id(self, obj):
-        return [p.id for p in obj.get_project_affiliation()]
+        return [p.id for p in obj.get_connected_projects()]
 
 class NoteIndex(RealTimeSearchIndex):
     title = CharField(model_attr='as_text')
@@ -85,5 +85,5 @@ class NoteIndex(RealTimeSearchIndex):
 site.register(Document, DocumentIndex)
 site.register(Transcript, TranscriptIndex)
 site.register(Footnote, FootnoteIndex)
-site.register(Topic, TopicIndex)
+site.register(TopicNode, TopicIndex)
 site.register(Note, NoteIndex)
