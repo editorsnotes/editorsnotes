@@ -2,7 +2,7 @@
 
 import unittest
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Permission
 from django.db import IntegrityError, transaction
 from django.test import TestCase, TransactionTestCase
 from lxml import etree
@@ -225,3 +225,68 @@ class ProjectTopicTestCase(TestCase):
         self.assertEqual(len(topic.get_project_connections(self.project)), 2)
         topic.delete_project_connections(self.project)
         self.assertTrue(topic.deleted)
+
+class ProjectSpecificPermissionsTestCase(TestCase):
+    fixtures = ['projects.json']
+    def setUp(self):
+        self.project = main_models.Project.objects.create(
+            name='Alexander Berkman Papers Project',
+            slug='abpp')
+        self.user = User.objects.create(
+            username='jd',
+            first_name='John',
+            last_name='Doe',
+            is_superuser=False)
+        role = self.project.roles.get_or_create_by_name(
+            'Editor', is_super_role=True)
+        role.users.add(self.user)
+
+    def test_super_role(self):
+        from management import get_all_project_permissions
+
+        role = self.project.roles.get()
+        self.assertEqual(role, self.project.roles.get_for_user(self.user))
+        user_profile = main_models.UserProfile.get_for(self.user)
+
+        # "Super roles" should have all project-specific permissions
+        self.assertEqual(len(user_profile.get_project_permissions(self.project)),
+                         len(get_all_project_permissions()))
+
+        self.assertTrue(user_profile.has_project_perm(self.project, 'main.add_note'))
+        self.assertFalse(user_profile.has_project_perm(self.project, 'made up permission'))
+
+    def test_other_project_perms(self):
+        user_profile = main_models.UserProfile.get_for(self.user)
+        egp = main_models.Project.objects.get(slug='emma')
+
+        # User is not a member of this project, so shouldn't have any permissions
+        self.assertEqual(egp.roles.get_for_user(self.user), None)
+        self.assertEqual(len(user_profile.get_project_permissions(egp)), 0)
+        self.assertFalse(user_profile.has_project_perm(egp, 'main.add_note'))
+
+    def test_limited_role(self):
+        # Make a role with only one permission & make sure users of that role
+        # can only do that.
+        researcher = User.objects.create(username='a_researcher')
+        new_role = self.project.roles.get_or_create_by_name('Researcher')
+        note_perm = Permission.objects.get_by_natural_key('change_note', 'main', 'note')
+        new_role.users.add(researcher)
+        new_role.add_permissions(note_perm)
+
+        user_profile = main_models.UserProfile.get_for(researcher)
+        self.assertEqual(len(user_profile.get_project_permissions(self.project)), 1)
+        self.assertTrue(user_profile.has_project_perm(self.project, 'main.change_note'))
+        self.assertFalse(user_profile.has_project_perm(self.project, 'main.delete_note'))
+        self.assertFalse(user_profile.has_project_perm(self.project, 'main.change_topicsummary'))
+
+    def test_invalid_project_permission(self):
+        new_role = self.project.roles.get_or_create_by_name('Researcher')
+        ok_perm1 = Permission.objects.get_by_natural_key('change_note', 'main', 'note')
+        ok_perm2 = Permission.objects.get_by_natural_key('delete_note', 'main', 'note')
+
+        # This isn't a project specific permission
+        bad_perm = Permission.objects.get_by_natural_key('add_group', 'auth', 'group')
+
+        new_role.add_permissions(ok_perm1, ok_perm2)
+        self.assertRaises(ValueError, new_role.add_permissions, bad_perm)
+        self.assertEqual(len(new_role.get_permissions()), 2)

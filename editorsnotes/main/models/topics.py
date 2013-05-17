@@ -8,7 +8,7 @@ from django.db import models, transaction
 import reversion
 
 from .. import fields, utils
-from auth import Project
+from auth import Project, ProjectPermissionsMixin
 from base import (Administered, CreationMetadata, LastUpdateMetadata,
                   ProjectSpecific, URLAccessible)
 
@@ -180,7 +180,7 @@ class ProjectTopicNameManager(models.Manager):
     def for_project(self, project):
         return self.get_queryset().filter(project_id=project.id)
 
-class TopicName(CreationMetadata):
+class TopicName(CreationMetadata, ProjectPermissionsMixin):
     """
     A name identifying a topic, specific to a project.
 
@@ -197,9 +197,11 @@ class TopicName(CreationMetadata):
         unique_together = ('project', 'topic', 'is_preferred',)
     def __unicode__(self):
         return u'{} (topic node {})'.format(self.name, self.topic_id)
+    def get_affiliation(self):
+        return self.project
 reversion.register(TopicName)
 
-class TopicSummary(LastUpdateMetadata):
+class TopicSummary(LastUpdateMetadata, ProjectPermissionsMixin):
     """
     A summary about a topic, specific to a project.
 
@@ -214,9 +216,11 @@ class TopicSummary(LastUpdateMetadata):
         unique_together = ('project', 'topic',)
     def __unicode__(self):
         return u'Summary by {} for {}'.format(self.project.slug, self.topic)
+    def get_affiliation(self):
+        return self.project
 reversion.register(TopicSummary)
 
-class TopicNodeAssignment(CreationMetadata):
+class TopicNodeAssignment(CreationMetadata, ProjectPermissionsMixin):
     """
     An assignment of a topic to any other object, specific to a project.
 
@@ -234,6 +238,8 @@ class TopicNodeAssignment(CreationMetadata):
         unique_together = ('content_type', 'object_id', 'topic', 'project')
     def __unicode__(self):
         return 'Topic assignment by {} for {}'.format(self.project.slug, self.topic)
+    def get_affiliation(self):
+        return self.project
 reversion.register(TopicNodeAssignment)
 
 

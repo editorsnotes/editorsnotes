@@ -1,22 +1,34 @@
 # -*- coding: utf-8 -*-
 import datetime
 from south.db import db
-from south.v2 import DataMigration
-from django.db import models, DatabaseError
+from south.v2 import SchemaMigration
+from django.db import models
 
-class Migration(DataMigration):
-    
+
+class Migration(SchemaMigration):
+
     def forwards(self, orm):
+        # Adding model 'ProjectRole'
+        db.create_table(u'main_projectrole', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('project', self.gf('django.db.models.fields.related.ForeignKey')(related_name='roles', to=orm['main.Project'])),
+            ('is_super_role', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('role', self.gf('django.db.models.fields.CharField')(max_length=40)),
+            ('group', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['auth.Group'], unique=True)),
+        ))
+        db.send_create_signal('main', ['ProjectRole'])
 
-        try:
-            # Delete these so we can update topic models in 0089
-            orm['refine.topiccluster'].objects.all().delete()
-            orm['refine.badclusterpair'].objects.all().delete()
-        except DatabaseError:
-            pass
+        # Adding unique constraint on 'ProjectRole', fields ['project', 'role']
+        db.create_unique(u'main_projectrole', ['project_id', 'role'])
+
 
     def backwards(self, orm):
-        pass
+        # Removing unique constraint on 'ProjectRole', fields ['project', 'role']
+        db.delete_unique(u'main_projectrole', ['project_id', 'role'])
+
+        # Deleting model 'ProjectRole'
+        db.delete_table(u'main_projectrole')
+
 
     models = {
         u'auth.group': {
@@ -54,14 +66,6 @@ class Migration(DataMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'model': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
-        },
-        'main.alias': {
-            'Meta': {'unique_together': "(('topic', 'name'),)", 'object_name': 'Alias'},
-            'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_alias_set'", 'to': u"orm['auth.User']"}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': "'80'"}),
-            'topic': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'aliases'", 'to': "orm['main.Topic']"})
         },
         'main.citation': {
             'Meta': {'ordering': "['ordering']", 'object_name': 'Citation'},
@@ -183,6 +187,14 @@ class Migration(DataMigration):
             'project': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Project']"}),
             'role': ('django.db.models.fields.CharField', [], {'default': "'researcher'", 'max_length': '10'})
         },
+        'main.projectrole': {
+            'Meta': {'unique_together': "(('project', 'role'),)", 'object_name': 'ProjectRole'},
+            'group': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['auth.Group']", 'unique': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'is_super_role': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'project': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'roles'", 'to': "orm['main.Project']"}),
+            'role': ('django.db.models.fields.CharField', [], {'max_length': '40'})
+        },
         'main.scan': {
             'Meta': {'ordering': "['ordering']", 'object_name': 'Scan'},
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
@@ -199,28 +211,10 @@ class Migration(DataMigration):
         },
         'main.topic': {
             'Meta': {'ordering': "['slug']", 'object_name': 'Topic'},
-            'affiliated_projects': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': "orm['main.Project']", 'null': 'True', 'blank': 'True'}),
-            'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_topic_set'", 'to': u"orm['auth.User']"}),
-            'has_accepted_facts': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'has_candidate_facts': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'last_updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'last_updater': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'last_to_update_topic_set'", 'to': u"orm['auth.User']"}),
+            'merged_into': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.TopicNode']", 'null': 'True', 'blank': 'True'}),
             'preferred_name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': "'80'"}),
-            'related_topics': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'related_topics_rel_+'", 'blank': 'True', 'to': "orm['main.Topic']"}),
-            'slug': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': "'80'", 'db_index': 'True'}),
-            'summary': ('editorsnotes.main.fields.XHTMLField', [], {'null': 'True', 'blank': 'True'}),
-            'type': ('django.db.models.fields.CharField', [], {'max_length': '3', 'blank': 'True'})
-        },
-        'main.topicassignment': {
-            'Meta': {'unique_together': "(('content_type', 'object_id', 'topic'),)", 'object_name': 'TopicAssignment'},
-            'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['contenttypes.ContentType']"}),
-            'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_topicassignment_set'", 'to': u"orm['auth.User']"}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'object_id': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'topic': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'assignments'", 'to': "orm['main.Topic']"})
+            'slug': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': "'80'", 'db_index': 'True'})
         },
         'main.topicname': {
             'Meta': {'unique_together': "(('project', 'topic', 'is_preferred'),)", 'object_name': 'TopicName'},
@@ -284,53 +278,7 @@ class Migration(DataMigration):
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']", 'unique': 'True'}),
             'zotero_key': ('django.db.models.fields.CharField', [], {'max_length': "'24'", 'null': 'True', 'blank': 'True'}),
             'zotero_uid': ('django.db.models.fields.CharField', [], {'max_length': "'6'", 'null': 'True', 'blank': 'True'})
-        },
-        u'refine.badclusterpair': {
-            'Meta': {'object_name': 'BadClusterPair'},
-            'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['contenttypes.ContentType']"}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'obj1': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'obj2': ('django.db.models.fields.PositiveIntegerField', [], {})
-        },
-        u'refine.documentcluster': {
-            'Meta': {'object_name': 'DocumentCluster'},
-            'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'creator': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']", 'null': 'True', 'blank': 'True'}),
-            'documents': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'in_cluster'", 'symmetrical': 'False', 'to': "orm['main.Document']"}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'marked_for_merge': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'message': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'})
-        },
-        u'refine.topiccluster': {
-            'Meta': {'object_name': 'TopicCluster'},
-            'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'creator': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']", 'null': 'True', 'blank': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'marked_for_merge': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'message': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
-            'topics': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'in_cluster'", 'symmetrical': 'False', 'to': "orm['main.Topic']"})
-        },
-        u'reversion.revision': {
-            'Meta': {'object_name': 'Revision'},
-            'comment': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
-            'date_created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'manager_slug': ('django.db.models.fields.CharField', [], {'default': "u'default'", 'max_length': '200', 'db_index': 'True'}),
-            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']", 'null': 'True', 'blank': 'True'})
-        },
-        u'reversion.version': {
-            'Meta': {'object_name': 'Version'},
-            'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['contenttypes.ContentType']"}),
-            'format': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'object_id': ('django.db.models.fields.TextField', [], {}),
-            'object_id_int': ('django.db.models.fields.IntegerField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'}),
-            'object_repr': ('django.db.models.fields.TextField', [], {}),
-            'revision': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['reversion.Revision']"}),
-            'serialized_data': ('django.db.models.fields.TextField', [], {}),
-            'type': ('django.db.models.fields.PositiveSmallIntegerField', [], {'db_index': 'True'})
         }
     }
 
-    complete_apps = ['reversion', 'refine', 'main']
-    symmetrical = True
+    complete_apps = ['main']

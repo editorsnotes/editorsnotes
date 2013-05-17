@@ -12,6 +12,7 @@ from django.utils.safestring import mark_safe
 from lxml import etree
 
 from .. import fields, utils
+from auth import ProjectPermissionsMixin
 from base import (CreationMetadata, LastUpdateMetadata, URLAccessible,
                   Administered, ProjectSpecific)
 
@@ -29,7 +30,8 @@ FROM main_document AS part WHERE part.collection_id = main_document.id''',
                               '_has_transcript': '''EXISTS ( SELECT 1 
 FROM main_transcript WHERE main_transcript.document_id = main_document.id )''' })
 
-class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
+class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific,
+               ProjectPermissionsMixin):
     u"""
     Anything that can be taken as evidence for (documentation of) something.
 

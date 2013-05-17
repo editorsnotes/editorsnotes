@@ -1,9 +1,14 @@
+from collections import Counter
+
 from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
 from lxml import etree
 from model_utils.managers import InheritanceManager
+from reversion.models import Revision
 
 from .. import fields
+from auth import ProjectPermissionsMixin
 from base import (Administered, LastUpdateMetadata, ProjectSpecific,
                   URLAccessible)
 
@@ -13,7 +18,8 @@ NOTE_STATUS_CHOICES = (
     ('2', 'Hibernating')
 )
 
-class Note(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
+class Note(LastUpdateMetadata, Administered, URLAccessible,
+           ProjectSpecific, ProjectPermissionsMixin):
     u""" 
     Text written by an editor or curator. The text is stored as XHTML,
     so it may have hyperlinks and all the other features that XHTML
@@ -28,6 +34,15 @@ class Note(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
     sections_counter = models.PositiveIntegerField(default=0)
     def has_topic(self, topic):
         return topic.id in self.topics.values_list('topic_id', flat=True)
+    def get_all_updaters(self):
+        note_ct = ContentType.objects.get_for_model(Note)
+        qs = Revision.objects\
+                .select_related('user', 'version')\
+                .distinct('user')\
+                .filter(version__content_type_id=note_ct.id,
+                        version__object_id_int=self.id)
+        user_counter = Counter([revision.user for revision in qs])
+        return [user for user, count in user_counter.most_common()]
     def as_text(self):
         return self.title
     class Meta:

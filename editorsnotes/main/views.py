@@ -305,6 +305,10 @@ def note(request, note_id):
     o['history'] = reversion.get_unique_for_object(o['note'])
     o['topics'] = [ ta.topic for ta in o['note'].topics.all() ]
     o['cites'] = main_models.Citation.objects.get_for_object(o['note'])
+
+    o['can_edit'] = request.user.is_authenticated() and \
+            request.user.has_project_perm(o['note'].project, 'main.change_note')
+
     return render_to_response(
         'note.html', o, context_instance=RequestContext(request))
 
