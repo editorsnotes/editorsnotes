@@ -18,8 +18,7 @@ NOTE_STATUS_CHOICES = (
     ('2', 'Hibernating')
 )
 
-class Note(LastUpdateMetadata, Administered, URLAccessible,
-           ProjectSpecific, ProjectPermissionsMixin):
+class Note(LastUpdateMetadata, Administered, URLAccessible, ProjectPermissionsMixin):
     u""" 
     Text written by an editor or curator. The text is stored as XHTML,
     so it may have hyperlinks and all the other features that XHTML
@@ -27,11 +26,19 @@ class Note(LastUpdateMetadata, Administered, URLAccessible,
     """
     title = models.CharField(max_length='80', unique=True)
     content = fields.XHTMLField()
+    project = models.ForeignKey('Project', related_name='notes')
     assigned_users = models.ManyToManyField('UserProfile', blank=True, null=True)
     status = models.CharField(choices=NOTE_STATUS_CHOICES, max_length=1, default='1')
     topics = generic.GenericRelation('TopicNodeAssignment')
     citations = generic.GenericRelation('Citation')
     sections_counter = models.PositiveIntegerField(default=0)
+    class Meta:
+        app_label = 'main'
+        ordering = ['-last_updated']  
+    def as_text(self):
+        return self.title
+    def get_affiliation(self):
+        return self.project
     def has_topic(self, topic):
         return topic.id in self.topics.values_list('topic_id', flat=True)
     def get_all_updaters(self):
@@ -43,13 +50,8 @@ class Note(LastUpdateMetadata, Administered, URLAccessible,
                         version__object_id_int=self.id)
         user_counter = Counter([revision.user for revision in qs])
         return [user for user, count in user_counter.most_common()]
-    def as_text(self):
-        return self.title
-    class Meta:
-        app_label = 'main'
-        ordering = ['-last_updated']  
 
-class NoteSection(LastUpdateMetadata):
+class NoteSection(LastUpdateMetadata, ProjectPermissionsMixin):
     u"""
     The concrete base class for any note section.
     """
@@ -63,6 +65,8 @@ class NoteSection(LastUpdateMetadata):
         app_label = 'main'
         ordering = ['ordering', 'note_section_id']
         unique_together = ['note', 'note_section_id']
+    def get_affiliation(self):
+        return self.note.project
     def _get_section_subclass(self):
         """
         Get the subclass of this note section, used for caching.

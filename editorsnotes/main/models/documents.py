@@ -13,8 +13,7 @@ from lxml import etree
 
 from .. import fields, utils
 from auth import ProjectPermissionsMixin
-from base import (CreationMetadata, LastUpdateMetadata, URLAccessible,
-                  Administered, ProjectSpecific)
+from base import CreationMetadata, LastUpdateMetadata, URLAccessible, Administered
 
 class DocumentManager(models.Manager):
     # Include whether or not documents have scans/transcripts in default query.
@@ -30,8 +29,7 @@ FROM main_document AS part WHERE part.collection_id = main_document.id''',
                               '_has_transcript': '''EXISTS ( SELECT 1 
 FROM main_transcript WHERE main_transcript.document_id = main_document.id )''' })
 
-class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific,
-               ProjectPermissionsMixin):
+class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectPermissionsMixin):
     u"""
     Anything that can be taken as evidence for (documentation of) something.
 
@@ -42,6 +40,7 @@ class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific,
     import_id = models.CharField(max_length=64, editable=False, 
                                  blank=True, null=True, 
                                  unique=True, db_index=True)
+    project = models.ForeignKey('Project', related_name='documents')
     description = fields.XHTMLField()
     collection = models.ForeignKey('self', related_name='parts', blank=True, null=True)
     ordering = models.CharField(max_length=32, editable=False)
@@ -52,6 +51,10 @@ class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific,
     class Meta:
         app_label = 'main'
         ordering = ['ordering','import_id']    
+    def as_text(self):
+        return utils.xhtml_to_text(self.description)
+    def get_affiliation(self):
+        return self.project
     @property
     def transcript(self):
         try:
@@ -128,8 +131,6 @@ class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific,
                 changed = True
         return changed
         
-    def as_text(self):
-        return utils.xhtml_to_text(self.description)
     def as_html(self):
         if self.zotero_link():
             data_attributes = ''.join(
@@ -158,7 +159,7 @@ class TranscriptManager(models.Manager):
         return super(TranscriptManager, self).get_query_set()\
             .select_related('document')
 
-class Transcript(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecific):
+class Transcript(LastUpdateMetadata, Administered, URLAccessible, ProjectPermissionsMixin):
     u"""
     A text transcript of a document.
     """
@@ -167,11 +168,13 @@ class Transcript(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecifi
     objects = TranscriptManager()
     class Meta:
         app_label = 'main'
+    def as_text(self):
+        return self.document.as_text()
+    def get_affiliation(self):
+        return self.document.project
     def get_absolute_url(self):
         # Transcripts don't have their own URLs; use the document URL.
         return '%s#transcript' % self.document.get_absolute_url()
-    def as_text(self):
-        return self.document.as_text()
     def as_html(self):
         return self.document.as_html()
     def get_footnote_href_ids(self):
@@ -184,7 +187,8 @@ class Transcript(LastUpdateMetadata, Administered, URLAccessible, ProjectSpecifi
                       key=lambda fn: fn_ids.index(fn.id)
                       if fn.id in fn_ids else 9999)
 
-class Footnote(LastUpdateMetadata, Administered, URLAccessible):
+class Footnote(LastUpdateMetadata, Administered, URLAccessible,
+               ProjectPermissionsMixin):
     u"""
     A footnote attached to a transcript.
     """
@@ -192,6 +196,8 @@ class Footnote(LastUpdateMetadata, Administered, URLAccessible):
     content = fields.XHTMLField()
     class Meta:
         app_label = 'main'
+    def get_affiliation(self):
+        return self.transcript.document.project
     def footnoted_text(self):
         try:
             selector = 'a.footnote[href="%s"]' % self.get_absolute_url()
@@ -217,7 +223,7 @@ class Footnote(LastUpdateMetadata, Administered, URLAccessible):
         self.transcript.save()
         super(Footnote, self).delete(*args, **kwargs)
 
-class Scan(CreationMetadata):
+class Scan(CreationMetadata, ProjectPermissionsMixin):
     u"""
     A scanned image of (part of) a dcument.
     """
@@ -229,6 +235,8 @@ class Scan(CreationMetadata):
         ordering = ['ordering'] 
     def __unicode__(self):
         return u'Scan for %s (order: %s)' % (self.document, self.ordering)
+    def get_affiliation(self):
+        return self.document.project
 
 class DocumentLink(CreationMetadata):
     u"""
@@ -259,7 +267,7 @@ class CitationManager(models.Manager):
             content_type=ContentType.objects.get_for_model(obj),
             object_id=obj.id)
 
-class Citation(LastUpdateMetadata):
+class Citation(LastUpdateMetadata, ProjectPermissionsMixin):
     u"""
     A reference to or citation of a document.
     """
@@ -280,3 +288,5 @@ class Citation(LastUpdateMetadata):
         return self.notes is not None
     def __unicode__(self):
         return u'Citation for %s (order: %s)' % (self.document, self.ordering)
+    def get_affiliation(self):
+        return self.document.project

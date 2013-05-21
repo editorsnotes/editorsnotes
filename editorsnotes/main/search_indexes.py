@@ -82,8 +82,8 @@ class NoteIndex(RealTimeSearchIndex):
     def prepare_related_topic_id(self, obj):
         return [t.topic.id for t in obj.topics.all()]
 
-site.register(Document, DocumentIndex)
-site.register(Transcript, TranscriptIndex)
-site.register(Footnote, FootnoteIndex)
-site.register(TopicNode, TopicIndex)
-site.register(Note, NoteIndex)
+#site.register(Document, DocumentIndex)
+#site.register(Transcript, TranscriptIndex)
+#site.register(Footnote, FootnoteIndex)
+#site.register(TopicNode, TopicIndex)
+#site.register(Note, NoteIndex)
