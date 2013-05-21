@@ -50,9 +50,12 @@ def update_project_permissions(*args, **kwargs):
     project_perm_group = _get_project_permission_group()
     existing_perms = project_perm_group.permissions.all()
     detected_perms = get_all_builtin_project_permissions(models)
+
+    verbosity = kwargs.get('verbosity', 0)
     for perm in detected_perms - set(existing_perms):
-        print u'Adding project-specific permission: {}.{}'.format(
-            perm.content_type.app_label, perm.codename)
+        if verbosity > 0:
+            print u'Adding project-specific permission: {}.{}'.format(
+                perm.content_type.app_label, perm.codename)
         project_perm_group.permissions.add(perm)
     return
 

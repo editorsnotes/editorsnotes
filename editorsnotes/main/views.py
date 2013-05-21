@@ -54,7 +54,7 @@ def proxy(request):
 
 @reversion.create_revision()
 def create_invited_user(email):
-    invitation = main_models.ProjectInvitation.objects.filter(email=email)
+    invitation = main_models.auth.ProjectInvitation.objects.filter(email=email)
     if not invitation:
         return None
 

@@ -237,6 +237,10 @@ class TopicNodeAssignment(CreationMetadata, ProjectPermissionsMixin):
         app_label = 'main'
         unique_together = ('content_type', 'object_id', 'topic', 'project')
     def __unicode__(self):
+        return u'({}) {} --> {}: {}'.format(self.project.slug,
+                                            self.topic._preferred_name,
+                                            self.content_object._meta.module_name,
+                                            self.content_object)
         return 'Topic assignment by {} for {}'.format(self.project.slug, self.topic)
     def get_affiliation(self):
         return self.project

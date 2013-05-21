@@ -30,7 +30,6 @@ class Note(LastUpdateMetadata, Administered, URLAccessible, ProjectPermissionsMi
     assigned_users = models.ManyToManyField('UserProfile', blank=True, null=True)
     status = models.CharField(choices=NOTE_STATUS_CHOICES, max_length=1, default='1')
     topics = generic.GenericRelation('TopicNodeAssignment')
-    citations = generic.GenericRelation('Citation')
     sections_counter = models.PositiveIntegerField(default=0)
     class Meta:
         app_label = 'main'

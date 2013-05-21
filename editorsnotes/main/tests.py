@@ -51,99 +51,61 @@ def create_test_user():
     user.save()
     return user
 
-class TopicTestCase(TestCase):
-    def setUp(self):
-        self.user = create_test_user()
-        self.topics = []
-        self.topics.append(main_models.Topic.objects.create(
-                preferred_name=u'Foote, Edward B. (Edward Bliss) 1829-1906', 
-                summary='Foote was the man.',
-                creator=self.user, last_updater=self.user))
-        self.topics.append(main_models.Topic.objects.create(
-                preferred_name=u'Räggler å paschaser på våra mål tå en bonne', 
-                summary='Weird language!',
-                creator=self.user, last_updater=self.user))
-        self.topics.append(main_models.Topic.objects.create(
-                preferred_name=u'Not unicode', 
-                summary='Another test topic.',
-                creator=self.user, last_updater=self.user))
-    def tearDown(self):
-        for t in self.topics:
-            t.delete()
-    def testSlugGeneration(self):
-        self.assertEquals(self.topics[0].slug,
-                          u'Foote,_Edward_B_Edward_Bliss_1829-1906')
-        self.assertEquals(self.topics[1].slug,
-                          u'Räggler_å_paschaser_på_våra_mål_tå_en_bonne')
-        self.assertEquals(self.topics[2].slug,
-                          u'Not_unicode')
-    def testRelatedTopics(self):
-        self.topics[0].related_topics.add(self.topics[1])
-        self.topics[0].related_topics.add(self.topics[2])
-        self.topics[0].save()
-        for t in self.topics[1:]:
-            related = t.related_topics.all()
-            self.assertEquals(len(related), 1)
-            self.assertEquals(related[0], self.topics[0])
-
 class NoteTestCase(TestCase):
+    fixtures = ['projects.json']
     def setUp(self):
-        self.user = create_test_user()
+        self.project = main_models.Project.objects.get(slug='emma')
+        self.user = self.project.members.all()[0].user
     def testStripStyleElementsFromContent(self):
         note = main_models.Note.objects.create(
             content=u'<style>garbage</style><h1>hey</h1><p>this is a <em>note</em></p>', 
-            creator=self.user, last_updater=self.user)
+            creator=self.user, last_updater=self.user, project=self.project)
         self.assertEquals(
             etree.tostring(note.content),
             '<div><h1>hey</h1><p>this is a <em>note</em></p></div>')
-        note.delete()
     def testAddCitations(self):
         note = main_models.Note.objects.create(
             content=u'<h1>hey</h1><p>this is a <em>note</em></p>', 
-            creator=self.user, last_updater=self.user)
+            creator=self.user, last_updater=self.user, project=self.project)
         document = main_models.Document.objects.create(
             description='Ryan Shaw, <em>My Big Book of Cool Stuff</em>, 2010.', 
-            creator=self.user, last_updater=self.user)
-        note.citations.create(
-            document=document, creator=self.user, last_updater=self.user)
-        self.assertEquals(1, len(note.citations.all()))
-        self.assertEquals(document, note.citations.all()[0].document)
-        note.delete()
-        document.delete()
+            creator=self.user, last_updater=self.user, project=self.project)
+        main_models.notes.CitationNS.objects.create(
+            note=note, document=document, creator=self.user, last_updater=self.user)
+        self.assertEquals(note.sections.count(), 1)
+        self.assertEquals(note.sections_counter, 1)
+        self.assertEquals(document, note.sections.select_subclasses()[0].document)
     def testAssignTopics(self):
         note = main_models.Note.objects.create(
             content=u'<h1>hey</h1><p>this is a <em>note</em></p>', 
-            creator=self.user, last_updater=self.user)
-        topic = main_models.Topic.objects.create(
-            preferred_name=u'Example', 
-            summary='An example topic',
-            creator=self.user, last_updater=self.user)
+            creator=self.user, last_updater=self.user, project=self.project)
+        topic = main_models.TopicNode.objects.create_project_topic(
+            self.project, self.user, name=u'Example')
         self.assertFalse(note.has_topic(topic))
-        main_models.TopicAssignment.objects.create(
-            content_object=note, topic=topic, creator=self.user)
+        main_models.topics.TopicNodeAssignment.objects.create(
+            content_object=note, topic=topic, creator=self.user, project=self.project)
         self.assertTrue(note.has_topic(topic))
         self.assertEquals(1, len(note.topics.all()))
         self.assertEquals(1, len(topic.assignments.all()))
         self.assertEquals(topic, note.topics.all()[0].topic)
-        note.delete()
-        topic.delete()
 
 class NoteTransactionTestCase(TransactionTestCase):
+    fixtures = ['projects.json']
     def setUp(self):
-        self.user = create_test_user()
+        self.project = main_models.Project.objects.get(slug='emma')
+        self.user = self.project.members.all()[0].user
     def testAssignTopicTwice(self):
         note = main_models.Note.objects.create(
             content=u'<h1>hey</h1><p>this is a <em>note</em></p>', 
-            creator=self.user, last_updater=self.user)
-        topic = main_models.Topic.objects.create(
-            preferred_name=u'Example', 
-            summary='An example topic',
-            creator=self.user, last_updater=self.user)
-        main_models.TopicAssignment.objects.create(
-            content_object=note, topic=topic, creator=self.user)
+            creator=self.user, last_updater=self.user, project=self.project)
+        topic = TopicNode.objects.create_project_topic(
+            self.project, self.user, name=u'Example')
+        main_models.topics.TopicNodeAssignment.objects.create(
+            content_object=note, topic=topic,
+            creator=self.user, project=self.project)
         self.assertRaises(IntegrityError,
-                          main_models.TopicAssignment.objects.create,
-                          content_object=note, topic=topic, creator=self.user)
+                          main_models.topics.TopicNodeAssignment.objects.create,
+                          content_object=note, topic=topic, creator=self.user, project=self.project)
         transaction.rollback()
         note.delete()
         topic.delete()
@@ -162,7 +124,7 @@ class NewUserTestCase(TestCase):
         # We haven't invited this person yet, so this shouldn't make an account
         self.assertEqual(create_invited_user(new_user_email), None)
         
-        main_models.ProjectInvitation.objects.create(
+        main_models.auth.ProjectInvitation.objects.create(
             project=test_project,
             email=new_user_email,
             role='editor',
@@ -171,7 +133,7 @@ class NewUserTestCase(TestCase):
         new_user = create_invited_user(new_user_email)
 
         self.assertTrue(isinstance(new_user, User))
-        self.assertEqual(main_models.ProjectInvitation.objects.count(), 0)
+        self.assertEqual(main_models.auth.ProjectInvitation.objects.count(), 0)
         self.assertEqual(new_user.username, 'fakeperson')
 
 class ProjectTopicTestCase(TestCase):
