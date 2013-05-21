@@ -13,8 +13,6 @@ from base import URLAccessible, CreationMetadata
 
 class UserProfile(models.Model, URLAccessible):
     user = models.ForeignKey(User, unique=True)
-    affiliation = models.ForeignKey('Project', blank=True, null=True,
-                                    related_name='members')
     zotero_key = models.CharField(max_length='24', blank=True, null=True)
     zotero_uid = models.CharField(max_length='6', blank=True, null=True)
     class Meta:
@@ -82,11 +80,17 @@ class ProjectPermissionsMixin(object):
         raise NotImplementedError(
             'Must define get_affiliation method which returns the project for this model.')
 
+class ProjectManager(models.Manager):
+    def for_user(self, user):
+        return self.select_related('roles__group__user')\
+                .filter(roles__group__user=user)
+
 class Project(models.Model, URLAccessible, ProjectPermissionsMixin):
     name = models.CharField(max_length='80')
     slug = models.SlugField(help_text='Used for project-specific URLs and groups')
     image = models.ImageField(upload_to='project_images', blank=True, null=True)
     description = fields.XHTMLField(blank=True, null=True)
+    objects = ProjectManager()
     class Meta:
         app_label = 'main'
         permissions = (
