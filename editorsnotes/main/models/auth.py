@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import AbstractUser, Group
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -11,24 +11,23 @@ from .. import fields
 from ..management import get_all_project_permissions
 from base import URLAccessible, CreationMetadata
 
-class UserProfile(models.Model, URLAccessible):
-    user = models.ForeignKey(User, unique=True)
+class User(AbstractUser):
     zotero_key = models.CharField(max_length='24', blank=True, null=True)
     zotero_uid = models.CharField(max_length='6', blank=True, null=True)
     class Meta:
         app_label = 'main'
     def _get_display_name(self):
         "Returns the full name if available, or the username if not."
-        display_name = self.user.username
-        if self.user.first_name:
-            display_name = self.user.first_name
-            if self.user.last_name:
-                display_name = '%s %s' % (self.user.first_name, self.user.last_name)
+        display_name = self.username
+        if self.first_name:
+            display_name = self.first_name
+            if self.last_name:
+                display_name = '%s %s' % (self.first_name, self.last_name)
         return display_name
     display_name = property(_get_display_name)
     @models.permalink
     def get_absolute_url(self):
-        return ('user_view', [str(self.user.username)])
+        return ('user_view', [str(self.username)])
     def as_text(self):
         return self.display_name
     def get_project_permissions(self, project):
@@ -41,7 +40,7 @@ class UserProfile(models.Model, URLAccessible):
         this UserProfile into a custom User model, it would make sense to move
         this method to a custom backend.
         """
-        role = project.roles.get_for_user(self.user)
+        role = project.roles.get_for_user(self)
         if role is None:
             return set()
         return set(['{}.{}'.format(perm.content_type.app_label, perm.codename)
@@ -55,15 +54,8 @@ class UserProfile(models.Model, URLAccessible):
         """
         return perm in self.get_project_permissions(project)
     @staticmethod
-    def get_for(user):
-        try:
-            return user.get_profile()
-        except UserProfile.DoesNotExist:
-            return UserProfile.objects.create(user=user)
-    @staticmethod
     def get_activity_for(user, max_count=50):
         return activity_for(user, max_count=50)
-
 
 class ProjectPermissionsMixin(object):
     """
@@ -106,6 +98,10 @@ class Project(models.Model, URLAccessible, ProjectPermissionsMixin):
         return self.name
     def has_description(self):
         return self.description is not None
+    @property
+    def members(self):
+        role_groups = self.roles.values_list('group_id', flat=True)
+        return User.objects.filter(groups__in=role_groups)
 
     @staticmethod
     def get_activity_for(project, max_count=50):

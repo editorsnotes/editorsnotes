@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -9,8 +8,8 @@ import reversion
 
 from .. import fields, utils
 from auth import Project, ProjectPermissionsMixin
-from base import (Administered, CreationMetadata, LastUpdateMetadata,
-                  ProjectSpecific, URLAccessible)
+from base import (
+    Administered, CreationMetadata, LastUpdateMetadata, URLAccessible)
 
 TYPE_CHOICES = (
     ('EVT', 'Event'),
@@ -27,8 +26,6 @@ class TopicNodeManager(models.Manager):
         """
         if topic_node is None and name is None:
             raise ValueError('Must pass either a topic node or a name')
-        if not isinstance(project, Project) or not isinstance(user, User):
-            raise ValueError('Must provide project and user as first arguments.')
 
         topic = topic_node or TopicNode.objects.create(
             _preferred_name=name,

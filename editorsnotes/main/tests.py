@@ -2,7 +2,7 @@
 
 import unittest
 
-from django.contrib.auth.models import User, Permission
+from django.contrib.auth.models import Permission
 from django.db import IntegrityError, transaction
 from django.test import TestCase, TransactionTestCase
 from lxml import etree
@@ -46,7 +46,7 @@ class UtilsTestCase(unittest.TestCase):
         self.assertEquals('Z', columns[2][7]['first_letter'])
 
 def create_test_user():
-    user = User(username='testuser', is_staff=True, is_superuser=True)
+    user = main_models.auth.User(username='testuser', is_staff=True, is_superuser=True)
     user.set_password('testuser')
     user.save()
     return user
@@ -55,7 +55,7 @@ class NoteTestCase(TestCase):
     fixtures = ['projects.json']
     def setUp(self):
         self.project = main_models.Project.objects.get(slug='emma')
-        self.user = self.project.members.all()[0].user
+        self.user = self.project.members.all()[0]
     def testStripStyleElementsFromContent(self):
         note = main_models.Note.objects.create(
             content=u'<style>garbage</style><h1>hey</h1><p>this is a <em>note</em></p>', 
@@ -93,7 +93,7 @@ class NoteTransactionTestCase(TransactionTestCase):
     fixtures = ['projects.json']
     def setUp(self):
         self.project = main_models.Project.objects.get(slug='emma')
-        self.user = self.project.members.all()[0].user
+        self.user = self.project.members.all()[0]
     def testAssignTopicTwice(self):
         note = main_models.Note.objects.create(
             content=u'<h1>hey</h1><p>this is a <em>note</em></p>', 
@@ -120,6 +120,7 @@ class NewUserTestCase(TestCase):
             name='Editors\' Notes\' Idiot Brigade',
             slug='ENIB',
         )
+        test_role = test_project.roles.get_or_create_by_name('editor')
 
         # We haven't invited this person yet, so this shouldn't make an account
         self.assertEqual(create_invited_user(new_user_email), None)
@@ -127,12 +128,12 @@ class NewUserTestCase(TestCase):
         main_models.auth.ProjectInvitation.objects.create(
             project=test_project,
             email=new_user_email,
-            role='editor',
+            role=test_role.role,
             creator=self.user
         )
         new_user = create_invited_user(new_user_email)
 
-        self.assertTrue(isinstance(new_user, User))
+        self.assertTrue(isinstance(new_user, main_models.auth.User))
         self.assertEqual(main_models.auth.ProjectInvitation.objects.count(), 0)
         self.assertEqual(new_user.username, 'fakeperson')
 
@@ -140,9 +141,9 @@ class ProjectTopicTestCase(TestCase):
     fixtures = ['projects.json']
     def setUp(self):
         self.project = main_models.Project.objects.get(slug='emma')
-        self.user = self.project.members.all()[0].user
+        self.user = self.project.members.all()[0]
         self.project2 = main_models.Project.objects.get(slug='sanger')
-        self.user2 = self.project2.members.all()[0].user
+        self.user2 = self.project2.members.all()[0]
 
     def test_create_project_topic(self):
         new_topic = TopicNode.objects.create_project_topic(
@@ -194,7 +195,7 @@ class ProjectSpecificPermissionsTestCase(TestCase):
         self.project = main_models.Project.objects.create(
             name='Alexander Berkman Papers Project',
             slug='abpp')
-        self.user = User.objects.create(
+        self.user = main_models.auth.User.objects.create(
             username='jd',
             first_name='John',
             last_name='Doe',
@@ -208,38 +209,36 @@ class ProjectSpecificPermissionsTestCase(TestCase):
 
         role = self.project.roles.get()
         self.assertEqual(role, self.project.roles.get_for_user(self.user))
-        user_profile = main_models.UserProfile.get_for(self.user)
 
         # "Super roles" should have all project-specific permissions
-        self.assertEqual(len(user_profile.get_project_permissions(self.project)),
+        self.assertEqual(len(self.user.get_project_permissions(self.project)),
                          len(get_all_project_permissions()))
 
-        self.assertTrue(user_profile.has_project_perm(self.project, 'main.add_note'))
-        self.assertFalse(user_profile.has_project_perm(self.project, 'made up permission'))
+        self.assertTrue(self.user.has_project_perm(self.project, 'main.add_note'))
+        self.assertFalse(self.user.has_project_perm(self.project, 'made up permission'))
 
     def test_other_project_perms(self):
-        user_profile = main_models.UserProfile.get_for(self.user)
         egp = main_models.Project.objects.get(slug='emma')
 
         # User is not a member of this project, so shouldn't have any permissions
         self.assertEqual(egp.roles.get_for_user(self.user), None)
-        self.assertEqual(len(user_profile.get_project_permissions(egp)), 0)
-        self.assertFalse(user_profile.has_project_perm(egp, 'main.add_note'))
+        self.assertEqual(len(self.user.get_project_permissions(egp)), 0)
+        self.assertFalse(self.user.has_project_perm(egp, 'main.add_note'))
 
     def test_limited_role(self):
         # Make a role with only one permission & make sure users of that role
         # can only do that.
-        researcher = User.objects.create(username='a_researcher')
+        researcher = main_models.auth.User.objects.create(username='a_researcher')
         new_role = self.project.roles.get_or_create_by_name('Researcher')
         note_perm = Permission.objects.get_by_natural_key('change_note', 'main', 'note')
+
         new_role.users.add(researcher)
         new_role.add_permissions(note_perm)
 
-        user_profile = main_models.UserProfile.get_for(researcher)
-        self.assertEqual(len(user_profile.get_project_permissions(self.project)), 1)
-        self.assertTrue(user_profile.has_project_perm(self.project, 'main.change_note'))
-        self.assertFalse(user_profile.has_project_perm(self.project, 'main.delete_note'))
-        self.assertFalse(user_profile.has_project_perm(self.project, 'main.change_topicsummary'))
+        self.assertEqual(len(researcher.get_project_permissions(self.project)), 1)
+        self.assertTrue(researcher.has_project_perm(self.project, 'main.change_note'))
+        self.assertFalse(researcher.has_project_perm(self.project, 'main.delete_note'))
+        self.assertFalse(researcher.has_project_perm(self.project, 'main.change_topicsummary'))
 
     def test_invalid_project_permission(self):
         new_role = self.project.roles.get_or_create_by_name('Researcher')

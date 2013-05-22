@@ -8,7 +8,6 @@ from PIL import Image, ImageFont, ImageDraw
 from django.conf import settings
 from django.contrib import auth
 from django.contrib import messages
-from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core.mail import mail_admins
@@ -55,33 +54,34 @@ def proxy(request):
 @reversion.create_revision()
 def create_invited_user(email):
     invitation = main_models.auth.ProjectInvitation.objects.filter(email=email)
-    if not invitation:
+    if not invitation.exists():
         return None
+    invitation = invitation.get()
 
-    project = invitation[0].project
+    project = invitation.project
+    role = project.roles.get(role=invitation.role)
 
     username = re.sub(r'[^\w\-.]', '', email[:email.rindex('@')])[:29]
-    if User.objects.filter(username=username).exists():
+    if main_models.auth.User.objects.filter(username=username).exists():
         existing_names = [
             u.username[len(username):] for u in
-            User.objects.filter(username__startswith=username)]
+            main_models.auth.User.objects.filter(username__startswith=username)]
         username += str([
             i for i in range(0, 10) if str(i) not in existing_names][0])
 
-    new_user = User(username=username, email=email)
+    new_user = main_models.auth.User(username=username, email=email)
     new_user.set_unusable_password()
     new_user.save()
-    profile = main_models.UserProfile.objects.create(user=new_user)
-    project.members.add(profile)
 
-    invitation[0].delete()
+    role.users.add(new_user)
+    invitation.delete()
 
     return new_user
 
 class CustomBrowserIDVerify(Verify):
     failure_url = '/accounts/login/'
     def get_success_url(self):
-        return self.request.user.get_profile().get_absolute_url()
+        return self.request.user.get_absolute_url()
 
 def user_logout(request):
     auth.logout(request)
@@ -94,18 +94,19 @@ def user(request, username=None):
         user = request.user
         o['own_profile'] = True
     else:
-        user = get_object_or_404(User, username=username)
+        user = get_object_or_404(main_models.auth.User, username=username)
         o['own_profile'] = user == request.user
 
-    o['profile'] = main_models.UserProfile.get_for(user)
-    o['log_entries'], ignored = main_models.UserProfile.get_activity_for(user, max_count=20)
-    o['affiliation'] = o['profile'].affiliation
-    o['project_role'] = (o['profile'].get_project_role(o['affiliation'])
-                         if o['affiliation'] else None)
+    o['log_entries'], ignored = main_models.auth.User.get_activity_for(user, max_count=20)
+
+    # FIX
+    # o['profile'] = main_models.UserProfile.get_for(user)
+    # o['affiliation'] = o['profile'].affiliation
+    # o['project_role'] = (o['profile'].get_project_role(o['affiliation'])
+    #                      if o['affiliation'] else None)
 
     if ['own_profile']:
-        o['zotero_status'] = True if (o['profile'].zotero_key and
-                                      o['profile'].zotero_uid) else False
+        o['zotero_status'] = user.zotero_key and user.zotero_uid
         if (o['affiliation'] and o['project_role'] == 'editor') or user.is_superuser:
             if user.is_superuser:
                 o['clusters'] = TopicCluster.objects.all()
@@ -241,7 +242,7 @@ def project(request, project_slug):
     o['log_entries'], ignored = main_models.Project.get_activity_for(o['project'], max_count=10)
     if request.user.is_authenticated():
         o['can_change'] = o['project'].attempt('change', request.user)
-        o['project_role'] = request.user.get_profile().get_project_role(o['project'])
+        o['project_role'] = request.user.get_project_role(o['project'])
     return render_to_response(
         'project.html', o, context_instance=RequestContext(request))
 
@@ -280,8 +281,6 @@ def topicnode(request, topicnode_id):
     o = {}
     empty_qs = main_models.topics.TopicNode.objects\
             .select_related(
-                'creator__userprofile',
-                'last_updater__userprofile',
                 'names__project',
                 'summaries__citations__document'
             ).prefetch_related(

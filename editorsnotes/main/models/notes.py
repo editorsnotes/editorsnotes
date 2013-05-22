@@ -1,5 +1,6 @@
 from collections import Counter
 
+from django.conf import settings
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
@@ -9,8 +10,7 @@ from reversion.models import Revision
 
 from .. import fields
 from auth import ProjectPermissionsMixin
-from base import (Administered, LastUpdateMetadata, ProjectSpecific,
-                  URLAccessible)
+from base import Administered, LastUpdateMetadata, URLAccessible
 
 NOTE_STATUS_CHOICES = (
     ('0', 'Closed'),
@@ -27,7 +27,7 @@ class Note(LastUpdateMetadata, Administered, URLAccessible, ProjectPermissionsMi
     title = models.CharField(max_length='80', unique=True)
     content = fields.XHTMLField()
     project = models.ForeignKey('Project', related_name='notes')
-    assigned_users = models.ManyToManyField('UserProfile', blank=True, null=True)
+    assigned_users = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, null=True)
     status = models.CharField(choices=NOTE_STATUS_CHOICES, max_length=1, default='1')
     topics = generic.GenericRelation('TopicNodeAssignment')
     sections_counter = models.PositiveIntegerField(default=0)

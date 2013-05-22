@@ -34,6 +34,7 @@ CACHES = {
     }
 }
 COMPRESS_CACHE_BACKEND = 'compress'
+SOUTH_TESTS_MIGRATE = False
 
 
 #################
@@ -45,7 +46,7 @@ MEDIA_URL = '/media/'
 STATIC_URL = '/static/'
 ROOT_URLCONF = 'editorsnotes.urls'
 
-AUTH_PROFILE_MODULE = 'main.UserProfile'
+AUTH_USER_MODEL = 'main.User'
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
     'django_browserid.auth.BrowserIDBackend',
