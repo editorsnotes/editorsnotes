@@ -103,7 +103,7 @@ class ProjectSpecific(models.Model, PermissionsMixin):
         object_affiliation = self.affiliated_projects.all()
         can_change = False
         for p in object_affiliation:
-            if user.has_perm('%s.change_%s' % (p.slug, self._meta.module_name)):
+            if user.has_perm('%s.%s.change_%s' % (self._meta.app_label, p.slug, self._meta.module_name)):
                 can_change=True
                 break
         return can_change
@@ -111,7 +111,7 @@ class ProjectSpecific(models.Model, PermissionsMixin):
         object_affiliation = self.affiliated_projects.all()
         can_view = False
         for p in object_affiliation:
-            if user.has_perm('%s.view_%s' % (p.slug, self._meta.module_name)):
+            if user.has_perm('%s.%s.view_%s' % (self._meta.app_label, p.slug, self._meta.module_name)):
                 can_view=True
                 break
         return can_view
@@ -471,8 +471,10 @@ class Project(models.Model, URLAccessible, PermissionsMixin):
             return False
     def get_or_create_project_roles(self):
         base_project_permissions = (
-            (Note, ('change',)),
+            (Note, ('change', 'delete')),
             (Project, ('view',)),
+            (Document, ('change', 'delete')),
+            (Topic, ('change', 'delete')),
         )
         editor_project_permissions = (
             (Project, ('change',)),

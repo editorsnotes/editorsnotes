@@ -423,5 +423,5 @@ def change_featured_items(request, project_id):
         return http.HttpResponseRedirect(redirect)
 
     return render_to_response(
-        'featured_items_change.html', o, context_instance=RequestContext(request))
+        'featured_items_admin.html', o, context_instance=RequestContext(request))
 
