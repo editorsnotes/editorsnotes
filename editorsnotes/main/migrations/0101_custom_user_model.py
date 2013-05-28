@@ -40,6 +40,12 @@ class Migration(DataMigration):
         # Changing field 'NoteSection.last_updater'
         db.alter_column(u'main_notesection', 'last_updater_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['main.User']))
 
+        # Changing field 'ProjectTopicContainer.creator'
+        db.alter_column(u'main_projecttopiccontainer', 'creator_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['main.User']))
+
+        # Changing field 'ProjectTopicContainer.last_updater'
+        db.alter_column(u'main_projecttopiccontainer', 'last_updater_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['main.User']))
+
         # Changing field 'TopicSummary.creator'
         db.alter_column(u'main_topicsummary', 'creator_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['main.User']))
 
@@ -332,6 +338,18 @@ class Migration(DataMigration):
             'project': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'roles'", 'to': "orm['main.Project']"}),
             'role': ('django.db.models.fields.CharField', [], {'max_length': '40'})
         },
+        'main.projecttopiccontainer': {
+            'Meta': {'object_name': 'ProjectTopicContainer'},
+            'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_projecttopiccontainer_set'", 'to': "orm['main.User']"}),
+            'deleted': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'last_updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'last_updater': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'last_to_update_projecttopiccontainer_set'", 'to': "orm['main.User']"}),
+            'merged_into': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.ProjectTopicContainer']", 'null': 'True', 'blank': 'True'}),
+            'project': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Project']"}),
+            'topic': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.TopicNode']"})
+        },
         'main.scan': {
             'Meta': {'ordering': "['ordering']", 'object_name': 'Scan'},
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
@@ -354,14 +372,13 @@ class Migration(DataMigration):
             'slug': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': "'80'", 'db_index': 'True'})
         },
         'main.topicname': {
-            'Meta': {'unique_together': "(('project', 'topic', 'is_preferred'),)", 'object_name': 'TopicName'},
+            'Meta': {'unique_together': "(('container', 'name'),)", 'object_name': 'TopicName'},
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_topicname_set'", 'to': u"orm['main.User']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_preferred': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': "'200'"}),
-            'project': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Project']"}),
-            'topic': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'names'", 'to': "orm['main.TopicNode']"})
+            'container': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'names'", 'null': 'True', 'to': "orm['main.ProjectTopicContainer']"})
         },
         'main.topicnode': {
             'Meta': {'object_name': 'TopicNode'},
@@ -376,26 +393,24 @@ class Migration(DataMigration):
             'type': ('django.db.models.fields.CharField', [], {'max_length': '3', 'blank': 'True'})
         },
         'main.topicnodeassignment': {
-            'Meta': {'unique_together': "(('content_type', 'object_id', 'topic', 'project'),)", 'object_name': 'TopicNodeAssignment'},
+            'Meta': {'unique_together': "(('content_type', 'object_id', 'container'),)", 'object_name': 'TopicNodeAssignment'},
             'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['contenttypes.ContentType']"}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_topicnodeassignment_set'", 'to': u"orm['main.User']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'object_id': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'project': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Project']"}),
-            'topic': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'assignments'", 'to': "orm['main.TopicNode']"}),
+            'container': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'assignments'", 'null': 'True', 'to': "orm['main.ProjectTopicContainer']"}),
             'topic_name': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.TopicName']", 'null': 'True', 'blank': 'True'})
         },
         'main.topicsummary': {
-            'Meta': {'unique_together': "(('project', 'topic'),)", 'object_name': 'TopicSummary'},
+            'Meta': {'object_name': 'TopicSummary'},
             'content': ('editorsnotes.main.fields.XHTMLField', [], {}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_topicsummary_set'", 'to': u"orm['main.User']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'last_updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'last_updater': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'last_to_update_topicsummary_set'", 'to': u"orm['main.User']"}),
-            'project': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Project']"}),
-            'topic': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'summaries'", 'to': "orm['main.TopicNode']"})
+            'container': ('django.db.models.fields.related.OneToOneField', [], {'unique': 'True', 'blank': 'True', 'related_name': "'summary'", 'null': 'True', 'to': "orm['main.ProjectTopicContainer']"})
         },
         'main.transcript': {
             'Meta': {'object_name': 'Transcript'},

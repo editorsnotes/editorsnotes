@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
 import json
+import hashlib
 import re
 from lxml import etree
 from south.db import db
@@ -10,468 +11,541 @@ from django.contrib.contenttypes.management import update_contenttypes
 
 update_contenttypes(models.get_app('main'), models.get_models())
 
-################
-
 TIME_FMT = '%Y-%m-%d %H:%M:%S'
 
 tmap = {}
+tmap_id = {}
 assignmentmap = {}
+stale_revisions = set()
 
+##########################################
+# Helper statements with no side effects #
+##########################################
 cts = {}
-def content_type_for_model(model, orm):
-    app, model_name = model.split('.')
-    if not model in cts:
-        cts[model] = orm['contenttypes.contenttype'].objects.get(
-            app_label=app, model=model_name)
+def ct_for_model(model, app_label='main'):
+    if model not in cts:
+        ct_select = db.execute(
+            u'SELECT id FROM django_content_type '
+            'WHERE app_label = %s AND model = %s;',
+            params=[app_label, model])
+        ct_id, = ct_select[0]
+        cts[model] = ct_id
     return cts[model]
 
-users = {}
-def user_for_uid(user_id, orm):
-    if not user_id in users:
-        qs = orm['auth.user'].objects.filter(id=user_id)
-        user = qs.get() if qs.exists() else None
-        users[user_id] = user
-    return users[user_id]
+pid_memo = {}
+def pid_for_uid(uid):
+    if uid not in pid_memo:
+        affiliation_select = db.execute(
+            u'SELECT affiliation_id FROM main_userprofile WHERE user_id = %s;',
+            params=[uid])
+        pid = affiliation_select[0][0] if len(affiliation_select[0]) else None
+        pid_memo[uid] = affiliation_select[0][0]
+    return pid_memo[uid]
 
-affiliation_memo = {}
-def affiliation_for_user(user, orm):
-    if not user in affiliation_memo:
-        profile = orm['main.userprofile'].objects.get(user_id=user.pk)
-        qs = orm['main.project'].objects.select_related()\
-                .filter(members=profile)
-        affiliation = qs.get() if qs.exists() else None
-        affiliation_memo[user] = affiliation
-    return affiliation_memo[user]
+pslug_memo = {}
+def pslug_for_pid(pid, orm):
+    if pid not in pslug_memo:
+        pslug_memo[pid] = orm['main.project'].objects.get(id=pid).slug
+    return pslug_memo[pid]
 
-def revisions_for(model, object_id, orm):
+def versions_for(model, object_id, orm):
     return orm['reversion.version'].objects\
         .select_related('revision__user')\
-        .filter(content_type=content_type_for_model(model, orm),
-                object_id=object_id)\
+        .filter(content_type_id=ct_for_model(model), object_id=object_id)\
         .order_by('revision__date_created')
 
-fields_defaults = {}
-def turn_off_auto_now(model, field_name, orm):
-    field, = filter(lambda f: f.name == field_name,
-                    orm[model]._meta.fields)
-    fields_defaults[(model, field_name)] = {
-        'auto_now': field.auto_now,
-        'auto_now_add': field.auto_now_add
-    }
-    field.auto_now = False
-    field.auto_now_add = False
+def clean_version_summary_str(string):
+    if not string:
+        return ''
+    cleaned = re.sub('&#13;\n', ' ', string)
+    cleaned = cleaned.strip().rstrip()
+    if cleaned == '<br/>':
+        cleaned = ''
+    return cleaned
+
+########################################
+# Helper statements that change the db #
+########################################
+
+def fix_null_creator_revisions(orm):
+    """
+    Update the user_id for revisions without one if we can detect what it should
+    be.
+    """
+    null_creator_revisions = orm['reversion.revision'].objects\
+            .select_related('version')\
+            .filter(user=None)
+    for revision in null_creator_revisions:
+        found_user_id = None
+        last_updater_versions = revision.version_set\
+                .filter(serialized_data__contains='last_updater')
+        for version in last_updater_versions:
+            data = json.loads(version.serialized_data)[0]
+            found_user_id = data['fields'].get('last_updater', None)
+            if found_user_id is not None:
+                break
+        if found_user_id is None:
+            creator_versions = revision.version_set.filter(
+                serialized_data__contains='creator')
+            for version in creator_versions:
+                data = json.loads(version.serialized_data)[0]
+                found_user_id = data['fields'].get('creator', None)
+                if found_user_id is not None:
+                    break
+        if found_user_id is not None:
+            db.execute(
+                u'UPDATE reversion_revision SET user_id = %s WHERE id = %s;',
+                params=[found_user_id, revision.id])
+
+def create_new_revision(user_id, timestamp, comment):
+    revision_insert = db.execute(
+        u'INSERT INTO reversion_revision VALUES '
+        '(DEFAULT, %s, %s, %s, %s) '
+        'RETURNING id;',
+        params=[timestamp, user_id, comment, 'default'])
+    revision_id, = revision_insert[0]
+    return revision_id
+
+def create_topic_node(topic):
+    topic_node_insert = db.execute(
+        u'INSERT INTO main_topicnode VALUES '
+        '(DEFAULT, %s, %s, %s, %s, %s, %s, FALSE) '
+        'RETURNING id;' ,
+         params=[topic.creator_id, topic.created,
+                 topic.last_updater_id, topic.last_updated,
+                 topic.preferred_name, topic.type]
+    )
+    topic_node_id, = topic_node_insert[0]
+    return topic_node_id
+
+def get_or_create_project_container(topic, project_id, user_id, timestamp):
+    topic_node_id = tmap[topic]
+    container_select = db.execute(
+        u'SELECT id, last_updated '
+        'FROM main_projecttopiccontainer '
+        'WHERE topic_id = %s AND project_id = %s;',
+        params=[topic_node_id, project_id])
+    if len(container_select) == 0:
+        created = True
+        container_insert = db.execute(
+            u'INSERT INTO main_projecttopiccontainer '
+            'VALUES (DEFAULT, %s, %s, %s, %s, %s, %s, False) '
+            'RETURNING id;',
+            params=[user_id, timestamp, user_id, timestamp, project_id, topic_node_id])
+        container_id, = container_insert[0]
+        name_insert = db.execute(
+            u'INSERT INTO main_topicname '
+            'VALUES (DEFAULT, %s, %s, %s, %s, True) '
+            'RETURNING id;',
+            params=[user_id, timestamp, topic.preferred_name, container_id])
+        created_topic_name_id, = name_insert[0]
+    else:
+        created = False
+        created_topic_name_id = None
+        container_id, last_updated = container_select[0]
+        if timestamp > last_updated:
+            db.execute(
+                u'UPDATE main_projecttopiccontainer '
+                'SET last_updated = %s, last_updater_id = %s '
+                'WHERE id = %s',
+                params=[timestamp, user_id, container_id])
+    return container_id, created_topic_name_id
+
+summaries = {}
+def update_project_topic_summary(topic, container_id, summary_text, user_id,
+                                 timestamp, force=False):
+    """
+    Returns topic summary id if anything was changed, otherwise None
+    """
+    created = False
+    edited = False
+    if container_id not in summaries:
+        if force is False and not summary_text:
+            return None, False, False
+        else:
+            created = True
+            edited = True
+            topic_summary_insert = db.execute(
+                u'INSERT INTO main_topicsummary '
+                'VALUES (DEFAULT, %s, %s, %s, %s, %s, %s) '
+                'RETURNING id;',
+                params=[user_id, timestamp, user_id, timestamp, container_id,
+                        etree.tostring(topic.summary) if topic.summary is not None else '<br/>'])
+            topic_summary_id, = topic_summary_insert[0]
+    else:
+        digest = hashlib.md5(summary_text).hexdigest()
+        topic_summary_id = db.execute(
+            u'SELECT id FROM main_topicsummary WHERE container_id = %s',
+            params=[container_id])[0][0]
+        if summaries[container_id] != digest:
+            edited = True
+            topic_summary_update = db.execute(
+                u'UPDATE main_topicsummary '
+                'SET last_updater_id = %s, last_updated = %s '
+                'WHERE id = %s '
+                'RETURNING id;',
+                params=[user_id, timestamp, topic_summary_id])
+            topic_summary_id, = topic_summary_update[0]
+
+    summaries[container_id] = hashlib.md5(summary_text).hexdigest()
+    return topic_summary_id, created, edited
+
+def create_version(revision_id, object_id, model, fields, object_repr,
+                   typ=1, fmt='json'):
+    data = [{
+        u'pk': int(object_id),
+        u'model': 'main.{}'.format(model),
+        u'fields': fields
+    }]
+    db.execute(
+        u'INSERT INTO reversion_version '
+        'VALUES (DEFAULT, %s, %s, %s, %s, %s, %s, %s, %s) ',
+        params=[revision_id, str(object_id), ct_for_model(model),
+                fmt, json.dumps(data), object_repr, typ, int(object_id)])
     return
 
-def restore_auto_now(orm):
-    for model, field_name in fields_defaults:
-        field, = filter(lambda f: f.name == field_name,
-                        orm[model]._meta.fields)
-        settings = fields_defaults[(model, field_name)]
-        field.auto_now = settings['auto_now']
-        field.auto_now_add = settings['auto_now_add']
-    return
 
-################
+############################
 
-def create_topic_node(topic, orm):
-    topic_node = orm['main.topicnode'].objects.create(
-        _preferred_name=topic.preferred_name,
-        type=topic.type,
-        creator=topic.creator,
-        created=topic.created,
-        last_updater=topic.last_updater,
-        last_updated=topic.last_updated
-    )
-    revision_comments = u'(Automatically generated in data migration on 5/2/2013) '
-    revision_comments += u'TopicNode(pk={})'.format(topic_node.pk)
-    revision = orm['reversion.revision'].objects.create(
-        user_id=topic.creator_id,
-        date_created=topic.created,
-        comment=revision_comments
-    )
-    orm['reversion.version'].objects.create(
-        type=0,
-        format='json',
-        object_repr=u'TopicNode: '.format(topic_node._preferred_name),
-        revision_id=revision.id,
-        content_type=content_type_for_model('main.topicnode', orm),
-        object_id=unicode(topic_node.id),
-        object_id_int=topic_node.id,
-        serialized_data=json.dumps([{
-            u'pk': topic_node.id,
-            u'model': u'main.topicnode',
-            u'fields': {
-                u'_preferred_name': topic_node._preferred_name,
-                u'creator': topic_node.creator_id,
-                u'created': topic_node.created.strftime(TIME_FMT),
-                u'last_updater': topic_node.creator_id,
-                u'last_updated': topic_node.created.strftime(TIME_FMT)
-            }
-        }])
-    )
-    return topic_node
+def update_topic(topic, orm):
+    """
+    Make database changes for a topic based on its information as well as the
+    information contained in any of its stored versions.
+    """
+    topic_versions = versions_for('topic', topic.id, orm)
 
-def update_topic(topic, topic_node, orm):
+    # Get the topic node ID-- all topic nodes are created before this function
+    # is ever called.
+    topic_node_id = tmap[topic]
 
-    topic_versions = revisions_for('main.topic', topic.id, orm)
+    # Store whether this topic has any citations. We will use that knowledge
+    # later to decide whether to create new citations for TopicSummary objects.
+    topic_cites_select = db.execute(
+        u'SELECT id FROM main_citation '
+        'WHERE content_type_id = %s AND object_id = %s;',
+        params=[ct_for_model('topic'), topic.id])
+    final_topic_cites = map(lambda rec: rec[0], topic_cites_select)
 
-    # Create new topic names, summaries, and topic assignments for every project
-    # that has ever edited this topic.
-    project_name_models = {}
-    project_summary_models = {}
-    project_reltopic_models = {}
+    # Do the same for topic assignments.
+    reltopics_select = db.execute(
+        u'SELECT id FROM main_topicassignment '
+        'WHERE topic_id = %s;',
+        params=[topic.id])
+    final_reltopics = map(lambda rec: rec[0], reltopics_select)
 
-    prev_version_summary = None
-    prev_reltopics = []
+    topicreltopics_select = db.execute(
+        u'SELECT to_topic_id from main_topic_related_topics '
+        'WHERE from_topic_id = %s;',
+        params=[topic.id])
+    final_topicreltopics = map(lambda rec: rec[0], topicreltopics_select)
+    existing_topicreltopics = set()
 
-    final_summary_length = len(etree.tostring(topic.summary)) \
-            if topic.summary is not None else 0
-    final_summary_cites = [
-        c.id for c in 
-        orm['main.citation'].objects.filter(
-            content_type=content_type_for_model('main.topic', orm),
-            object_id=topic.id)
-    ]
+    aliases_select = db.execute(
+        u'SELECT id FROM main_alias '
+        'WHERE topic_id = %s;',
+        params=[topic.id])
+    final_aliases = map(lambda rec: rec[0], aliases_select)
+    existing_aliases = set()
 
+    # We didn't create versions for topics that we batch imported, so we need to
+    # handle them separately.
+    if not topic_versions or topic.created < topic_versions[0].revision.date_created:
+        project_id = pid_for_uid(topic.creator_id)
+        container_id, topic_name_id = get_or_create_project_container(
+            topic, project_id, topic.creator_id, topic.created)
+        container_created = topic_name_id is not None
+
+        revision_comment = (
+            u'[Generated in data migration on {}] '
+            'TopicContainer and TopicName created for topic {} by project {}.'.format(
+                datetime.datetime.now(), topic.preferred_name,
+                pslug_for_pid(project_id, orm)))
+        new_revision_id = create_new_revision(
+            topic.creator_id, topic.created, revision_comment)
+
+        data = {}
+        data['creator'] = data['last_updater'] = topic.creator_id
+        data['created'] = data['last_updated'] = topic.created.strftime(TIME_FMT)
+        data['topic'] = topic_node_id
+        data['project'] = project_id
+        create_version(
+            new_revision_id, container_id, 'projecttopiccontainer', data,
+            u'ProjectTopicContainer <project={}> <topic_id={}>'.format(
+                project_id, topic_node_id), typ=0)
+
+        data = {}
+        data['creator'] = topic.creator_id
+        data['created'] = topic.created.strftime(TIME_FMT)
+        data['name'] = topic.preferred_name
+        data['container'] = container_id
+        create_version(
+            new_revision_id, topic_name_id, 'topicname', data,
+            u'TopicName: {}'.format(topic.preferred_name), typ=0)
+
+    # For items that do have version data, work from that.
     for version in topic_versions:
 
-        # Get the user & affiliation for each revision. If the user does not
-        # exist anymore of the user is not a member of a project, don't worry
-        # about it.
-        user = user_for_uid(version.revision.user_id, orm)
-        project = user and affiliation_for_user(user, orm)
-        if project is None or user is None: continue
-
-        new_revision = orm['reversion.revision'].objects.create(
-            user_id=version.revision.user_id,
-            date_created=version.revision.date_created)
-        revision_comments = u'(Automatically generated in data migration on 5/2/2013) '
-        revision_comments += u'Project slug={} editing TopicNode pk={} -- '.format(
-            project.slug, topic_node.id)
-
-        # New version for the topic node with updated updater info
-        orm['reversion.version'].objects.create(
-            type=1,
-            format='json',
-            object_repr=u'TopicNode: {}'.format(topic_node._preferred_name),
-            revision_id=new_revision.id,
-            content_type=content_type_for_model('main.topicnode', orm),
-            object_id=unicode(topic_node.id),
-            object_id_int=topic_node.id,
-            serialized_data=json.dumps([{
-                u'pk': topic_node.id,
-                u'model': u'main.topicnode',
-                u'fields': {
-                    u'_preferred_name': topic_node._preferred_name,
-                    u'creator': topic_node.creator_id,
-                    u'created': topic_node.created.strftime(TIME_FMT),
-                    u'last_updater': version.revision.user_id,
-                    u'last_updated': version.revision.date_created.strftime(TIME_FMT)
-                }
-            }])
-        )
-        revision_comments += 'Topic node updated'
-
-        # Pull out the serialized data & take the values we need to inspect
+        version_dt = version.revision.date_created
+        user_id = version.revision.user_id
         version_data = json.loads(version.serialized_data)
-        version_reltopics = version_data[0]['fields'].pop('related_topics')
-        version_summary = version_data[0]['fields'].pop('summary')
-        version_summary = version_summary and re.sub('&#13;\n', ' ', version_summary)
-        if version_summary and version_summary.strip().rstrip() == '<br/>':
-            version_summary = None
-        if version_summary and topic.summary is not None and (
-            len(version_summary) < 20 and 
-            float(len(version_summary)) / final_summary_length < .05):
-            version_summary = None
 
-        # Create a project name if does not exist yet and add it to the
-        # revision. For simplicity's sake (lol), we'll only create a name for
-        # the latest name of the topic in question-- the alternative making a
-        # new topic name each time the Topic's preferred name changed. That's
-        # not very useful, and also it's way too nice out to worry about that.
-        if project not in project_name_models:
-            project_name_models[project] = _name = orm['main.topicname'].objects.create(
-                name=topic_node._preferred_name,
-                topic=topic_node,
-                project=project,
-                creator=user,
-                created=version.revision.date_created
-            )
-            serialized_data = {
-                u'pk': _name.id,
-                u'model': u'main.topicname',
-                u'fields': {
-                    u'name': _name.name,
-                    u'topic': _name.topic_id,
-                    u'project': _name.project_id,
-                    u'is_preferred': _name.is_preferred,
-                    u'creator': _name.creator_id,
-                    u'created': _name.created.strftime(TIME_FMT)
-                }
-            }
-            orm['reversion.version'].objects.create(
-                type=0,
-                format=u'json',
-                object_repr=u'TopicName: {}'.format(_name.name),
-                revision_id=new_revision.id,
-                content_type=content_type_for_model('main.topicname', orm),
-                object_id=unicode(_name.id),
-                object_id_int=_name.id,
-                serialized_data=json.dumps([serialized_data]))
-            revision_comments += ', topic name created'
-        
-        # Create a summary for this topic, using the same basic method as the
-        # names above. This will probably have to be cleaned up by hand later.
-        SUMMARY_CREATED = False
-        SUMMARY_CHANGED = version_summary and version_summary != prev_version_summary
-        SUMMARY_CITES = version.revision.version_set.filter(
-            content_type=content_type_for_model('main.citation', orm),
-            object_id_int__in=final_summary_cites)
-        HAS_SUMMARY_CITES = SUMMARY_CITES.exists()
-        CONCERNS_SUMMARY = topic.summary is not None and (HAS_SUMMARY_CITES or SUMMARY_CHANGED)
-        if CONCERNS_SUMMARY and project not in project_summary_models:
-            project_summary_models[project] = orm['main.topicsummary'](
-                project=project,
-                creator=user,
-                created=version.revision.date_created,
-                topic=topic_node,
-                content=topic.summary)
-            SUMMARY_CREATED = True
-        if CONCERNS_SUMMARY:
-            summary = project_summary_models[project]
-            summary.last_updater = user
-            summary.last_updated = version.revision.date_created
-            summary.save()
-            serialized_data = {
-                u'pk': summary.id,
-                u'model': u'main.topicsummary',
-                u'fields': {
-                    u'topic': summary.topic_id,
-                    u'project': summary.project_id,
-                    u'content': version_summary,
-                    u'creator': summary.creator_id,
-                    u'created': summary.created.strftime(TIME_FMT),
-                    u'last_updater': version.revision.user_id,
-                    u'last_updated': version.revision.date_created.strftime(TIME_FMT)
-                }
-            }
-            orm['reversion.version'].objects.create(
-                type=0 if SUMMARY_CREATED else 1,
-                format=u'json',
-                object_repr=u'TopicSummary: {} for {}'.format(
-                    project.slug, topic_node._preferred_name),
-                revision_id=new_revision.id,
-                content_type=content_type_for_model('main.topicsummary', orm),
-                object_id=unicode(summary.id),
-                object_id_int=summary.id,
-                serialized_data=json.dumps([serialized_data]))
-            revision_comments += ', topic summary {}ed'.format(
-                'creat' if SUMMARY_CREATED else 'updat')
-            prev_version_summary = version_summary
+        # Get or create a project container for this topic. This will create a
+        # TopicName if it does not exist for this project as well.
+        project_id = pid_for_uid(user_id)
+        container_id, topic_name_id = get_or_create_project_container(
+            topic, project_id, user_id, version_dt)
+        container_created = bool(topic_name_id)
 
-        # Work with the summary citations
-        citation_versions = version.revision.version_set.filter(
-            content_type=content_type_for_model('main.citation', orm),
-            object_id_int__in=final_summary_cites)
-        for cite_version in citation_versions:
-            if not project in project_summary_models: continue
-            cite_data = json.loads(cite_version.serialized_data)
-            cite_data[0]['fields']['content_type'] = \
-                    content_type_for_model('main.topicsummary', orm).id
-            cite_data[0]['fields']['object_id'] = \
-                    project_summary_models[project].id
-            cite_data[0]['fields'].pop('locator', None)
-            cite_data[0]['fields'].pop('type', None)
-            cite_data[0]['fields'].setdefault('ordering', None)
-            if 'source' in cite_data[0]['fields']:
-                cite_data[0]['fields']['document'] = cite_data[0]['fields'].pop('source')
-            cite_version.serialized_data = json.dumps(cite_data)
-            cite_version.revision_id = new_revision.id
-            cite_version.save()
+        revision_comment = u'[Generated in data migration on {}]'.format(datetime.datetime.now())
+        new_revision_id = create_new_revision(user_id, version_dt, revision_comment)
 
-            cite_qs = orm['main.citation'].objects.filter(
-                content_type=content_type_for_model('main.topicsummary', orm),
-                object_id=project_summary_models[project].id)
-            existing_cite = orm['main.citation'].objects.get(
-                id=cite_version.object_id)
-            if not cite_qs.exists():
-                cite = orm['main.citation'](
-                    content_type=content_type_for_model('main.topicsummary', orm),
-                    object_id=project_summary_models[project].id,
-                    document_id=existing_cite.document_id,
-                    notes=existing_cite.notes,
-                    created=version.revision.date_created,
-                    creator_id=user.id)
-            else:
-                cite = cite_qs.get()
-            cite.last_updater_id = user.id
-            cite.last_updated = version.revision.date_created
-            cite.save()
-        if citation_versions.exists():
-            revision_comments += ', topic summary citations changed'
+        if container_created:
+            data = {}
+            data['creator'] = data['last_updater'] = topic.creator_id
+            data['created'] = data['last_updated'] = topic.created.strftime(TIME_FMT)
+            data['topic'] = topic_node_id
+            data['project'] = project_id
+            create_version(
+                new_revision_id, container_id, 'projecttopiccontainer', data,
+                u'ProjectTopicContainer {} ({})'.format(
+                    topic.preferred_name, pslug_for_pid(project_id, orm)), typ=0)
 
-        # Work with the related_topics
-        reltopic_difference = [t for t in version_reltopics
-                               if t not in prev_reltopics]
-        for topic_id in reltopic_difference:
-            prev_reltopics.append(topic)
-            reltopic = orm['main.topic'].objects.filter(id=topic_id)
-            if not reltopic.exists(): continue
-            reltopic = reltopic.get()
-            if not reltopic in tmap: continue
-            reltopicnode = tmap[reltopic]
-            qs = orm['main.topicnodeassignment'].objects.filter(
-                content_type_id=content_type_for_model('main.topicnode', orm),
-                object_id=reltopicnode.id,
-                topic_id=topic_node.id,
-                project_id=project.id)
-            if qs.exists(): continue
-            assignment = orm['main.topicnodeassignment'].objects.create(
-                creator_id=version.revision.user_id,
-                created=version.revision.date_created,
-                topic_id=topic_node.id,
-                project_id=project.id,
-                content_type=content_type_for_model('main.topicnode', orm),
-                object_id=reltopicnode.id
-            )
-            orm['reversion.version'].objects.create(
-                type=0,
-                format=u'json',
-                object_repr=u'TopicNodeAssignment: {} for {}'.format(
-                    project.slug, topic_node._preferred_name),
-                revision_id=new_revision.id,
-                content_type=content_type_for_model('main.topicnodeassignment', orm),
-                object_id=unicode(assignment.id),
-                object_id_int=assignment.id,
-                serialized_data = json.dumps([{
-                    u'model': u'main.topicnodeassignment',
-                    u'pk': assignment.id,
-                    u'fields': {
-                        u'topic': topic_node.id,
-                        u'project': project.id,
-                        u'content_type': content_type_for_model('main.topicnode', orm).id,
-                        u'object_id': reltopicnode.id
+            data = {}
+            data['creator'] = topic.creator_id
+            data['created'] = topic.created.strftime(TIME_FMT)
+            data['name'] = topic.preferred_name
+            data['container'] = container_id
+            create_version(
+                new_revision_id, topic_name_id, 'topicname', data,
+                u'TopicName: {}'.format(topic.preferred_name), typ=0)
+
+            revision_comment += u'Added project topic container "{} ({})". '.format(
+                topic.preferred_name, pslug_for_pid(project_id, orm))
+            revision_comment += u'Added topic name "{}".  '.format(topic.preferred_name)
+
+        summary_created = False
+        summary_edited = False
+        summary_id = None
+        version_summary = clean_version_summary_str(
+            version_data[0]['fields'].pop('summary', ''))
+
+        if topic.summary is not None:
+            summary_id, summary_created, summary_edited = update_project_topic_summary(
+                topic, container_id, version_summary, user_id, version_dt)
+
+        version_citations = version.revision.version_set.filter(
+            content_type_id=ct_for_model('citation'),
+            object_id_int__in=final_topic_cites)
+
+        if version_citations.exists():
+            if summary_id is None:
+                summary_id, summary_created, summary_edited = update_project_topic_summary(
+                    topic, container_id, version_summary, user_id, version_dt,
+                    force=True)
+            for citation in version_citations:
+                db.execute(
+                    u'UPDATE main_citation '
+                    'SET content_type_id = %s, object_id = %s '
+                    'WHERE id = %s;',
+                    params=[ct_for_model('topicsummary'), summary_id,
+                            citation.object_id])
+                data = json.loads(citation.serialized_data)
+                data[0]['fields']['content_type'] = ct_for_model('topicsummary')
+                data[0]['fields']['object_id'] = summary_id
+                citation.serialized_data = json.dumps(data)
+                citation.revision_id = new_revision_id
+                citation.save()
+        if summary_edited or summary_created:
+            create_version(
+                new_revision_id, container_id, 'topicsummary', data,
+                u'Summary for {} by {}.'.format(topic.preferred_name,
+                                               pslug_for_pid(project_id, orm)),
+                typ=0 if summary_created else 1)
+            revision_comment += u'{}ed summary "Summary for {} by {}'.format(
+                'Add' if summary_created else 'Edit',
+                topic.preferred_name, pslug_for_pid(project_id, orm))
+
+        reltopics_changed = False
+        version_assignments = version.revision.version_set.filter(
+            content_type_id=ct_for_model('topicassignment'),
+            object_id_int__in=final_reltopics)
+
+        if version_assignments.exists():
+            for assignment in version_assignments:
+                assignment_created = False
+
+                data = json.loads(assignment.serialized_data)
+                creator_id = data[0]['fields']['creator']
+                created = datetime.datetime.strptime(
+                    data[0]['fields']['created'], TIME_FMT)
+                ct_id = data[0]['fields']['content_type']
+                object_id = data[0]['fields']['object_id']
+
+                assignment_select = db.execute(
+                    u'SELECT id FROM main_topicnodeassignment '
+                    'WHERE container_id = %s AND content_type_id = %s AND object_id = %s;',
+                    params=[container_id, ct_id, object_id])
+                if not len(assignment_select):
+                    assignment_created = True
+                    assignment_insert = db.execute(
+                        u'INSERT INTO main_topicnodeassignment '
+                        'VALUES (DEFAULT, %s, %s, %s, %s, %s, %s) '
+                        'RETURNING id;',
+                        params=[creator_id, created, container_id, None,
+                                data[0]['fields']['content_type'],
+                                data[0]['fields']['object_id']])
+                    assignment_id, = assignment_insert[0]
+                    fields = {
+                        'creator': creator_id,
+                        'created': created.strftime(TIME_FMT),
+                        'container': container_id,
+                        'topicname': None,
+                        'content_type': data[0]['fields']['content_type'],
+                        'object_id': data[0]['fields']['object_id']
                     }
-                }])
-            )
-            revision_comments += u', topic assignment to {} added'.format(
-                reltopicnode._preferred_name)
+                    create_version(
+                        new_revision_id, assignment_id, 'topicnodeassignment', json.dumps(fields),
+                        u'TopicNodeAssignment for topic {}'.format(topic.preferred_name),
+                        typ= 0)
+                    revision_comment += u'Add topic assignment for {}. '.format(
+                        topic.preferred_name)
+                else:
+                    assignment_id, = assignment_select[0]
 
-        # Work with aliases
+                assignment.revision_id = new_revision_id
+                assignment.save()
+        new_reltopics = [tid for tid in version_data[0]['fields'].pop('related_topics', [])
+                         if tid in final_topicreltopics]
+        new_reltopics = set(new_reltopics) - existing_topicreltopics
+        for assignment in new_reltopics:
+            assignment_insert = db.execute(
+                u'INSERT INTO main_topicnodeassignment '
+                'VALUES (DEFAULT, %s, %s, %s, %s, %s, %s) '
+                'RETURNING id;',
+                params=[user_id, version_dt, container_id, None,
+                        ct_for_model('topicnode'), tmap_id[assignment]])
+            assignment_id, = assignment_insert[0]
+            existing_topicreltopics.add(assignment)
+            fields = {
+                'creator': user_id,
+                'created': version_dt.strftime(TIME_FMT),
+                'container': container_id,
+                'topicname': None,
+                'content_type': ct_for_model('topicnode'),
+                'object_id': tmap_id[assignment]
+            }
+            create_version(
+                new_revision_id, assignment_id, 'topicnodeassignment', json.dumps(fields),
+                u'TopicNodeAssignment for topic {}'.format(topic.preferred_name),
+                typ= 0)
+            revision_comment += u'Add topic assignment for {}. '.format(
+                topic.preferred_name)
         alias_versions = version.revision.version_set.filter(
-            content_type=content_type_for_model('main.alias', orm))
+            content_type_id=ct_for_model('alias'))
         for alias_version in alias_versions:
             alias = orm['main.alias'].objects.filter(id=alias_version.id)
-            if not alias.exists(): continue
+            if not alias.exists():
+                alias_version.delete()
+                continue
             alias = alias.get()
-            if not alias.topic in tmap: continue
-            _name = orm['main.topicname'].objects.create(
-                name=alias.name,
-                created=version.revision.date_created,
-                creator=version.revision.user_id,
-                topic_id=topic_node.id,
-                project_id=project.id,
-                is_preferred=False)
-            serialized_data = {
-                u'pk': _name.id,
-                u'model': u'main.topicname',
-                u'fields': {
-                    u'name': _name.name,
-                    u'topic': _name.topic_id,
-                    u'project': _name.project_id,
-                    u'is_preferred': _name.is_preferred,
-                    u'creator': _name.creator_id,
-                    u'created': _name.created.strftime(TIME_FMT)
-                }
+            if not alias.id in final_aliases:
+                alias_version.delete()
+                continue
+            if alias.id in existing_aliases:
+                alias_version.delete()
+                continue
+            if project_id != pid_for_uid(alias.creator_id):
+                continue
+            alias_topic_name_insert = db.execute(
+                u'INSERT INTO main_topicname '
+                'VALUES (DEFAULT, %s, %s, %s, %s, False) '
+                'RETURNING id;',
+                params=[alias.creator_id, alias.created, alias.name,
+                        container_id])
+            alias_topic_name_id, = alias_topic_name_insert[0]
+            fields = {
+                'creator': alias.creator_id,
+                'created': alias.created.strftime(TIME_FMT),
+                'name': alias.name,
+                'container': container_id,
+                'is_preferred': False,
             }
-            orm['reversion.version'].objects.create(
-                type=0,
-                format=u'json',
-                object_repr=u'TopicName: {}'.format(_name.name),
-                revision_id=new_revision.id,
-                content_type=content_type_for_model('main.topicname', orm),
-                object_id=unicode(_name.id),
-                object_id_int=_name.id,
-                serialized_data=json.dumps([serialized_data]))
-            alias_version.delete()
-            revision_comments += u', additional name {} added'.format(_name.name)
+            create_version(
+                new_revision_id, alias_topic_name_id, 'topicname',
+                fields, u'TopicName "{}"'.format(alias.name), typ=0)
+            revision_comment += u'Added topic name "{}"'.format(alias.name)
+            existing_aliases.add(alias.id)
 
-        new_revision.comment = revision_comments
-        new_revision.save()
+        db.execute(
+            'UPDATE reversion_revision '
+            'SET comment = %s '
+            'WHERE id = %s;',
+            params=[revision_comment, new_revision_id])
 
-        version.revision.delete() # yeah?
+        stale_revisions.add(version.revision_id)
+        version.delete()
+    return
 
 class Migration(DataMigration):
 
     def forwards(self, orm):
+        # 1. Create new topic nodes for every topic
+        # 2. Connect projects to every edit they made
+        # 3. Update reversions
 
-        turn_off_auto_now('reversion.revision', 'date_created', orm)
-        turn_off_auto_now('main.topicnode', 'created', orm)
-        turn_off_auto_now('main.topicnode', 'last_updated', orm)
-        turn_off_auto_now('main.topicsummary', 'created', orm)
-        turn_off_auto_now('main.topicsummary', 'last_updated', orm)
-        turn_off_auto_now('main.citation', 'created', orm)
-        turn_off_auto_now('main.citation', 'last_updated', orm)
-        turn_off_auto_now('main.topicname', 'created', orm)
-        turn_off_auto_now('main.topicassignment', 'created', orm)
-        turn_off_auto_now('main.topicnodeassignment', 'created', orm)
+        fix_null_creator_revisions(orm)
 
         # Create topic nodes for every topic
         for topic in orm['main.topic'].objects.order_by('id'):
-            tmap[topic] = create_topic_node(topic, orm)
+            tmap[topic] = create_topic_node(topic)
+            tmap_id[topic.id] = tmap[topic]
 
         # Update all the topics
         for topic in orm['main.topic'].objects.order_by('id').all():
-            update_topic(topic, tmap[topic], orm)
+            update_topic(topic, orm)
 
-        # Update all the topic assignments
         for ta in orm['main.topicassignment'].objects.all():
-            user = user_for_uid(ta.creator_id, orm)
-            project = user and affiliation_for_user(user, orm)
-            if user is None or project is None:
-                continue
-            new_ta = orm['main.topicnodeassignment'].objects.create(
-                topic=tmap[ta.topic],
-                project=project,
-                content_type_id=ta.content_type_id,
-                object_id=ta.object_id,
-                creator_id=ta.creator_id,
-                created=ta.created
-            )
-            for version in revisions_for('main.topicassignment', ta.id, orm):
-                data = json.loads(version.serialized_data)
-                data[0]['pk'] = new_ta.id
-                data[0]['model'] = 'main.topicnodeassignment'
-                data[0]['fields']['topic'] = new_ta.topic_id
-                data[0]['fields']['project'] = new_ta.project_id
-                data[0]['fields']['topic_name'] = None
+            project = pid_for_uid(ta.creator_id)
+            container_id, created_topic_name_id = get_or_create_project_container(
+                ta.topic, project, ta.creator_id,  ta.created)
+            topic_node_assignment_insert = db.execute(
+                u'INSERT INTO main_topicnodeassignment '
+                'VALUES (DEFAULT, %s, %s, %s, %s, %s, %s) '
+                'RETURNING id;',
+                params=[ta.creator_id, ta.created, container_id, None,
+                        ta.content_type_id, ta.object_id])
+            topic_node_assignment_id, = topic_node_assignment_insert[0]
 
-                version.content_type = \
-                        content_type_for_model('main.topicnodeassignment', orm)
-                version.object_id = unicode(new_ta.id)
-                version.object_id_int = new_ta.id
+            ta_versions = versions_for('topicassignment', ta.id, orm)
+            for version in ta_versions:
+                if not project == pid_for_uid(version.revision.user_id):
+                    version.delete()
+                version.object_id = str(topic_node_assignment_id)
+                version.object_id_int = int(topic_node_assignment_id)
+                version.content_type_id = ct_for_model('topicnodeassignment')
+                data = json.loads(version.serialized_data)
+                data[0]['fields'].pop('topic', None)
+                data[0]['container'] = container_id
                 version.serialized_data = json.dumps(data)
                 version.save()
-            ta.delete()
 
-        # Update any featured topics to point to the new topic node
+        for stale_revision_id in stale_revisions:
+            db.execute(
+                u'DELETE FROM reversion_version WHERE revision_id = %s;',
+                params=[stale_revision_id])
+            db.execute(
+                u'DELETE FROM reversion_revision WHERE id = %s;',
+                params=[stale_revision_id])
+
         featured_topics = orm['main.featureditem'].objects.filter(
-            content_type=content_type_for_model('main.topic', orm))
+            content_type_id=ct_for_model('topic'))
         for featured_item in featured_topics:
             old_topic = orm['main.topic'].objects.get(id=featured_item.object_id)
-            featured_item.content_type = content_type_for_model('main.topicnode', orm)
-            featured_item.object_id = tmap[old_topic].id
+            featured_item.content_type_id = ct_for_model('topicnode')
+            featured_item.object_id = tmap[old_topic]
             featured_item.save()
 
-        # Delete old citations
-        for topic in orm['main.topic'].objects.all():
-            citations = orm['main.citation'].objects.filter(
-                content_type=content_type_for_model('main.topic', orm),
-                object_id=topic.id)
-            for citation in citations:
-                citation.delete()
-
-        restore_auto_now(orm)
+        return
 
     def backwards(self, orm):
         "Write your backwards methods here." # hahaha fuck off NO
@@ -641,6 +715,18 @@ class Migration(DataMigration):
             'project': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Project']"}),
             'role': ('django.db.models.fields.CharField', [], {'default': "'researcher'", 'max_length': '10'})
         },
+        'main.projecttopiccontainer': {
+            'Meta': {'object_name': 'ProjectTopicContainer'},
+            'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_projecttopiccontainer_set'", 'to': "orm['auth.User']"}),
+            'deleted': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'last_updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'last_updater': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'last_to_update_projecttopiccontainer_set'", 'to': "orm['auth.User']"}),
+            'merged_into': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.ProjectTopicContainer']", 'null': 'True', 'blank': 'True'}),
+            'project': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Project']"}),
+            'topic': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.TopicNode']"})
+        },
         'main.scan': {
             'Meta': {'ordering': "['ordering']", 'object_name': 'Scan'},
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
@@ -681,14 +767,13 @@ class Migration(DataMigration):
             'topic': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'assignments'", 'to': "orm['main.Topic']"})
         },
         'main.topicname': {
-            'Meta': {'unique_together': "(('project', 'topic', 'is_preferred'),)", 'object_name': 'TopicName'},
+            'Meta': {'unique_together': "(('container', 'name'),)", 'object_name': 'TopicName'},
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_topicname_set'", 'to': u"orm['auth.User']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_preferred': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': "'200'"}),
-            'project': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Project']"}),
-            'topic': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'names'", 'to': "orm['main.TopicNode']"})
+            'container': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'names'", 'null': 'True', 'to': "orm['main.ProjectTopicContainer']"})
         },
         'main.topicnode': {
             'Meta': {'object_name': 'TopicNode'},
@@ -703,26 +788,24 @@ class Migration(DataMigration):
             'type': ('django.db.models.fields.CharField', [], {'max_length': '3', 'blank': 'True'})
         },
         'main.topicnodeassignment': {
-            'Meta': {'unique_together': "(('content_type', 'object_id', 'topic', 'project'),)", 'object_name': 'TopicNodeAssignment'},
+            'Meta': {'unique_together': "(('content_type', 'object_id', 'container'),)", 'object_name': 'TopicNodeAssignment'},
             'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['contenttypes.ContentType']"}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_topicnodeassignment_set'", 'to': u"orm['auth.User']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'object_id': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'project': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Project']"}),
-            'topic': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'assignments'", 'to': "orm['main.TopicNode']"}),
+            'container': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'assignments'", 'null': 'True', 'to': "orm['main.ProjectTopicContainer']"}),
             'topic_name': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.TopicName']", 'null': 'True', 'blank': 'True'})
         },
         'main.topicsummary': {
-            'Meta': {'unique_together': "(('project', 'topic'),)", 'object_name': 'TopicSummary'},
+            'Meta': {'object_name': 'TopicSummary'},
             'content': ('editorsnotes.main.fields.XHTMLField', [], {}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_topicsummary_set'", 'to': u"orm['auth.User']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'last_updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'last_updater': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'last_to_update_topicsummary_set'", 'to': u"orm['auth.User']"}),
-            'project': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Project']"}),
-            'topic': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'summaries'", 'to': "orm['main.TopicNode']"})
+            'container': ('django.db.models.fields.related.OneToOneField', [], {'unique': 'True', 'blank': 'True', 'related_name': "'summary'", 'null': 'True', 'to': "orm['main.ProjectTopicContainer']"})
         },
         'main.transcript': {
             'Meta': {'object_name': 'Transcript'},

@@ -156,8 +156,18 @@ class TopicNode(LastUpdateMetadata, URLAccessible):
         if delete_empty and self.names.count() == 0:
             self.deleted = True
             self.save()
-
 reversion.register(TopicNode)
+
+class ProjectTopicContainer(LastUpdateMetadata, ProjectPermissionsMixin):
+    project = models.ForeignKey('Project')
+    topic = models.ForeignKey(TopicNode)
+    deleted = models.BooleanField(default=False, editable=False)
+    merged_into = models.ForeignKey('self', blank=True, null=True, editable=False)
+    class Meta:
+        app_label = 'main'
+    def as_text(self):
+        return '({}): {}'.format(
+            self.project.slug, self.names.get(is_preferred=True))
 
 class ProjectTopicNameManager(models.Manager):
     def for_topic(self, topic):
@@ -185,15 +195,17 @@ class TopicName(CreationMetadata, ProjectPermissionsMixin):
     must be preferred.
     """
     name = models.CharField(max_length='200')
-    topic = models.ForeignKey(TopicNode, related_name='names')
-    project = models.ForeignKey('Project')
+    #topic = models.ForeignKey(TopicNode, related_name='names')
+    #project = models.ForeignKey('Project')
+    container = models.ForeignKey(ProjectTopicContainer, related_name='names',
+                                  blank=True, null=True)
     is_preferred = models.BooleanField(default=True)
     objects = ProjectTopicNameManager()
     class Meta:
         app_label = 'main'
-        unique_together = ('project', 'topic', 'is_preferred',)
+        unique_together = ('container', 'name',)
     def __unicode__(self):
-        return u'{} (topic node {})'.format(self.name, self.topic_id)
+        return u'{} (topic node {})'.format(self.name, self.container.topic_id)
     def get_affiliation(self):
         return self.project
 reversion.register(TopicName)
@@ -204,15 +216,17 @@ class TopicSummary(LastUpdateMetadata, ProjectPermissionsMixin):
 
     Projects may only create one summary for a topic.
     """
-    project = models.ForeignKey('Project')
-    topic = models.ForeignKey(TopicNode, related_name='summaries')
+    #project = models.ForeignKey('Project')
+    #topic = models.ForeignKey(TopicNode, related_name='summaries')
+    container = models.OneToOneField(ProjectTopicContainer, related_name='summary',
+                                     blank=True, null=True)
     citations = generic.GenericRelation('Citation')
     content = fields.XHTMLField()
     class Meta:
         app_label = 'main'
-        unique_together = ('project', 'topic',)
     def __unicode__(self):
-        return u'Summary by {} for {}'.format(self.project.slug, self.topic)
+        return u'Summary by {} for {}'.format(self.container.project.slug,
+                                              self.container.topic.preferred_name)
     def get_affiliation(self):
         return self.project
 reversion.register(TopicSummary)
@@ -224,21 +238,21 @@ class TopicNodeAssignment(CreationMetadata, ProjectPermissionsMixin):
     Optionally, a specific name can be used for an assignment, otherwise the
     projects' preferred name for that topic will be used.
     """
-    topic = models.ForeignKey(TopicNode, related_name='assignments')
-    project = models.ForeignKey('Project')
+    #topic = models.ForeignKey(TopicNode, related_name='assignments')
+    #project = models.ForeignKey('Project')
+    container = models.ForeignKey(ProjectTopicContainer, blank=True, null=True, related_name='assignments')
     topic_name = models.ForeignKey(TopicName, blank=True, null=True)
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     content_object = generic.GenericForeignKey()
     class Meta:
         app_label = 'main'
-        unique_together = ('content_type', 'object_id', 'topic', 'project')
+        unique_together = ('content_type', 'object_id', 'container')
     def __unicode__(self):
-        return u'({}) {} --> {}: {}'.format(self.project.slug,
-                                            self.topic._preferred_name,
+        return u'{} --> {}: {} ({})'.format(self.container.topic.preferred_name,
                                             self.content_object._meta.module_name,
-                                            self.content_object)
-        return 'Topic assignment by {} for {}'.format(self.project.slug, self.topic)
+                                            self.content_object,
+                                            self.container.project.slug)
     def get_affiliation(self):
         return self.project
 reversion.register(TopicNodeAssignment)
