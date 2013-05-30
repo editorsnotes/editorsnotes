@@ -1,49 +1,46 @@
+# -*- coding: utf-8 -*-
+# vim: set tw=0:
+
 from django.conf.urls import patterns, url, include
 from django.conf import settings
 from django.views.generic.base import RedirectView
 from editorsnotes.main.views import CustomBrowserIDVerify, LegacyTopicRedirectView
 
+# These will be intercepted by apache in production
 urlpatterns = patterns('',
-    (r'^accounts/login/$', 'django.contrib.auth.views.login'),
-    (r'^accounts/profile/$', 'editorsnotes.main.views.user'),
-    url(r'^accounts/browserid/$', CustomBrowserIDVerify.as_view(), name='browserid_verify'),
-)
-
-#urlpatterns += patterns('',
-#    (r'^admin/', include('editorsnotes.admin_custom.urls')),
-#)
-
-urlpatterns += patterns('',
-    (r'^comments/', include('django.contrib.comments.urls')),
-    # The following won't actually be called in production, since Apache will intercept them.
     (r'^favicon.ico$', RedirectView.as_view(url='/static/style/icons/favicon.ico')),
     (r'^media/(?P<path>.*)$', 'django.views.static.serve', { 'document_root': settings.MEDIA_ROOT }),
     (r'^static/(?P<path>.*)$', 'django.views.static.serve', { 'document_root': settings.STATIC_ROOT }),
     (r'^proxy$', 'editorsnotes.main.views.proxy'),
 )
 
-urlpatterns += patterns('editorsnotes.main.views',
-    url(r'^project/(?P<project_slug>[-_a-z0-9]+)/$', 'project', name='project_view'),
-    url(r'^document/(?P<document_id>\d+)/$', 'document', name='document_view'),
-    url(r'^topic/(?P<topic_slug>[\w\-,]+)/$', LegacyTopicRedirectView.as_view(), name='topic_view'),
-    url(r'^topicnode/(?P<topicnode_id>\d+)/$', 'topicnode', name='topicnode_view'),
-    url(r'^note/(?P<note_id>\d+)/$', 'note', name='note_view'),
+# Auth patterns
+urlpatterns += patterns('',
+    url(r'^accounts/login/$', 'django.contrib.auth.views.login'),
+    url(r'^accounts/logout/$', 'user_logout', name='user_logout_view'),
+    url(r'^accounts/profile/$', 'editorsnotes.main.views.user'),
+    url(r'^accounts/browserid/$', CustomBrowserIDVerify.as_view(), name='browserid_verify'),
     url(r'^user/(?P<username>[\w@\+\.\-]+)/$', 'user', name='user_view'),
-    url(r'^logout/$', 'user_logout', name='user_logout_view'),
-    url(r'^footnote/(?P<footnote_id>\d+)/$', 'footnote', name='footnote_view'),
-    url(r'^search/$', 'search', name='search_view'),
 )
 
-index_patterns = patterns('editorsnotes.main.views',
+# Base patterns
+urlpatterns += patterns('editorsnotes.main.views',
     url(r'^$', 'index', name='index_view'),
     url(r'^about/$', 'about', name='about_view'),
     url(r'^about/test/$', 'about_test'),
-    url(r'^browse/$', 'browse', name='browse_view'),
-    url(r'^documents/$', 'all_documents', name='all_documents_view'),
-    url(r'^topics/$', 'all_topics', name='all_topics_view'),
-    url(r'^notes/$', 'all_notes', name='all_notes_view'),
+    url(r'^search/$', 'search', name='search_view'),
+    url(r'^topic/(?P<topic_slug>[\w\-,]+)/$', LegacyTopicRedirectView.as_view(), name='topic_view'),
 )
-urlpatterns += index_patterns
+
+# Admin patterns
+urlpatterns += patterns('',
+    url(r'^projects/(?P<project_slug\w+)/', include('editorsnotes.admin_custom.urls')),
+)
+
+# Main model patterns
+urlpatterns += patterns('',
+    url(r'^', include('editorsnotes.main.urls')),
+)
 
 #urlpatterns += patterns('editorsnotes.djotero.views',
 #    url(r'^document/upload/$', 'import_zotero', name='import_zotero_view'),
