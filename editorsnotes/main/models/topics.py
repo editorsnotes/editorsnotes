@@ -52,6 +52,9 @@ class TopicNode(LastUpdateMetadata, URLAccessible):
     @property
     def preferred_name(self):
         return self._preferred_name
+    def get_connected_projects(self):
+        return Project.objects.filter(
+            id__in=self.project_containers.values_list('project_id', flat=True))
 reversion.register(TopicNode)
 
 
@@ -60,18 +63,38 @@ reversion.register(TopicNode)
 #################################
 
 class ProjectTopicContainerManager(models.Manager):
-    def create_from_name(self, name, project, user, topic_type=None):
+    def create_along_with_node(self, name, project, user, topic_type=None):
+        """
+        Create a new topic node and a container with the given name.
+
+        Returns the node and the container.
+        """
         topic_node = TopicNode.objects.create(preferred_name=name, creator=user,
                                               last_updater=user, type=topic_type)
-        return self.create(topic_id=topic_node.id, project_id=project.id,
-                           preferred_name=name, creator_id=user.id,
-                           last_updater_id=user.id)
+        return topic_node, self.create(topic_id=topic_node.id,
+                                       project_id=project.id, preferred_name=name,
+                                       creator_id=user.id, last_updater_id=user.id)
     def create_from_node(self, topic, project, user, name=None):
+        """
+        Given a topic node, create a new container for a project.
+
+        If no name is passed, the (cached) preferred name of the topic node will
+        be used as the container's preferred name.
+        """
         return self.create(topic=topic, project=project,
                            creator=user, last_updater=user,
                            preferred_name=name or topic.preferred_name)
     def get_or_create_from_node(self, topic, project, user, name=None):
-        defaults = {'creator': user, 'last_updater': user
+        """
+        Given a topic node, get or create a container for a project.
+
+        Returns (created (bool), container (ProjectTopicContainer))
+
+        If a topic container is created and no name is passed to the function,
+        the (cached) preferred name of the topic node will be used as the
+        container's preferred name.
+        """
+        defaults = {'creator': user, 'last_updater': user,
                     'preferred_name': name or topic.preferred_name}
         return self.get_or_create(topic=topic, project=project, defaults=defaults)
 
@@ -91,13 +114,15 @@ class ProjectTopicContainer(LastUpdateMetadata, URLAccessible, ProjectPermission
     def has_summary(self):
         return hasattr(self, 'summary')
     @transaction.commit_on_success
-    def merge_into_container(self, target):
+    def merge_into(self, target):
         """
         Merge all connections from this container into another.
         """
         if self.project_id != target.project_id:
             raise TopicMergeError(
                 'Can only merge topics within the same project.')
+        if not isinstance(target, ProjectTopicContainer):
+            raise ValueError('Target must be another ProjectTopicContainer')
 
         # Move summary to new container if it exists
         if self.has_summary():
@@ -120,31 +145,26 @@ class ProjectTopicContainer(LastUpdateMetadata, URLAccessible, ProjectPermission
         for stale_assignment in self.assignments.all():
             stale_assignment.delete()
 
-        # Move topic names to the new container, making sure they are not marked
-        # as preferred. Delete any names that exist in the target.
-        target_names = target.names.values_list('name', flat=True)
-        for name in self.names.all():
-            if name.name in target_names:
-                name.delete()
-                continue
-            name.is_preferred = False
-            name.container_id = target.id
-            name.save()
-
         # Save the topic to check if it should be deleted as well (see below).
         topic = self.topic
+
+        # If no projects point to origin's topic node anymore, merge it into the
+        # target's topic node.
+        other_containers_exist = self.topic.project_containers\
+                .filter(deleted=False)\
+                .exclude(id=self.id)\
+                .exists()
+        if not other_containers_exist:
+            self.topic.deleted = True
+            self.topic.merged_into = target.topic
+            self.topic.save()
 
         # Point this node toward the new node.
         self.deleted = True
         self.merged_into = target
         self.save()
 
-        # If no projects point to origin's topic node anymore, merge it into the
-        # target's topic node.
-        if not topic.project_containers.exists():
-            topic.deleted = True
-            topic.merged_into = target.topic
-            topic.save()
+        return target
 
 class TopicSummary(LastUpdateMetadata, ProjectPermissionsMixin):
     """
@@ -179,6 +199,9 @@ class TopicNodeAssignment(CreationMetadata, ProjectPermissionsMixin):
     class Meta:
         app_label = 'main'
         unique_together = ('content_type', 'object_id', 'container')
+    @property
+    def topic_id(self):
+        return container.topic.id
     def __unicode__(self):
         return u'{} --> {}: {} ({})'.format(
             self.container.topic.preferred_name,

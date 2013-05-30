@@ -79,15 +79,16 @@ class NoteTestCase(TestCase):
         note = main_models.Note.objects.create(
             content=u'<h1>hey</h1><p>this is a <em>note</em></p>', 
             creator=self.user, last_updater=self.user, project=self.project)
-        container = PTC.objects.create_by_name(
+        topic, container = PTC.objects.create_along_with_node(
             u'Example', self.project, self.user)
-        topic = container.topic
+
         self.assertFalse(note.has_topic(topic))
         container.assignments.create(content_object=note, creator=self.user)
+
         self.assertTrue(note.has_topic(topic))
         self.assertEquals(1, len(note.topics.all()))
-        self.assertEquals(1, len(topic.assignments.all()))
-        self.assertEquals(topic, note.topics.all()[0].topic)
+        self.assertEquals(1, len(container.assignments.all()))
+        self.assertEquals(container, note.topics.all()[0].container)
 
 class NoteTransactionTestCase(TransactionTestCase):
     fixtures = ['projects.json']
@@ -98,7 +99,7 @@ class NoteTransactionTestCase(TransactionTestCase):
         note = main_models.Note.objects.create(
             content=u'<h1>hey</h1><p>this is a <em>note</em></p>', 
             creator=self.user, last_updater=self.user, project=self.project)
-        container = PTC.objects.create_by_name(
+        topic, container = PTC.objects.create_along_with_node(
             u'Example', self.project, self.user)
         container.assignments.create(content_object=note, creator=self.user)
         self.assertRaises(IntegrityError,
@@ -144,43 +145,32 @@ class ProjectTopicTestCase(TestCase):
         self.user2 = self.project2.members.all()[0]
 
     def test_create_project_topic(self):
-        new_topic_container = PTC.objects.create_by_name(
+        topic, container = PTC.objects.create_along_with_node(
             u'Emma Goldman', self.project, self.user)
-        new_topic = new_topic_container.topic
-        self.assertTrue(isinstance(new_topic, main_models.topics.TopicNode))
 
-        new_topic_container2 = PTC.objects.create_by_topic(
-            new_topic, self.project2, self.user2, name=u'Emma Goldman!!!')
+        self.assertTrue(isinstance(topic, main_models.topics.TopicNode))
 
-        self.assertEqual(new_topic, new_topic_container2.topic)
-        self.assertEqual(main_models.topics.TopicName.objects.count(), 2)
-        self.assertEqual(new_topic.get_connected_projects().count(), 2)
+        container2 = PTC.objects.create_from_node(
+            topic, self.project2, self.user2, name=u'Emma Goldman!!!')
+
+        self.assertEqual(topic, container2.topic)
+        self.assertEqual(topic.get_connected_projects().count(), 2)
 
     def test_merge_topic_nodes(self):
-        good_topic = PTC.objects.create_by_name(
+        good_topic, good_container = PTC.objects.create_along_with_node(
             'Emma Goldman', self.project, self.user)
-        bad_topic = PTC.objects.create_by_name(
+        bad_topic, bad_container = PTC.objects.create_along_with_node(
             u'Емма Голдман', self.project, self.user)
 
-        bad_topic.merge_into_container(good_topic)
+        bad_container.merge_into(good_container)
+
+        bad_topic = bad_container.topic
 
         self.assertEqual(bad_topic.deleted, True)
+        self.assertEqual(bad_container.deleted, True)
         self.assertEqual(bad_topic.merged_into, good_topic)
-        self.assertEqual(good_topic.names.count(), 2)
-
-    def test_delete_topic_nodes(self):
-        topic = PTC.objects.create_by_name(
-            'MISTAKE TOPIC', self.project, self.user)
-        summary = main_models.topics.TopicSummary.objects.create(
-            project=self.project,
-            creator=self.user,
-            last_updater=self.user,
-            topic=topic,
-            content='WHOOPS'
-        )
-        self.assertEqual(len(topic.get_project_connections(self.project)), 2)
-        topic.delete_project_connections(self.project)
-        self.assertTrue(topic.deleted)
+        self.assertEqual(bad_container.merged_into, good_container)
+        self.assertEqual(good_topic.get_connected_projects().count(), 1)
 
 class ProjectSpecificPermissionsTestCase(TestCase):
     fixtures = ['projects.json']
