@@ -243,15 +243,18 @@ class TranscriptAdminView(BaseAdminView):
         response = super(TranscriptAdminView, self).get(request, *args, **kwargs)
 
         footnote_fs = response.context_data['formsets']['footnote']
-        footnote_ids = self.object.get_footnote_href_ids()
+        if hasattr(self, 'object') and self.object is not None:
+            footnote_ids = self.object.get_footnote_href_ids()
+        else:
+            footnote_ids = []
 
         footnote_fs.forms.sort(key=lambda fn: footnote_ids.index(fn.instance.id)
                                if fn.instance.id in footnote_ids else 9999)
 
         return response
-    def get_object(self, transcript_id=None):
-        return transcript_id and get_object_or_404(
-            main_models.Transcript, id=transcript_id)
+    def get_object(self, document_id=None):
+        self.document = document = get_object_or_404(main_models.Document, id=document_id)
+        return document.transcript if document.has_transcript() else None
     def save_object(self, form, formsets):
         obj = form.save(commit=False)
         action = 'add' if not obj.id else 'change'
