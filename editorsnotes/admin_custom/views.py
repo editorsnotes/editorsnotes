@@ -54,8 +54,9 @@ class ProcessInlineFormsetsView(View):
         return fs
     def save_formsets(self, formsets):
         for fs in formsets.values():
-            save_method = getattr(
-                self, 'save_%s_formset_form' % fs.prefix, 'save_formset_form')
+            save_method = (
+                getattr(self, 'save_%s_formset_form' % fs.prefix, None)
+                or self.save_formset_form)
             for form in fs:
                 if not form.has_changed() or not form.is_valid():
                     continue
@@ -224,6 +225,12 @@ class TopicAdminView(BaseAdminView):
             obj.content_object = self.object
             obj.creator = self.request.user
         obj.last_updater = self.request.user
+        obj.save()
+    def save_alias_formset_form(self, form):
+        obj = form.save(commit=False)
+        if not obj.id:
+            obj.creator = self.request.user
+        obj.topic = topic
         obj.save()
 
 class TranscriptAdminView(BaseAdminView):
