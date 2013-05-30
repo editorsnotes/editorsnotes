@@ -55,6 +55,21 @@ class TopicNode(LastUpdateMetadata, URLAccessible):
     def get_connected_projects(self):
         return Project.objects.filter(
             id__in=self.project_containers.values_list('project_id', flat=True))
+    def related_objects(self, model=None):
+        qs = TopicNodeAssignment.objects\
+                .select_related('container__topic')\
+                .filter(container__topic=self)
+        if model is not None:
+            model_ct = ContentType.objects.get(
+                app_label=model._meta.app_label,
+                model=model._meta.module_name)
+            ids = qs.filter(content_type_id=model_ct.id)\
+                    .values_list('object_id', flat=True)
+            return model.objects.filter(id__in=ids)
+        else:
+            return [obj.content_object for obj in qs]
+
+
 reversion.register(TopicNode)
 
 
@@ -182,7 +197,7 @@ class TopicSummary(LastUpdateMetadata, ProjectPermissionsMixin):
         return u'Summary by {} for {}'.format(self.container.project.slug,
                                               self.container.topic.preferred_name)
     def get_affiliation(self):
-        return self.project
+        return self.container.project
 reversion.register(TopicSummary)
 
 class TopicNodeAssignment(CreationMetadata, ProjectPermissionsMixin):
