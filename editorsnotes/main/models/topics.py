@@ -11,6 +11,7 @@ from auth import Project, ProjectPermissionsMixin
 from base import (
     Administered, CreationMetadata, LastUpdateMetadata, URLAccessible)
 
+
 TYPE_CHOICES = (
     ('EVT', 'Event'),
     ('ORG', 'Organization'),
@@ -18,33 +19,13 @@ TYPE_CHOICES = (
     ('PUB', 'Publication')
 )
 
-class TopicNodeManager(models.Manager):
-    @transaction.commit_on_success
-    def create_project_topic(self, project, user, topic_node=None, name=None):
-        """
-        Connects a project & a topic, creating a topic if one is not given.
-        """
-        if topic_node is None and name is None:
-            raise ValueError('Must pass either a topic node or a name')
-
-        topic = topic_node or TopicNode.objects.create(
-            _preferred_name=name,
-            creator=user,
-            last_updater=user
-        )
-
-        # If topic node is given but no name, use the most popular topic name
-        name = name or topic._preferred_name
-        topic.names.create(name=name, project=project, creator=user)
-        return topic
-    def get_or_create_project_topic(self, project, user, topic_node, name=None):
-        project_topic = topic_node.names.filter(
-            project_id=project.id, is_preferred=True)
-        return topic_node if project_topic.exists() \
-                else self.create_project_topic(project, user, topic_node, name)
-
 class TopicMergeError(Exception):
     pass
+
+
+#########################
+# Main topic node model #
+#########################
 
 class TopicNode(LastUpdateMetadata, URLAccessible):
     """
@@ -61,154 +42,109 @@ class TopicNode(LastUpdateMetadata, URLAccessible):
     deleted and optionally point to the new Topic node that it was merged into.
     """
     _preferred_name = models.CharField(max_length='200')
-    type = models.CharField(max_length=3, choices=TYPE_CHOICES, blank=True)
+    type = models.CharField(max_length=3, choices=TYPE_CHOICES, blank=True, null=True)
     deleted = models.BooleanField(default=False, editable=False)
     merged_into = models.ForeignKey('self', blank=True, null=True, editable=False)
-    related_topics = generic.GenericRelation('TopicNodeAssignment',
-                                             related_name='parent_topic')
-    objects = TopicNodeManager()
     class Meta:
         app_label = 'main'
     def as_text(self):
-        return self._preferred_name
+        return self.preferred_name
     @property
     def preferred_name(self):
         return self._preferred_name
-    def related_objects(self, model=None, project=None):
-        qs = self.assignments.all()
-        if project is not None:
-            qs = qs.filter(project_id=project.id)
-        if model is not None:
-            qs = qs.filter(content_type=ContentType.objects.get_for_model(model))
-            return model.objects.filter(id__in=[ta.object_id for ta in qs])
-        return sorted([ta.content_object for ta in qs], key=lambda o: repr(o))
-    @transaction.commit_on_success
-    def merge_project_topic_connections(self, project, into):
-        names = list(TopicName.objects.select_related('topic').filter(
-            project_id=project.id, topic__id__in=[self.id, into.id]))
-        origin_name_objs = [n for n in names if n.topic_id == self.id]
-        target_name_objs = [n for n in names if n.topic_id == into.id]
-
-        if not len(origin_name_objs):
-            raise TopicMergeError('No names connect this project & topic')
-
-        summary_objs = list(TopicSummary.objects.filter(
-            project_id=project.id, id__in=[self.id, into.id]))
-        if len(summary_objs) > 1:
-            raise TopicMergeError('Can\'t merge with two summaries. Delete a summary before continuing.')
-
-        origin_summary = summary_objs[0] \
-            if len(summary_objs) and summary_objs[0].project_id == project.id \
-            else None
-
-        # Keep the preferred name for the target if it exists
-        target_preferred_exists = any(n.is_preferred for n in target_name_objs)
-        target_names = [n.name for n in target_name_objs]
-
-        for model in origin_name_objs:
-            # If the other topic already has this name, delete it.
-            if model.name in target_names:
-                model.delete()
-                continue
-            model.topic = into
-            if target_preferred_exists:
-                model.is_preferred = False
-            model.save()
-        if origin_summary:
-            origin_summary.topic = into
-            origin_summary.save()
-
-        self.deleted = True
-        self.merged_into = into
-        self.save()
-
-        return into
-    def get_connected_projects(self):
-        """
-        Return all projects connected to this topic.
-        """
-        return Project.objects.select_related('topicname')\
-                .filter(topicname__topic_id=self.id)
-    def get_project_connections(self, project):
-        """
-        Returns all objects connecting a topic and a project.
-
-        Connecting objects include names, summaries, and assignments.
-        """
-        connections = []
-        connections += [n for n in self.names.all()
-                        if n.project_id == project.id]
-        connections += [s for s in self.summaries.all()
-                        if s.project_id == project.id]
-        return connections
-    def delete_project_connections(self, project, delete_empty=True):
-        """
-        Removes all topic connections, optionally deleting "empty" topic nodes.
-
-        Does not return any value.
-
-        A topic can be considered empty if it no longer has any projects
-        connected to it.
-        """
-        connections = self.get_project_connections(project)
-        for connection in connections:
-            connection.delete()
-        if delete_empty and self.names.count() == 0:
-            self.deleted = True
-            self.save()
 reversion.register(TopicNode)
 
-class ProjectTopicContainer(LastUpdateMetadata, ProjectPermissionsMixin):
-    project = models.ForeignKey('Project')
-    topic = models.ForeignKey(TopicNode)
+
+#################################
+# Project-specific topic models #
+#################################
+
+class ProjectTopicContainerManager(models.Manager):
+    def create_from_name(self, name, project, user, topic_type=None):
+        topic_node = TopicNode.objects.create(preferred_name=name, creator=user,
+                                              last_updater=user, type=topic_type)
+        return self.create(topic_id=topic_node.id, project_id=project.id,
+                           preferred_name=name, creator_id=user.id,
+                           last_updater_id=user.id)
+    def create_from_node(self, topic, project, user, name=None):
+        return self.create(topic=topic, project=project,
+                           creator=user, last_updater=user,
+                           preferred_name=name or topic.preferred_name)
+    def get_or_create_from_node(self, topic, project, user, name=None):
+        defaults = {'creator': user, 'last_updater': user
+                    'preferred_name': name or topic.preferred_name}
+        return self.get_or_create(topic=topic, project=project, defaults=defaults)
+
+class ProjectTopicContainer(LastUpdateMetadata, URLAccessible, ProjectPermissionsMixin):
+    project = models.ForeignKey('Project', related_name='topic_containers')
+    topic = models.ForeignKey(TopicNode, related_name='project_containers')
+    preferred_name = models.CharField(max_length=200)
+
     deleted = models.BooleanField(default=False, editable=False)
     merged_into = models.ForeignKey('self', blank=True, null=True, editable=False)
+
+    objects = ProjectTopicContainerManager()
     class Meta:
         app_label = 'main'
     def as_text(self):
-        return '({}): {}'.format(
-            self.project.slug, self.names.get(is_preferred=True))
-
-class ProjectTopicNameManager(models.Manager):
-    def for_topic(self, topic):
-        return self.get_queryset()\
-                .filter(topic_id=topic.id)\
-                .select_related('topic')\
-                .order_by('-created')
-    def counts_for_topic(self, topic):
+        return '({}): {}'.format(self.project.slug, self.preferred_name)
+    def has_summary(self):
+        return hasattr(self, 'summary')
+    @transaction.commit_on_success
+    def merge_into_container(self, target):
         """
-        Returns a (name, count) tuple for all names of given topic.
+        Merge all connections from this container into another.
         """
-        # This might be done faster in SQL but it's not worth it right now.
-        names = self.for_topic(topic).values('name')
-        names_ct = [(name, names.count(name)) for name in set(names)]
-        names_ct.sort(key=lambda n: n[1])
-        return names_ct
-    def for_project(self, project):
-        return self.get_queryset().filter(project_id=project.id)
+        if self.project_id != target.project_id:
+            raise TopicMergeError(
+                'Can only merge topics within the same project.')
 
-class TopicName(CreationMetadata, ProjectPermissionsMixin):
-    """
-    A name identifying a topic, specific to a project.
+        # Move summary to new container if it exists
+        if self.has_summary():
+            if target.has_summary():
+                raise TopicMergeError(
+                    'Can\'t merge two summaries. Delete a summary before continuing.')
+            self.summary.container_id = target.id
+            self.summary.save()
 
-    Project can specify multiple names to use for a topic, but at exactly one
-    must be preferred.
-    """
-    name = models.CharField(max_length='200')
-    #topic = models.ForeignKey(TopicNode, related_name='names')
-    #project = models.ForeignKey('Project')
-    container = models.ForeignKey(ProjectTopicContainer, related_name='names',
-                                  blank=True, null=True)
-    is_preferred = models.BooleanField(default=True)
-    objects = ProjectTopicNameManager()
-    class Meta:
-        app_label = 'main'
-        unique_together = ('container', 'name',)
-    def __unicode__(self):
-        return u'{} (topic node {})'.format(self.name, self.container.topic_id)
-    def get_affiliation(self):
-        return self.project
-reversion.register(TopicName)
+        # Move topic assignments to the new container, but only if those
+        # assignments don't already exist in the target.
+        assignments = (
+            ta for ta in self.assignments.all()
+            if (ta.content_type_id, ta.object_id) not in
+            target.assignments.values_list('content_type_id', 'object_id')
+        )
+        for assignment in assignments:
+            assignment.container_id = target.id
+            assignment.save()
+        for stale_assignment in self.assignments.all():
+            stale_assignment.delete()
+
+        # Move topic names to the new container, making sure they are not marked
+        # as preferred. Delete any names that exist in the target.
+        target_names = target.names.values_list('name', flat=True)
+        for name in self.names.all():
+            if name.name in target_names:
+                name.delete()
+                continue
+            name.is_preferred = False
+            name.container_id = target.id
+            name.save()
+
+        # Save the topic to check if it should be deleted as well (see below).
+        topic = self.topic
+
+        # Point this node toward the new node.
+        self.deleted = True
+        self.merged_into = target
+        self.save()
+
+        # If no projects point to origin's topic node anymore, merge it into the
+        # target's topic node.
+        if not topic.project_containers.exists():
+            topic.deleted = True
+            topic.merged_into = target.topic
+            topic.save()
 
 class TopicSummary(LastUpdateMetadata, ProjectPermissionsMixin):
     """
@@ -216,8 +152,6 @@ class TopicSummary(LastUpdateMetadata, ProjectPermissionsMixin):
 
     Projects may only create one summary for a topic.
     """
-    #project = models.ForeignKey('Project')
-    #topic = models.ForeignKey(TopicNode, related_name='summaries')
     container = models.OneToOneField(ProjectTopicContainer, related_name='summary',
                                      blank=True, null=True)
     citations = generic.GenericRelation('Citation')
@@ -238,10 +172,7 @@ class TopicNodeAssignment(CreationMetadata, ProjectPermissionsMixin):
     Optionally, a specific name can be used for an assignment, otherwise the
     projects' preferred name for that topic will be used.
     """
-    #topic = models.ForeignKey(TopicNode, related_name='assignments')
-    #project = models.ForeignKey('Project')
     container = models.ForeignKey(ProjectTopicContainer, blank=True, null=True, related_name='assignments')
-    topic_name = models.ForeignKey(TopicName, blank=True, null=True)
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     content_object = generic.GenericForeignKey()
@@ -249,10 +180,11 @@ class TopicNodeAssignment(CreationMetadata, ProjectPermissionsMixin):
         app_label = 'main'
         unique_together = ('content_type', 'object_id', 'container')
     def __unicode__(self):
-        return u'{} --> {}: {} ({})'.format(self.container.topic.preferred_name,
-                                            self.content_object._meta.module_name,
-                                            self.content_object,
-                                            self.container.project.slug)
+        return u'{} --> {}: {} ({})'.format(
+            self.container.topic.preferred_name,
+            self.content_object._meta.module_name,
+            self.content_object,
+            self.container.project.slug)
     def get_affiliation(self):
         return self.project
 reversion.register(TopicNodeAssignment)

@@ -257,7 +257,7 @@ def update_topic(topic, orm):
 
         revision_comment = (
             u'[Generated in data migration on {}] '
-            'TopicContainer and TopicName created for topic {} by project {}.'.format(
+            'TopicContainer created for topic {} by project {}.'.format(
                 datetime.datetime.now(), topic.preferred_name,
                 pslug_for_pid(project_id, orm)))
         new_revision_id = create_new_revision(
@@ -272,15 +272,6 @@ def update_topic(topic, orm):
             new_revision_id, container_id, 'projecttopiccontainer', data,
             u'ProjectTopicContainer <project={}> <topic_id={}>'.format(
                 project_id, topic_node_id), typ=0)
-
-        data = {}
-        data['creator'] = topic.creator_id
-        data['created'] = topic.created.strftime(TIME_FMT)
-        data['name'] = topic.preferred_name
-        data['container'] = container_id
-        create_version(
-            new_revision_id, topic_name_id, 'topicname', data,
-            u'TopicName: {}'.format(topic.preferred_name), typ=0)
 
     # For items that do have version data, work from that.
     for version in topic_versions:
@@ -310,18 +301,8 @@ def update_topic(topic, orm):
                 u'ProjectTopicContainer {} ({})'.format(
                     topic.preferred_name, pslug_for_pid(project_id, orm)), typ=0)
 
-            data = {}
-            data['creator'] = topic.creator_id
-            data['created'] = topic.created.strftime(TIME_FMT)
-            data['name'] = topic.preferred_name
-            data['container'] = container_id
-            create_version(
-                new_revision_id, topic_name_id, 'topicname', data,
-                u'TopicName: {}'.format(topic.preferred_name), typ=0)
-
             revision_comment += u'Added project topic container "{} ({})". '.format(
                 topic.preferred_name, pslug_for_pid(project_id, orm))
-            revision_comment += u'Added topic name "{}".  '.format(topic.preferred_name)
 
         summary_created = False
         summary_edited = False
@@ -404,7 +385,7 @@ def update_topic(topic, orm):
                         'object_id': data[0]['fields']['object_id']
                     }
                     create_version(
-                        new_revision_id, assignment_id, 'topicnodeassignment', json.dumps(fields),
+                        new_revision_id, assignment_id, 'topicnodeassignment', fields,
                         u'TopicNodeAssignment for topic {}'.format(topic.preferred_name),
                         typ= 0)
                     revision_comment += u'Add topic assignment for {}. '.format(
@@ -435,7 +416,7 @@ def update_topic(topic, orm):
                 'object_id': tmap_id[assignment]
             }
             create_version(
-                new_revision_id, assignment_id, 'topicnodeassignment', json.dumps(fields),
+                new_revision_id, assignment_id, 'topicnodeassignment', fields,
                 u'TopicNodeAssignment for topic {}'.format(topic.preferred_name),
                 typ= 0)
             revision_comment += u'Add topic assignment for {}. '.format(

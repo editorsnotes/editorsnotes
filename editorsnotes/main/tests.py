@@ -8,7 +8,7 @@ from django.test import TestCase, TransactionTestCase
 from lxml import etree
 
 import models as main_models
-from models.topics import TopicNode
+from models.topics import ProjectTopicContainer as PTC
 import utils
 from views import create_invited_user
 
@@ -79,11 +79,11 @@ class NoteTestCase(TestCase):
         note = main_models.Note.objects.create(
             content=u'<h1>hey</h1><p>this is a <em>note</em></p>', 
             creator=self.user, last_updater=self.user, project=self.project)
-        topic = main_models.TopicNode.objects.create_project_topic(
-            self.project, self.user, name=u'Example')
+        container = PTC.objects.create_by_name(
+            u'Example', self.project, self.user)
+        topic = container.topic
         self.assertFalse(note.has_topic(topic))
-        main_models.topics.TopicNodeAssignment.objects.create(
-            content_object=note, topic=topic, creator=self.user, project=self.project)
+        container.assignments.create(content_object=note, creator=self.user)
         self.assertTrue(note.has_topic(topic))
         self.assertEquals(1, len(note.topics.all()))
         self.assertEquals(1, len(topic.assignments.all()))
@@ -98,17 +98,15 @@ class NoteTransactionTestCase(TransactionTestCase):
         note = main_models.Note.objects.create(
             content=u'<h1>hey</h1><p>this is a <em>note</em></p>', 
             creator=self.user, last_updater=self.user, project=self.project)
-        topic = TopicNode.objects.create_project_topic(
-            self.project, self.user, name=u'Example')
-        main_models.topics.TopicNodeAssignment.objects.create(
-            content_object=note, topic=topic,
-            creator=self.user, project=self.project)
+        container = PTC.objects.create_by_name(
+            u'Example', self.project, self.user)
+        container.assignments.create(content_object=note, creator=self.user)
         self.assertRaises(IntegrityError,
-                          main_models.topics.TopicNodeAssignment.objects.create,
-                          content_object=note, topic=topic, creator=self.user, project=self.project)
+                          container.assignments.create,
+                          content_object=note, creator=self.user)
         transaction.rollback()
         note.delete()
-        topic.delete()
+        container.delete()
 
 class NewUserTestCase(TestCase):
     def setUp(self):
@@ -146,38 +144,33 @@ class ProjectTopicTestCase(TestCase):
         self.user2 = self.project2.members.all()[0]
 
     def test_create_project_topic(self):
-        new_topic = TopicNode.objects.create_project_topic(
-            self.project, self.user, name=u'Emma Goldman')
+        new_topic_container = PTC.objects.create_by_name(
+            u'Emma Goldman', self.project, self.user)
+        new_topic = new_topic_container.topic
         self.assertTrue(isinstance(new_topic, main_models.topics.TopicNode))
-        new_topic2 = TopicNode.objects.create_project_topic(
-            self.project2, self.user2, topic_node=new_topic)
-        self.assertEqual(new_topic, new_topic2)
+
+        new_topic_container2 = PTC.objects.create_by_topic(
+            new_topic, self.project2, self.user2, name=u'Emma Goldman!!!')
+
+        self.assertEqual(new_topic, new_topic_container2.topic)
         self.assertEqual(main_models.topics.TopicName.objects.count(), 2)
         self.assertEqual(new_topic.get_connected_projects().count(), 2)
 
     def test_merge_topic_nodes(self):
-        good_topic = TopicNode.objects.create_project_topic(
-            self.project, self.user, name='Emma Goldman')
-        bad_topic = TopicNode.objects.create_project_topic(
-            self.project, self.user, name=u'Емма Голдман')
+        good_topic = PTC.objects.create_by_name(
+            'Emma Goldman', self.project, self.user)
+        bad_topic = PTC.objects.create_by_name(
+            u'Емма Голдман', self.project, self.user)
 
-        # No connection between this project & topic, so we should get an
-        # exception
-        self.assertRaises(
-            main_models.topics.TopicMergeError,
-            bad_topic.merge_project_topic_connections,
-            self.project2, good_topic
-        )
-
-        bad_topic.merge_project_topic_connections(self.project, good_topic)
+        bad_topic.merge_into_container(good_topic)
 
         self.assertEqual(bad_topic.deleted, True)
         self.assertEqual(bad_topic.merged_into, good_topic)
         self.assertEqual(good_topic.names.count(), 2)
 
     def test_delete_topic_nodes(self):
-        topic = TopicNode.objects.create_project_topic(
-            self.project, self.user, name='MISTAKE TOPIC')
+        topic = PTC.objects.create_by_name(
+            'MISTAKE TOPIC', self.project, self.user)
         summary = main_models.topics.TopicSummary.objects.create(
             project=self.project,
             creator=self.user,
