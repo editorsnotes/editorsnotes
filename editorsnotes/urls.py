@@ -1,10 +1,7 @@
 from django.conf.urls import patterns, url, include
-from django.contrib import admin
 from django.conf import settings
 from django.views.generic.base import RedirectView
 from editorsnotes.main.views import CustomBrowserIDVerify, LegacyTopicRedirectView
-
-admin.autodiscover()
 
 urlpatterns = patterns('',
     (r'^accounts/login/$', 'django.contrib.auth.views.login'),
@@ -12,14 +9,12 @@ urlpatterns = patterns('',
     url(r'^accounts/browserid/$', CustomBrowserIDVerify.as_view(), name='browserid_verify'),
 )
 
-urlpatterns += patterns('',
-    (r'^admin/', include('editorsnotes.admin_custom.urls')),
-)
+#urlpatterns += patterns('',
+#    (r'^admin/', include('editorsnotes.admin_custom.urls')),
+#)
 
 urlpatterns += patterns('',
-    (r'^admin/', include(admin.site.urls)),
     (r'^comments/', include('django.contrib.comments.urls')),
-
     # The following won't actually be called in production, since Apache will intercept them.
     (r'^favicon.ico$', RedirectView.as_view(url='/static/style/icons/favicon.ico')),
     (r'^media/(?P<path>.*)$', 'django.views.static.serve', { 'document_root': settings.MEDIA_ROOT }),
@@ -39,15 +34,6 @@ urlpatterns += patterns('editorsnotes.main.views',
     url(r'^search/$', 'search', name='search_view'),
 )
 
-api_patterns = patterns('editorsnotes.main.api_views',
-    url(r'^api/topics/$', 'api_topics', name='api_topics_view'),
-    url(r'^api/topics/(?P<topic_ids>\d+(,\d+)*)/$', 'api_topic', name='api_topic_view'),
-    url(r'^api/documents/$', 'api_documents', name='api_documents_view'),
-    url(r'^api/documents/(?P<document_id>\d+)/$', 'api_document', name='api_document_view'),
-    url(r'^api/notes/$', 'api_notes', name='api_notes_view'),
-    url(r'^api/transcripts/$', 'api_transcripts', name='api_transcripts_view'),
-    url(r'^api/transcripts/(?P<transcript_id>\d+)/$', 'api_transcript', name='api_transcript_view'),
-)
 index_patterns = patterns('editorsnotes.main.views',
     url(r'^$', 'index', name='index_view'),
     url(r'^about/$', 'about', name='about_view'),
@@ -57,24 +43,22 @@ index_patterns = patterns('editorsnotes.main.views',
     url(r'^topics/$', 'all_topics', name='all_topics_view'),
     url(r'^notes/$', 'all_notes', name='all_notes_view'),
 )
-
-urlpatterns += api_patterns
 urlpatterns += index_patterns
 
-urlpatterns += patterns('editorsnotes.djotero.views',
-    url(r'^document/upload/$', 'import_zotero', name='import_zotero_view'),
-    url(r'^document/upload/libraries/$', 'libraries', name='libraries_view'),
-    url(r'^document/upload/collections/$', 'collections', name='collections_view'),
-    url(r'^document/upload/items/$', 'items', name='items_view'),
-    url(r'^document/upload/continue/$', 'items_continue', name='items_continue_view'),
-    url(r'^document/upload/import/$', 'import_items', name='import_items_view'),
-    url(r'^user/zotero_info$', 'update_zotero_info', name='update_zotero_info_view'),
-    url(r'^api/document/template/', 'zotero_template'),
-    url(r'^api/document/blank/$', 'get_blank_item', name='get_blank_item_view'),
-    url(r'^api/document/csl/$', 'zotero_json_to_csl', name='zotero_json_to_csl_view'),
-    url(r'^api/document/archives/$', 'api_archives', name='api_archives_view'),
-)
-urlpatterns += patterns('editorsnotes.refine.views',
-    url(r'^topics/clusters/$', 'show_topic_clusters', name='show_topic_clusters_view'),
-    url(r'^topics/merge/(?P<cluster_id>\d+)/$', 'merge_topic_cluster', name='merge_topic_cluster_view'),
-)
+#urlpatterns += patterns('editorsnotes.djotero.views',
+#    url(r'^document/upload/$', 'import_zotero', name='import_zotero_view'),
+#    url(r'^document/upload/libraries/$', 'libraries', name='libraries_view'),
+#    url(r'^document/upload/collections/$', 'collections', name='collections_view'),
+#    url(r'^document/upload/items/$', 'items', name='items_view'),
+#    url(r'^document/upload/continue/$', 'items_continue', name='items_continue_view'),
+#    url(r'^document/upload/import/$', 'import_items', name='import_items_view'),
+#    url(r'^user/zotero_info$', 'update_zotero_info', name='update_zotero_info_view'),
+#    url(r'^api/document/template/', 'zotero_template'),
+#    url(r'^api/document/blank/$', 'get_blank_item', name='get_blank_item_view'),
+#    url(r'^api/document/csl/$', 'zotero_json_to_csl', name='zotero_json_to_csl_view'),
+#    url(r'^api/document/archives/$', 'api_archives', name='api_archives_view'),
+#)
+#urlpatterns += patterns('editorsnotes.refine.views',
+#    url(r'^topics/clusters/$', 'show_topic_clusters', name='show_topic_clusters_view'),
+#    url(r'^topics/merge/(?P<cluster_id>\d+)/$', 'merge_topic_cluster', name='merge_topic_cluster_view'),
+#)
