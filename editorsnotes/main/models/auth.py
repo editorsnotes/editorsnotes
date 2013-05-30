@@ -102,7 +102,9 @@ class Project(models.Model, URLAccessible, ProjectPermissionsMixin):
     def members(self):
         role_groups = self.roles.values_list('group_id', flat=True)
         return User.objects.filter(groups__in=role_groups)
-
+    def get_role_for(self, user):
+        qs = self.roles.filter(groups__users=user)
+        return qs.get() if qs.exists() else None
     @staticmethod
     def get_activity_for(project, max_count=50):
         return activity_for(project, max_count=max_count)

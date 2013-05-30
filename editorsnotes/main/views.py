@@ -96,6 +96,8 @@ def user(request, username=None):
     else:
         user = get_object_or_404(main_models.auth.User, username=username)
         o['own_profile'] = user == request.user
+    o['user'] = user
+
 
     o['log_entries'], ignored = main_models.auth.User.get_activity_for(user, max_count=20)
 
@@ -107,12 +109,6 @@ def user(request, username=None):
 
     if ['own_profile']:
         o['zotero_status'] = user.zotero_key and user.zotero_uid
-        if (o['affiliation'] and o['project_role'] == 'editor') or user.is_superuser:
-            if user.is_superuser:
-                o['clusters'] = TopicCluster.objects.all()
-            else:
-                o['clusters'] = TopicCluster.objects.filter(
-                    topics__affiliated_projects=o['profile'].affiliation)
     return render_to_response(
         'user.html', o, context_instance=RequestContext(request))
 
