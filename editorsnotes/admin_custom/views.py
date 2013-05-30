@@ -230,7 +230,7 @@ class TopicAdminView(BaseAdminView):
         obj = form.save(commit=False)
         if not obj.id:
             obj.creator = self.request.user
-        obj.topic = topic
+        obj.topic = self.object
         obj.save()
 
 class TranscriptAdminView(BaseAdminView):
