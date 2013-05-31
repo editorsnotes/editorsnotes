@@ -93,7 +93,7 @@
       <div class="fieldset-content">
         <div class="left-margin">
           {% with form.instance as d %}
-            {% if not form.instance %}
+            {% if not d.id %}
               Save document before adding a transcript.
             {% else %}
               {% if d.has_transcript %}
