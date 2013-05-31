@@ -12,7 +12,7 @@ from .. import forms
 class DocumentAdminView(BaseAdminView):
     form_class = forms.DocumentForm
     formset_classes = (
-        forms.TopicAssignmentFormset,
+        # forms.TopicAssignmentFormset,
         forms.DocumentLinkFormset,
         forms.ScanFormset
     )

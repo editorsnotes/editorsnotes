@@ -468,3 +468,32 @@ def all_notes(request, project_slug=None):
 
     return render_to_response(
         template, o, context_instance=RequestContext(request)) 
+
+
+def project_documents(request, *args, **kwargs):
+    return HttpResponse('hi')
+
+def project_topics(request, *args, **kwargs):
+    return HttpResponse('hi')
+
+def project_notes(request, *args, **kwargs):
+    return HttpResponse('hi')
+
+def project_topic(request, *args, **kwargs):
+    return HttpResponse('hi')
+
+def footnote_view(request, *args, **kwargs):
+    return HttpResponse('hi')
+
+def document(request, *args, **kwargs):
+    return HttpResponse('hi')
+
+def note(request, *args, **kwargs):
+    return HttpResponse('hi')
+
+def all_projects(request, *args, **kwargs):
+    return HttpResponse('hi')
+
+def transcript(request, *args, **kwargs):
+    return HttpResponse('hi')
+

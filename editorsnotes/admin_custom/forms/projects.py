@@ -1,10 +1,10 @@
 from django import forms
-from django.contrib.auth import Group
+from django.contrib.auth.models import Group
 from django.forms.models import (
     BaseModelFormSet, ModelForm, modelformset_factory)
 
-from editorsnotes.main.model.auth import (
-    User, Project, ProjectInvitation, PROJECT_ROLES)
+from editorsnotes.main.models.auth import (
+    User, Project, ProjectInvitation)
 
 def make_project_invitation_formset(project):
     if not isinstance(project, Project):
@@ -68,7 +68,7 @@ def make_project_roster_formset(project):
             super(ProjectRosterFormSet, self).__init__(*args, **kwargs)
 
     class ProjectMemberForm(ModelForm):
-        project_role = forms.ChoiceField(choices=PROJECT_ROLES)
+        project_role = forms.ChoiceField(choices=('fixme', 'fixme',))
         class Meta:
             model = User
         def __init__(self, *args, **kwargs):

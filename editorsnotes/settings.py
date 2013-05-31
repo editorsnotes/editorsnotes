@@ -117,8 +117,6 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'django.contrib.admin',
-    'django.contrib.admindocs',
     'reversion',
     'south',
     'haystack',
@@ -126,7 +124,7 @@ INSTALLED_APPS = (
     'editorsnotes.main',
     #'editorsnotes.djotero',
     #'editorsnotes.refine',
-    #'editorsnotes.admin_custom',
+    'editorsnotes.admin_custom',
 )
 
 STATICFILES_FINDERS = (

@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.contenttypes.generic import generic_inlineformset_factory
 from django.forms.models import ModelForm, inlineformset_factory
 
-from editorsnotes.main.models.topics import Topic, Alias
+from editorsnotes.main.models.topics import ProjectTopicContainer
 from editorsnotes.main.models.documents import Citation
 
 class TopicForm(ModelForm):
@@ -12,17 +12,17 @@ class TopicForm(ModelForm):
             "function/admin-bootstrap-note-sections.js",
         )
     class Meta:
-        model = Topic
-        fields = ('preferred_name', 'type', 'summary',)
+        model = ProjectTopicContainer
+        fields = ('preferred_name', )
 
-class AliasForm(ModelForm):
-    class Meta:
-        model = Alias
-        fields = ('name',)
-
-AliasFormset = inlineformset_factory(
-    Topic, Alias, form=AliasForm, extra=1)
-
+#class AliasForm(ModelForm):
+#    class Meta:
+#        model = Alias
+#        fields = ('name',)
+#
+#AliasFormset = inlineformset_factory(
+#    Topic, Alias, form=AliasForm, extra=1)
+#
 class CitationForm(ModelForm):
     class Meta:
         model = Citation

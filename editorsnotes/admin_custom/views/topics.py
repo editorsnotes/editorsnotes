@@ -10,8 +10,8 @@ from common import BaseAdminView
 class TopicAdminView(BaseAdminView):
     form_class = forms.TopicForm
     formset_classes = (
-        forms.TopicAssignmentFormset,
-        forms.AliasFormset,
+        # forms.TopicAssignmentFormset,
+        # forms.AliasFormset,
         forms.CitationFormset,
     )
     template_name = 'topic_admin.html'
