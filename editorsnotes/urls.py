@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 # vim: set tw=0:
 
 from django.conf.urls import patterns, url, include
 from django.conf import settings
 from django.views.generic.base import RedirectView
-from editorsnotes.main.views import CustomBrowserIDVerify, LegacyTopicRedirectView
+from editorsnotes.main.views.auth import CustomBrowserIDVerify
 
 # These will be intercepted by apache in production
 urlpatterns = patterns('',
@@ -18,18 +17,17 @@ urlpatterns = patterns('',
 urlpatterns += patterns('',
     url(r'^accounts/login/$', 'django.contrib.auth.views.login'),
     url(r'^accounts/logout/$', 'user_logout', name='user_logout_view'),
-    url(r'^accounts/profile/$', 'editorsnotes.main.views.user'),
+    url(r'^accounts/profile/$', 'editorsnotes.main.views.auth.user'),
     url(r'^accounts/browserid/$', CustomBrowserIDVerify.as_view(), name='browserid_verify'),
     url(r'^user/(?P<username>[\w@\+\.\-]+)/$', 'user', name='user_view'),
 )
 
 # Base patterns
-urlpatterns += patterns('editorsnotes.main.views',
+urlpatterns += patterns('editorsnotes.main.views.navigation',
     url(r'^$', 'index', name='index_view'),
     url(r'^about/$', 'about', name='about_view'),
     url(r'^about/test/$', 'about_test'),
     url(r'^search/$', 'search', name='search_view'),
-    url(r'^topic/(?P<topic_slug>[\w\-,]+)/$', LegacyTopicRedirectView.as_view(), name='topic_view'),
 )
 
 # Admin patterns

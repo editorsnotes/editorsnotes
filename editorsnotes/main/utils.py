@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import os.path
-import re
-import unicodedata
 from lxml import etree
 from pytz import timezone, utc
 from django.conf import settings
-from django.utils.encoding import smart_text
 
 textify = etree.XSLT(etree.parse(
         os.path.abspath(os.path.join(os.path.dirname(__file__), 'textify.xsl'))))

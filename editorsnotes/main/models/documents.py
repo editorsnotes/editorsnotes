@@ -53,6 +53,9 @@ class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectPermissio
         ordering = ['ordering','import_id']    
     def as_text(self):
         return utils.xhtml_to_text(self.description)
+    @models.permalink
+    def get_absolute_url(self):
+        return ('document_view', [str(self.project.slug), str(self.id)])
     def get_affiliation(self):
         return self.project
     @property
@@ -198,6 +201,10 @@ class Footnote(LastUpdateMetadata, Administered, URLAccessible,
         app_label = 'main'
     def get_affiliation(self):
         return self.transcript.document.project
+    @models.permalink
+    def get_absolute_url(self):
+        document = self.transcript.document
+        return ('footnote_view', [document.project.slug, document.id, self.id])
     def footnoted_text(self):
         try:
             selector = 'a.footnote[href="%s"]' % self.get_absolute_url()

@@ -49,6 +49,9 @@ class TopicNode(LastUpdateMetadata, URLAccessible):
         app_label = 'main'
     def as_text(self):
         return self.preferred_name
+    @models.permalink
+    def get_absolute_url(self):
+        return ('topic_node_view', [self.id])
     @property
     def preferred_name(self):
         return self._preferred_name
@@ -126,6 +129,9 @@ class ProjectTopicContainer(LastUpdateMetadata, URLAccessible, ProjectPermission
         app_label = 'main'
     def as_text(self):
         return '({}): {}'.format(self.project.slug, self.preferred_name)
+    @models.permalink
+    def get_absolute_url(self):
+        return ('project_topic', [self.project.slug, self.topic_id])
     def has_summary(self):
         return hasattr(self, 'summary')
     @transaction.commit_on_success

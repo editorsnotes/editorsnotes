@@ -36,6 +36,9 @@ class Note(LastUpdateMetadata, Administered, URLAccessible, ProjectPermissionsMi
         ordering = ['-last_updated']  
     def as_text(self):
         return self.title
+    @models.permalink
+    def get_absolute_url(self):
+        return ('note_view', [self.project.slug, self.id])
     def get_affiliation(self):
         return self.project
     def has_topic(self, topic):
