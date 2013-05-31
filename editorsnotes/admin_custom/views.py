@@ -177,9 +177,9 @@ class DocumentAdminView(BaseAdminView):
                 document.creator = self.request.user
                 document.last_updater = self.request.user
                 project = self.request.user.get_profile().affiliation
+                document.save()
                 if project is not None:
                     document.affiliated_projects.add(project)
-                document.save()
                 form.save_zotero_data()
             return http.HttpResponse(json.dumps(
                 {'value': document.as_text(),
