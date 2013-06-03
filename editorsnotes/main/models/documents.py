@@ -2,6 +2,7 @@
 
 import json
 import re
+from itertools import chain
 
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
@@ -101,20 +102,30 @@ class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectPermissio
             r.append('External Link')
         return r
     def get_all_related_topics(self):
-        topics = []
+        topic_ct = ContentType.objects.get(
+            app_label='main', model='topicsummary')
 
-        # Explicitly stated topic assignments
-        topics += [ta.topic for ta in self.topics.all()]
+        topic_citations = self.citations.filter(content_type_id=topic_ct.id)
+        citation_note_sections = self.citationns_set.all()
+        notes = {ns.note for ns in citation_note_sections}
 
-        # Topic assignments via Citation objects
-        #topics += [c.content_object for c in self.citations.filter(
-        #    content_type=ContentType.objects.get_for_model(Topic))]
+        return {ta.topic for ta in set(chain(
+            # Explicitly related topics
+            self.topics.all(),
 
-        # Topic assignments via NoteSection objects
-        #for ns in self.notesection_set.all():
-        #    topics += [ t for t in ns.get_all_related_topics() ]
+            # The topic of any TopicSummary objects citing this doc
+            [cite.content_object.container for cite in topic_citations],
 
-        return set(topics)
+            # The related topics of the topic gotten previously
+            chain(*[cite.content_object.container.assignments.all()
+                   for cite in topic_citations]),
+
+            # Topics related to sections citing to this doc
+            chain(*[sec.topics.all() for sec in citation_note_sections]),
+
+            # Topics relate to the note citing this doc
+            chain(*[n.topics.all() for n in notes])
+        ))}
     def get_metadata(self):
         metadata = {}
         for md in self.metadata.all():

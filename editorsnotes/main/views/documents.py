@@ -8,7 +8,7 @@ from editorsnotes.djotero.utils import as_readable, type_map
 
 from ..models.auth import Project
 from ..models.documents import Document, Footnote, Transcript
-from ..models.topics import Topic
+from ..models.topics import Topic, TopicNode
 from ..models.notes import CitationNS
 
 def footnote(request, project_slug, document_id, footnote_id):
@@ -68,7 +68,7 @@ def all_documents(request, project_slug=None):
 
     # Facet results
     valid_facets = (
-        'project_id',
+        'project_slug',
         'related_topic_id',
         'archive',
         'publicationTitle',
@@ -103,7 +103,7 @@ def all_documents(request, project_slug=None):
                                       for p_id, count in sorted_facets ]
         elif facet == 'related_topic_id':
             o['facets']['related_topic_id'] = \
-                    [ (t_id, Topic.objects.get(id=t_id), count)
+                    [ (t_id, TopicNode.objects.get(id=t_id), count)
                      for t_id, count in sorted_facets ]
         elif facet =='itemType':
             o['facets']['itemType'] = [ (item, type_map['readable'].get(item), count)

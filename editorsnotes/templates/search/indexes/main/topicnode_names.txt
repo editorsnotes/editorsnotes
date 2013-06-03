@@ -1,0 +1,4 @@
+{{ topic.preferred_name }}
+{% for container in topic.project_containers.all %}
+{{ container.preferred_name }}
+{% endfor %}

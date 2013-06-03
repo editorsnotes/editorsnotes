@@ -1,11 +1,10 @@
 {% load display %}
 {{ object.title }}
 {{ object.content|as_text }}
-{% for cite in object.citations.all %}
-{{ cite.notes|as_text }}
-{{ cite.document.description|as_text }}
+{% for section in object.sections.all %}
+{{ section.content|as_text }}
 {% endfor %}
+
 {% for topic in topics %}
 {{ topic.preferred_name }}
-{{ topic.get_aliases }}
 {% endfor %}

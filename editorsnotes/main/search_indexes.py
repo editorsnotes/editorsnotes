@@ -1,16 +1,23 @@
 # -*- coding: utf-8 -*-
 
+import json
+
+from django.db.models.fields import FieldDoesNotExist
 from haystack import site
 from haystack.indexes import *
-from django.db.models.fields import FieldDoesNotExist
-from models import Document, Transcript, Footnote, TopicNode, Note
+
 from editorsnotes.djotero.utils import get_creator_name
-import json
+
+from models.documents import Document, Footnote, Transcript
+from models.notes import Note
+from models.topics import TopicNode
 
 class DocumentIndex(RealTimeSearchIndex):
     title = CharField(model_attr='as_text')
     text = CharField(document=True, use_template=True)
-    project_id = MultiValueField()
+    project = CharField(model_attr='project')
+    project_slug = CharField()
+
     related_topic_id = MultiValueField()
     representations = MultiValueField()
 
@@ -19,21 +26,20 @@ class DocumentIndex(RealTimeSearchIndex):
     archive = CharField()
     itemType = CharField()
     publicationTitle = CharField()
-    def prepare_project_id(self, obj):
-        return [p.id for p in obj.get_project_affiliation()]
     def prepare_related_topic_id(self, obj):
         return [t.id for t in obj.get_all_related_topics()]
     def prepare_representations(self, obj):
         return [r for r in obj.get_all_representations()]
+    def prepare_project_slug(self, obj):
+        return obj.project.slug
     def prepare(self, obj):
         self.prepared_data = super(DocumentIndex, self).prepare(obj)
 
         z = obj.zotero_link()
         zotero_data = json.loads(z.zotero_data) if z else {}
-        fields_to_index = ['archive', 'publicationTitle', 'itemType']
 
-        for field in fields_to_index:
-            if zotero_data.get(field):
+        for field in ['archive', 'publicationTitle', 'itemType']:
+            if field in zotero_data:
                 self.prepared_data[field] = zotero_data[field]
 
         names = []
@@ -67,23 +73,34 @@ class TopicIndex(RealTimeSearchIndex):
     title = CharField(model_attr='as_text')
     text = CharField(document=True, use_template=True)
     names = CharField(use_template=True)
-    project_id = MultiValueField()
-    def prepare_project_id(self, obj):
-        return [p.id for p in obj.get_connected_projects()]
+    project = MultiValueField()
+    project_slug = MultiValueField()
+    related_topic_id = MultiValueField()
+    def prepare_project(self, obj):
+        return [pc.project.name for pc in obj.project_containers.all()]
+    def prepare_project_slug(self, obj):
+        return [pc.project.slug for pc in obj.project_containers.all()]
+    def prepare_related_topic_id(self, obj):
+        return [ta.id for ta in obj.related_objects(model=TopicNode)]
+    def index_queryset(self):
+        return self.model.objects.select_related('project_containers__project')
 
 class NoteIndex(RealTimeSearchIndex):
     title = CharField(model_attr='as_text')
     text = CharField(document=True, use_template=True)
-    project_id = MultiValueField()
+    project = CharField(model_attr='project')
+    project_slug = MultiValueField()
     related_topic_id = MultiValueField()
     last_updated = DateTimeField(model_attr='last_updated')
-    def prepare_project_id(self, obj):
-        return [p.id for p in obj.get_project_affiliation()]
+    def prepare_project_slug(self, obj):
+        return obj.project.slug
     def prepare_related_topic_id(self, obj):
         return [t.topic.id for t in obj.topics.all()]
+    def index_queryset(self):
+        return self.model.objects.select_related('project')
 
-#site.register(Document, DocumentIndex)
-#site.register(Transcript, TranscriptIndex)
-#site.register(Footnote, FootnoteIndex)
-#site.register(TopicNode, TopicIndex)
-#site.register(Note, NoteIndex)
+site.register(Document, DocumentIndex)
+site.register(Transcript, TranscriptIndex)
+site.register(Footnote, FootnoteIndex)
+site.register(TopicNode, TopicIndex)
+site.register(Note, NoteIndex)

@@ -47,7 +47,7 @@
     <ul class="unstyled model-list" id="document-list">
     {% for document in documents %}
     <li class="document">
-      <a href="{% url "document_view" document_id=document.pk %}">{{ document.title }}</a>
+      <a href="{% url "document_view" project_slug=document.project_slug document_id=document.pk %}">{{ document.title }}</a>
     </li>
     {% endfor %}
     </ul>

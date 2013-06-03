@@ -221,8 +221,11 @@ class TopicNodeAssignment(CreationMetadata, ProjectPermissionsMixin):
         app_label = 'main'
         unique_together = ('content_type', 'object_id', 'container')
     @property
+    def topic(self):
+        return self.container.topic
+    @property
     def topic_id(self):
-        return container.topic.id
+        return self.container.topic.id
     def __unicode__(self):
         return u'{} --> {}: {} ({})'.format(
             self.container.topic.preferred_name,
