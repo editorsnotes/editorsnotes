@@ -122,7 +122,7 @@ INSTALLED_APPS = (
     'haystack',
     'compressor',
     'editorsnotes.main',
-    #'editorsnotes.djotero',
+    'editorsnotes.djotero',
     #'editorsnotes.refine',
     'editorsnotes.admin_custom',
 )

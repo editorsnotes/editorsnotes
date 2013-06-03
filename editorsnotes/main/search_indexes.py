@@ -2,9 +2,9 @@
 
 import json
 
-from django.db.models.fields import FieldDoesNotExist
 from haystack import site
-from haystack.indexes import *
+from haystack.indexes import (
+    RealTimeSearchIndex, CharField, DateTimeField, MultiValueField)
 
 from editorsnotes.djotero.utils import get_creator_name
 
@@ -16,22 +16,22 @@ class DocumentIndex(RealTimeSearchIndex):
     title = CharField(model_attr='as_text')
     text = CharField(document=True, use_template=True)
     project = CharField(model_attr='project')
-    project_slug = CharField()
+    project_slug = MultiValueField(faceted=True)
 
-    related_topic_id = MultiValueField()
-    representations = MultiValueField()
+    related_topic_id = MultiValueField(faceted=True)
+    representations = MultiValueField(faceted=True)
 
     # Zotero fields
-    creators = MultiValueField()
-    archive = CharField()
-    itemType = CharField()
-    publicationTitle = CharField()
+    creators = MultiValueField(faceted=True)
+    archive = CharField(faceted=True)
+    itemType = CharField(faceted=True)
+    publicationTitle = CharField(faceted=True)
     def prepare_related_topic_id(self, obj):
         return [t.id for t in obj.get_all_related_topics()]
     def prepare_representations(self, obj):
         return [r for r in obj.get_all_representations()]
     def prepare_project_slug(self, obj):
-        return obj.project.slug
+        return [obj.project.slug]
     def prepare(self, obj):
         self.prepared_data = super(DocumentIndex, self).prepare(obj)
 
@@ -41,6 +41,8 @@ class DocumentIndex(RealTimeSearchIndex):
         for field in ['archive', 'publicationTitle', 'itemType']:
             if field in zotero_data:
                 self.prepared_data[field] = zotero_data[field]
+            elif field == 'itemType':
+                self.prepared_data[field] = 'none'
 
         names = []
         if zotero_data.get('creators'):
@@ -74,8 +76,8 @@ class TopicIndex(RealTimeSearchIndex):
     text = CharField(document=True, use_template=True)
     names = CharField(use_template=True)
     project = MultiValueField()
-    project_slug = MultiValueField()
-    related_topic_id = MultiValueField()
+    project_slug = MultiValueField(faceted=True)
+    related_topic_id = MultiValueField(faceted=True)
     def prepare_project(self, obj):
         return [pc.project.name for pc in obj.project_containers.all()]
     def prepare_project_slug(self, obj):
@@ -89,11 +91,11 @@ class NoteIndex(RealTimeSearchIndex):
     title = CharField(model_attr='as_text')
     text = CharField(document=True, use_template=True)
     project = CharField(model_attr='project')
-    project_slug = MultiValueField()
-    related_topic_id = MultiValueField()
+    project_slug = MultiValueField(faceted=True)
+    related_topic_id = MultiValueField(faceted=True)
     last_updated = DateTimeField(model_attr='last_updated')
     def prepare_project_slug(self, obj):
-        return obj.project.slug
+        return [obj.project.slug]
     def prepare_related_topic_id(self, obj):
         return [t.topic.id for t in obj.topics.all()]
     def index_queryset(self):

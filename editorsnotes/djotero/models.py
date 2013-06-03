@@ -1,9 +1,10 @@
+import datetime
+import json
+
 from django.db import models
-from django.dispatch import receiver
+
 from editorsnotes.main.models import Document
 import utils
-import json
-import datetime
 
 class ZoteroLink(models.Model):
     doc = models.OneToOneField(Document, related_name='_zotero_link')

@@ -2,7 +2,9 @@
 {{ object.title }}
 {{ object.content|as_text }}
 {% for section in object.sections.all %}
+{% if section.content %}
 {{ section.content|as_text }}
+{% endif %}
 {% endfor %}
 
 {% for topic in topics %}
