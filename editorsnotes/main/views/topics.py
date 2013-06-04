@@ -1,16 +1,16 @@
-from itertools import chain
-
-from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 from django.views.generic.base import RedirectView
 
+from haystack.query import SearchQuerySet
+
 from .. import utils
 from ..models.auth import Project
 from ..models.documents import Document, Citation
-from ..models.notes import Note, NoteSection
+from ..models.notes import Note
 from ..models.topics import Topic, TopicNode
 
 def _sort_citations(instance):
@@ -47,49 +47,26 @@ def all_topics(request, project_slug=None):
     return render_to_response(
         template, o, context_instance=RequestContext(request))
 
-
-def topic(request, topic_slug):
+def topic_node(request, topic_node_id):
     o = {}
-    o['topic'] = get_object_or_404(Topic, slug=topic_slug)
-    o['contact'] = { 'name': settings.ADMINS[0][0], 
-                     'email': settings.ADMINS[0][1] }
-    o['related_topics'] = o['topic'].related_topics.all()
-    o['summary_cites'] = _sort_citations(o['topic'])
-
-    notes = o['topic'].related_objects(Note)
-    note_topics = [ [ ta.topic for ta in n.topics.exclude(topic=o['topic']).select_related('topic') ] for n in notes ]
-    note_sections = NoteSection.objects.filter(note__in=[n.id for n in notes])
-
-    o['notes'] = zip(notes, note_topics)
-
-    o['documents'] = set(chain(
-        o['topic'].related_objects(Document),
-        Document.objects.filter(notesection__in=note_sections)))
-
-    o['thread'] = { 'id': 'topic-%s' % o['topic'].id, 'title': o['topic'].preferred_name }
-    o['alpha'] = (request.user.groups.filter(name='Alpha').count() == 1)
-
-    return render_to_response(
-        'topic.html', o, context_instance=RequestContext(request))
-
-def topic_node(request, topicnode_id):
-    o = {}
-    empty_qs = TopicNode.objects\
-            .select_related(
-                'names__project',
-                'summaries__citations__document'
-            ).prefetch_related(
-                'related_topics__topic',
-                'summaries__project',
-                'summaries__citations__document'
-            )
-    o['topic'] = topic = get_object_or_404(empty_qs, id=topicnode_id)
+    node_qs = TopicNode.objects\
+            .prefetch_related('project_containers')\
+            .select_related('creator', 'last_updater',
+                            'project_containers__sumary')
+    o['topic'] = topic = get_object_or_404(node_qs, id=topic_node_id)
+    o['related_topics'] = topic.related_objects(TopicNode)
     o['notes'] = topic.related_objects(Note)\
-            .prefetch_related('topics__topic')
-    o['documents'] = set(chain(
-        topic.related_objects(Document),
-        Document.objects.prefetch_related('citationns_set')\
-            .filter(citationns__note_id__in=[n.id for n in o['notes']])))
+            .select_related('project')\
+            .prefetch_related('topics__container__project',
+                              'topics__container__topic')
+    document_ids = SearchQuerySet()\
+            .models(Document)\
+            .filter(related_topic_id=topic.id)\
+            .values_list('pk', flat=True)
+    o['documents'] = Document.objects.filter(id__in=document_ids)
+    o['summaries'] = [container.summary for container in
+                      topic.project_containers.all() 
+                      if container.has_summary()]
     return render_to_response(
         'topic2.html', o, context_instance=RequestContext(request))
 

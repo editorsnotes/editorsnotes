@@ -9,7 +9,6 @@
 {% endblock %}
 
 {% block css %}
-<link rel="stylesheet" href="{{ STATIC_URL }}style/disqus.css" type="text/css"/>
 <link rel="stylesheet" href="{{ STATIC_URL }}style/topic.css" type="text/css"/>
 <link rel="stylesheet" href="{{ STATIC_URL }}style/facets.css" type="text/css" />
 {% endblock %}
@@ -17,16 +16,7 @@
 {% block content %}
     <header>
       <h2 id="topic-name">{{ topic.preferred_name }}</h2>
-      <div class="related-topics">
-        {% if topic.related_topics.count %}
-        <span class="quiet">Related topics:</span> 
-        <ul class="topic-list">
-          {% for related_topic in topic.related_topics.all %}
-          <li>{{ related_topic.topic|as_link }}</a>{% if not forloop.last %} | {% endif %}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-      </div>
+      {% include "includes/related_topics_header.html" %}
     </header>
 
     <ul id="tabs" class="nav nav-tabs">
@@ -38,28 +28,13 @@
     <div class="tab-content">
       <section id="article-tab" class="tab-pane active">
         <article id="{{ topic.slug }}-summary" class="note">
-          {% if topic.summaries.count %}
-          {% for summary in topic.summaries.all %}
-          <h5>{{ summary.project }} summary</h5>
-          <div class="note-content">
-            {{ summary.content|as_html }}
 
-            {% if summary.citations.count %}
-            <h4>Sources</h4>
-            <div class="citation-list">
-              {% for cite in summary.citations.all %}
-                {% include "citation.include" %}
-              {% endfor %}
-            </div>
-            {% endif %}
-
-          </div>
+          {% for summary in summaries %}
+            {% include "includes/topic_summary.html" with display_project=True %}
+          {% empty %}
+            <div>There is no article about <em>{{ topic.preferred_name }}</em> yet.</div>
           {% endfor %}
-          {% else %}
-          <div>
-            There is no article about <em>{{ topic.preferred_name }}</em> yet.
-          </div>
-          {% endif %}
+
           <div class="row edit-row">
             <div class="span6 edit-button">
               {% if request.user.is_authenticated %}
@@ -70,6 +45,7 @@
               {{ topic|display_edit_history }}
             </div>
           </div>
+
         </article>
       </section>
 
@@ -83,16 +59,7 @@
             <div class="note-last-modified">
               <span class="quiet">Last modified: </span><span>{{ note.last_updated|date:"F j, Y" }}</span>
             </div>
-            {% if note.topics.count %}
-            <div class="note-topics">
-              <span class="quiet">Related topics: </span>
-              <ul class="topic-list unstyled">
-                {% for ta in note.topics.all %}
-                  <li>{{ ta.topic|as_link }}</a>{% if not forloop.last %} | {% endif %}</li>
-                {% endfor %}
-              </ul>
-            </div>
-            {% endif %}
+            {% include "includes/related_topics_header.html" with related_topics=note.topics.all %}
           </div>
           {% endfor %}
         {% else %}
@@ -109,12 +76,8 @@
           </li>
           {% endfor %}
         </ul>
-
         {% else %}
           There are no documents related to <em>{{ topic.preferred_name }}</em>.
-            <div id="import-documents">
-              <a class="button" href="/document/upload/?reltopic={{ topic.id }}&return_to={{ topic.get_absolute_url }}">Import documents</a>
-            </div>
         {% endif %}
       </section>
     </div>

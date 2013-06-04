@@ -59,20 +59,17 @@ class TopicNode(LastUpdateMetadata, URLAccessible):
         return Project.objects.filter(
             id__in=self.project_containers.values_list('project_id', flat=True))
     def related_objects(self, model=None):
-        qs = TopicNodeAssignment.objects\
-                .select_related('container__topic')\
-                .filter(container__topic=self)
+        qs = TopicNodeAssignment.objects.filter(container__topic_id=self.id)
         if model is not None:
             model_ct = ContentType.objects.get(
                 app_label=model._meta.app_label,
                 model=model._meta.module_name)
-            ids = qs.filter(content_type_id=model_ct.id)\
-                    .values_list('object_id', flat=True)
-            return model.objects.filter(id__in=ids)
+            model_assignments = qs.filter(content_type_id=model_ct.id)
+            return model.objects.filter(
+                id__in=model_assignments.values_list('object_id', flat=True)
+            )
         else:
             return [obj.content_object for obj in qs]
-
-
 reversion.register(TopicNode)
 
 
@@ -187,6 +184,13 @@ class ProjectTopicContainer(LastUpdateMetadata, URLAccessible, ProjectPermission
 
         return target
 
+class TopicSummaryManager(models.Manager):
+    use_for_related_fields = True
+    def get_query_set(self):
+        return super(TopicSummaryManager, self).get_query_set()\
+                .prefetch_related('citations__document')
+
+
 class TopicSummary(LastUpdateMetadata, ProjectPermissionsMixin):
     """
     A summary about a topic, specific to a project.
@@ -197,6 +201,7 @@ class TopicSummary(LastUpdateMetadata, ProjectPermissionsMixin):
                                      blank=True, null=True)
     citations = generic.GenericRelation('Citation')
     content = fields.XHTMLField()
+    objects = TopicSummaryManager()
     class Meta:
         app_label = 'main'
     def __unicode__(self):

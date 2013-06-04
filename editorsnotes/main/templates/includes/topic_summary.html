@@ -1,0 +1,15 @@
+{% load display %}
+
+{% if display_project %}<h5>{{ summary.container.project }} summary</h5>{% endif %}
+
+<div class="note-content">
+  {{ summary.content|as_html }}
+  {% if summary.citations.count %}
+  <h4>Sources</h4>
+  <div class="citation-list">
+    {% for cite in summary.citations.all %}
+      {% include "citation.include" %}
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>

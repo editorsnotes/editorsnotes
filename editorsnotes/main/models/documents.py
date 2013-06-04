@@ -17,10 +17,11 @@ from auth import ProjectPermissionsMixin
 from base import CreationMetadata, LastUpdateMetadata, URLAccessible, Administered
 
 class DocumentManager(models.Manager):
+    use_for_related_fields = True
     # Include whether or not documents have scans/transcripts in default query.
     def get_query_set(self):
         return super(DocumentManager, self).get_query_set()\
-            .select_related('_transcript', '_zotero_link')\
+            .select_related('_transcript', '_zotero_link', 'project')\
             .extra(select = { 'link_count': '''SELECT COUNT(*) 
 FROM main_documentlink WHERE main_documentlink.document_id = main_document.id''',
                               'scan_count': '''SELECT COUNT(*) 

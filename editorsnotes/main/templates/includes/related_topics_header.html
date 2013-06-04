@@ -1,0 +1,22 @@
+{% load display %}
+
+<div class="related-topics">
+  {% if related_topics|length %}
+  <span class="quiet">Related topics:</span>
+  <ul class="topic-list">
+    {% for related_topic in related_topics %}
+    <li>
+      {% if project_specific %}
+        {{ related_topic.container|as_link }}
+      {% else %}
+        {% if related_topic.topic %}
+          {{ related_topic.topic|as_link }}
+        {% else %}
+          {{ related_topic|as_link }}
+        {% endif %}
+      {% endif %}
+      {% if not forloop.last %} | {% endif %}
+    </li>
+    {% endfor %}
+  {% endif %}
+</div>
