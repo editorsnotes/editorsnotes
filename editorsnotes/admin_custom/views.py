@@ -243,7 +243,7 @@ class TranscriptAdminView(BaseAdminView):
         response = super(TranscriptAdminView, self).get(request, *args, **kwargs)
 
         # this is awful but it will be taken out soon
-        if isinstance(response, HttpResponseForbidden):
+        if isinstance(response, http.HttpResponseForbidden):
             return response
 
         footnote_fs = response.context_data['formsets']['footnote']
