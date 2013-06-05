@@ -71,6 +71,9 @@ class NoteSection(LastUpdateMetadata, ProjectPermissionsMixin):
         unique_together = ['note', 'note_section_id']
     def get_affiliation(self):
         return self.note.project
+    @property
+    def section_type(self):
+        return self._section_type
     def _get_section_subclass(self):
         """
         Get the subclass of this note section, used for caching.
@@ -103,6 +106,8 @@ class CitationNS(NoteSection):
         app_label = 'main'
     def __unicode__(self):
         return u'Note section -- citation -- {}'.format(self.document)
+    def has_content(self):
+        return self.content is not None
 
 class TextNS(NoteSection):
     content = fields.XHTMLField()

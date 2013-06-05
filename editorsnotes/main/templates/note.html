@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load typogrify display %}
+{% load typogrify display note_sections %}
 
 {% block title %}: {{ note.title }}{% endblock %}
 
@@ -42,16 +42,7 @@
 {% block content %}
     <header>
       <h2>{{ note.title|typogrify }}</h2>
-      {% if topics %}
-      <div class="related-topics">
-        <span class="quiet">Related topics:</span> 
-        <ul class="topic-list">
-          {% for topic in topics %}
-          <li>{{ topic|as_link }}{% if not forloop.last %} | {% endif %}</li>
-          {% endfor %}
-        </ul>
-      </div>
-      {% endif %}
+      {% include "includes/related_topics_header.html" with related_topics=topics %}
     </header>
 
     <ul id="tabs" class="nav nav-tabs">
@@ -90,8 +81,8 @@
           <div class="row edit-row">
             <div class="span6 edit-button">
               {% if request.user.is_authenticated %}
-              <a class="btn" href="{% url "admin:main_note_change" note.id %}?return_to={{ note.get_absolute_url }}">Edit note details</a>
-              <a class="btn" href="{% url "note_sections" note.id %}">Edit note content</a>
+              <a class="btn" href="{% url "change_note_view" note.project.slug note.id %}?return_to={{ note.get_absolute_url }}">Edit note details</a>
+              <a class="btn" href="{% url "change_note_sections_view" note.project.slug note.id %}">Edit note content</a>
               {% endif %}
             </div>
             <div class="span6 edit-history">
@@ -102,42 +93,13 @@
       </section>
 
       <section id="note-tab" class="tab-pane active">
-
-      {% if cites %}
-      {% comment %}
-        <div class="sort">
-          <ul class="unstyled">
-            <li><span class="big">Sort by:</span></li>
-            <li>
-              <a href="#"
-                 class="inactive ascending"
-                 id="sort-by-date">
-                 Date in document
-                 <i class="ascending-icon icon-chevron-down"></i>
-             </a>
-            </li>
-          </ul>
-        </div>
-      {% endcomment %}
         <div id="note-sections">
-        {% for cite in cites %}
-          <div class="citation">
-            <div class="citation-document">
-              <i class="icon-file"></i>
-              <a href="{{ cite.document.get_absolute_url }}">{{ cite.document.as_html }}</a>
-            </div>
-            {% if cite.has_notes %}
-            <div class="citation-notes">
-              {{ cite.notes|as_html }}
-            </div>
-            {% endif %}
-          </div>
-        {% endfor %}
+          {% for section in sections %}
+          {% include section|ns_template_name %}
+          {% empty %}
+          <span class="quiet">This note is empty</span>
+          {% endfor %}
         </div>
-      {% else %}
-        <span class="quiet">This note is empty</span>
-      {% endif %}
-
       </section>
 
       <section id="history-tab" class="tab-pane">

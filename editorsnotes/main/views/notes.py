@@ -12,8 +12,10 @@ def note(request, note_id, project_slug=None):
     o = {}
     o['note'] = get_object_or_404(Note, id=note_id)
     o['history'] = reversion.get_unique_for_object(o['note'])
-    o['topics'] = [ ta.topic for ta in o['note'].topics.all() ]
-    o['cites'] = Citation.objects.get_for_object(o['note'])
+    o['topics'] = [ta.topic for ta in o['note'].topics.all()]
+    o['sections'] = o['note'].sections\
+            .order_by('ordering', 'note_section_id')\
+            .select_subclasses()
 
     o['can_edit'] = request.user.is_authenticated() and \
             request.user.has_project_perm(o['note'].project, 'main.change_note')

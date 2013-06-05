@@ -31,6 +31,11 @@ BEGIN
 				'"fields": {',
 				'"fields": {"project": ' || userprofile.affiliation_id || ', '
 			);
+            newdata := regexp_replace(
+                newdata,
+                '(?:, )?"affiliated_projects": \[.*?\]',
+                ''
+            );
 			EXECUTE 'UPDATE reversion_version SET serialized_data = '
 				|| quote_literal(newdata)
 				|| ' WHERE id = '

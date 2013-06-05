@@ -27,6 +27,7 @@ class Migration(DataMigration):
 
             for version in versions:
                 data = json.loads(version.serialized_data)
+                data[0]['fields'].pop('affiliated_projects', None)
                 data[0]['fields']['project'] = note.project_id
                 version.serialized_data = json.dumps(data)
                 version.save()
