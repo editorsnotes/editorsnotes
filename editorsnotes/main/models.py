@@ -475,6 +475,8 @@ class Project(models.Model, URLAccessible, PermissionsMixin):
             (Project, ('view',)),
             (Document, ('change', 'delete')),
             (Topic, ('change', 'delete')),
+            (Transcript, ('change', 'delete')),
+            (Footnote, ('change', 'delete')),
         )
         editor_project_permissions = (
             (Project, ('change',)),

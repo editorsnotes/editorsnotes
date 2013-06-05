@@ -242,15 +242,17 @@ class TranscriptAdminView(BaseAdminView):
     def get(self, request, *args, **kwargs):
         response = super(TranscriptAdminView, self).get(request, *args, **kwargs)
 
+        # this is awful but it will be taken out soon
+        if isinstance(response, HttpResponseForbidden):
+            return response
+
         footnote_fs = response.context_data['formsets']['footnote']
         if hasattr(self, 'object') and self.object is not None:
             footnote_ids = self.object.get_footnote_href_ids()
         else:
             footnote_ids = []
-
         footnote_fs.forms.sort(key=lambda fn: footnote_ids.index(fn.instance.id)
                                if fn.instance.id in footnote_ids else 9999)
-
         return response
     def get_object(self, document_id=None):
         self.document = document = get_object_or_404(main_models.Document, id=document_id)
