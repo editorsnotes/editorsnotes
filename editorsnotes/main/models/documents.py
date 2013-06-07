@@ -6,7 +6,7 @@ from itertools import chain
 
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
-from django.core.urlresolvers import NoReverseMatch
+from django.core.urlresolvers import reverse, NoReverseMatch
 from django.db import models
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
@@ -190,6 +190,9 @@ class Transcript(LastUpdateMetadata, Administered, URLAccessible, ProjectPermiss
     def get_absolute_url(self):
         # Transcripts don't have their own URLs; use the document URL.
         return '%s#transcript' % self.document.get_absolute_url()
+    def get_admin_url(self):
+        return reverse('admin:main_transcript_add_or_change',
+                       args=(self.document_id,))
     def as_html(self):
         return self.document.as_html()
     def get_footnote_href_ids(self):

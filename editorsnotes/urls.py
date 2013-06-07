@@ -32,7 +32,7 @@ urlpatterns += patterns('editorsnotes.main.views.navigation',
 
 # Admin patterns
 urlpatterns += patterns('',
-    url(r'^projects/(?P<project_slug>\w+)/', include('editorsnotes.admin_custom.urls')),
+    url(r'^projects/(?P<project_slug>\w+)/', include('editorsnotes.admin_custom.urls', namespace='admin', app_name='admin')),
 )
 
 # Main model patterns
