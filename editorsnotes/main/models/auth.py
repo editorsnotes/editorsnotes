@@ -30,7 +30,19 @@ class User(AbstractUser, URLAccessible):
         return ('user_view', [str(self.username)])
     def as_text(self):
         return self.display_name
-    def get_project_permissions(self, project):
+    def belongs_to(self, project):
+        return project.get_role_for(self) is not None
+    def get_affiliated_projects(self):
+        return Project.objects.filter(roles__group__user=self)
+    def get_affiliated_projects_with_roles(self):
+        roles = ProjectRole.objects.filter(group__user=self)
+        return [(role.project, role) for role in roles]
+    def _get_project_role(self, project):
+        role_attr = '_{}_role_cache'
+        if not hasattr(self, role_attr):
+            setattr(self, role_attr, project.get_role_for(self))
+        return getattr(self, role_attr)
+    def _get_project_permissions(self, project):
         """
         Get all of a user's permissions within a project.
 
@@ -40,11 +52,20 @@ class User(AbstractUser, URLAccessible):
         this UserProfile into a custom User model, it would make sense to move
         this method to a custom backend.
         """
-        role = project.roles.get_for_user(self)
-        if role is None:
-            return set()
+        role = self._get_project_role(project)
+        if self.is_superuser or role.is_super_role:
+            perm_list = get_all_project_permissions()
+        elif role is None:
+            perm_list = []
+        else:
+            perm_list = role.get_permissions()
         return set(['{}.{}'.format(perm.content_type.app_label, perm.codename)
-                    for perm in role.get_permissions()])
+                    for perm in perm_list])
+    def get_project_permissions(self, project):
+        perms_attr = '_{}_permissions_cache'.format(project.slug)
+        if not hasattr(self, perms_attr):
+            setattr(self, perms_attr, self._get_project_permissions(project))
+        return getattr(self, perms_attr)
     def has_project_perm(self, project, perm):
         """
         Returns whether a user has a permission within a project.
@@ -52,7 +73,14 @@ class User(AbstractUser, URLAccessible):
         Perm argument should be a string consistent with how Django handles
         permissions in its admin: `{app_label}.{permission.codename}`
         """
+        if self.is_superuser:
+            return True
+        role = self._get_project_role(project)
+        if role.is_super_role:
+            return True
         return perm in self.get_project_permissions(project)
+    def has_project_perms(self, project, perm_list):
+        return all(self.has_project_perm(project, p) for p in perm_list)
     @staticmethod
     def get_activity_for(user, max_count=50):
         return activity_for(user, max_count=50)
@@ -103,7 +131,7 @@ class Project(models.Model, URLAccessible, ProjectPermissionsMixin):
         role_groups = self.roles.values_list('group_id', flat=True)
         return User.objects.filter(groups__in=role_groups)
     def get_role_for(self, user):
-        qs = self.roles.filter(groups__users=user)
+        qs = self.roles.filter(group__user=user)
         return qs.get() if qs.exists() else None
     @staticmethod
     def get_activity_for(project, max_count=50):

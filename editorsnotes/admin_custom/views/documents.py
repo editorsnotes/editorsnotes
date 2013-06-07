@@ -10,6 +10,7 @@ from common import BaseAdminView
 from .. import forms
 
 class DocumentAdminView(BaseAdminView):
+    model = Document
     form_class = forms.DocumentForm
     formset_classes = (
         # forms.TopicAssignmentFormset,
@@ -23,7 +24,8 @@ class DocumentAdminView(BaseAdminView):
         return super(DocumentAdminView, self).post(request, *args, **kwargs)
 
     def get_object(self, document_id=None):
-        return document_id and get_object_or_404(Document, id=document_id)
+        return document_id and get_object_or_404(
+            Document, id=document_id, project_id=self.project.id)
 
     def save_object(self, form, formsets):
         obj, action = super(DocumentAdminView, self).save_object(form, formsets)
@@ -80,9 +82,13 @@ class TranscriptAdminView(BaseAdminView):
                                if fn.instance.id in footnote_ids else 9999)
 
         return response
-    def get_object(self, document_id=None):
-        self.document = document = get_object_or_404(main_models.Document, id=document_id)
-        return document.transcript if document.has_transcript() else None
+    def get_object(self, document_id):
+        self.document = get_object_or_404(
+            Document, id=document_id, project_id=project.id)
+        return self.document.transcript if self.document.has_transcript() else None
+    def set_additional_object_properties(self, obj):
+        obj.document = self.document
+        return obj
     def save_object(self, form, formsets):
         obj = form.save(commit=False)
         action = 'add' if not obj.id else 'change'
@@ -107,5 +113,3 @@ class TranscriptAdminView(BaseAdminView):
             a = transcript.content.cssselect('a.footnote[href$="%s"]' % stamp)[0]
             a.attrib['href'] = footnote.get_absolute_url()
             transcript.save()
-
-

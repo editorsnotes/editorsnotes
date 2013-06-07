@@ -1,11 +1,12 @@
 from django import http
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect
+from django.core.exceptions import PermissionDenied
+from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic.edit import View, ModelFormMixin, TemplateResponseMixin
 import reversion
 
-from editorsnotes.main import models as main_models
+from editorsnotes.main.models.auth import Project
 
 VIEW_ERROR_MSG = 'You do not have permission to view {}.'
 CHANGE_ERROR_MSG = 'You do not have permission to change {}.'
@@ -65,19 +66,34 @@ class ProcessInlineFormsetsView(View):
 class BaseAdminView(ProcessInlineFormsetsView, ModelFormMixin, TemplateResponseMixin):
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
+        self.project = get_object_or_404(
+            Project, slug=kwargs.pop('project_slug'))
+        user = self.request.user
+        if user and user.is_authenticated():
+            can_access = user.is_superuser or user.belongs_to(self.project)
+            if not can_access:
+                raise PermissionDenied(
+                    'You are not a member of {}.'.format(self.project.name))
         return super(BaseAdminView, self).dispatch(*args, **kwargs)
     def get(self, request, *args, **kwargs):
         self.object = self.get_object(**kwargs)
-        if self.object and not self.object.attempt('change', self.request.user):
-            return http.HttpResponseForbidden(CHANGE_ERROR_MSG.format(object))
+        self.check_perms()
         return super(BaseAdminView, self).get(request, *args, **kwargs)
     def post(self, request, *args, **kwargs):
         self.object = self.get_object(**kwargs)
-        if self.object and not self.object.attempt('change', self.request.user):
-            return http.HttpResponseForbidden(CHANGE_ERROR_MSG.format(object))
+        self.check_perms()
         return super(BaseAdminView, self).post(request, *args, **kwargs)
+    def get_default_perms(self):
+        opts = self.model._meta
+        perm = opts.get_add_permission if self.object is None \
+                else opts.get_change_permission()
+        return ['{}.{}'.format(opts.app_label, perm)]
+    def check_perms(self):
+        perms = getattr(self, 'permissions', self.get_default_perms())
+        if not self.request.user.has_project_perms(self.project, perms):
+            raise PermissionDenied()
 
-    def get_object(self):
+    def get_object(self, project, *args, **kwargs):
         raise NotImplementedError(
             'Child views must create get_object method')
     def get_form_kwargs(self):
@@ -86,8 +102,12 @@ class BaseAdminView(ProcessInlineFormsetsView, ModelFormMixin, TemplateResponseM
             kwargs.update({'instance': self.object})
         return kwargs
 
+    def set_additional_object_properties(self, obj):
+        return obj
+
     def save_object(self, form, formsets):
         obj = form.save(commit=False)
+        self.set_additional_object_properties(obj)
         action = 'add' if not obj.id else 'change'
         if action == 'add':
             obj.creator = self.request.user
@@ -103,9 +123,6 @@ class BaseAdminView(ProcessInlineFormsetsView, ModelFormMixin, TemplateResponseM
             reversion.set_user(self.request.user)
             reversion.set_comment('%sed %s.' % (action, self.object._meta.module_name))
 
-            # Now save models that depend on this object existing
-            self.object.affiliated_projects.add(
-                *main_models.Project.get_affiliation_for(self.request.user))
             self.save_formsets(formsets)
             form.save_m2m()
 
@@ -127,6 +144,3 @@ class BaseAdminView(ProcessInlineFormsetsView, ModelFormMixin, TemplateResponseM
         ta.content_object = self.object
         ta.save()
         return ta
-###########################################################################
-# Project management
-###########################################################################

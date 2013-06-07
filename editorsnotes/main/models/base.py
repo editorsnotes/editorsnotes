@@ -26,7 +26,8 @@ class LastUpdateMetadata(CreationMetadata):
 class Administered():
     def get_admin_url(self):
         return urlresolvers.reverse(
-            'admin:main_%s_change' % self._meta.module_name, args=(self.id,))
+            'admin:main_%s_change' % self._meta.module_name,
+            args=(self.get_affiliation().slug, self.id,))
 
 class URLAccessible():
     @models.permalink
