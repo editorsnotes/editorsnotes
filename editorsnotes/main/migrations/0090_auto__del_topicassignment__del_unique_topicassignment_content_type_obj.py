@@ -18,7 +18,8 @@ class Migration(SchemaMigration):
         db.delete_table(u'main_topicassignment')
 
         # Deleting model 'Alias'
-        db.delete_table(u'main_alias')
+        # I wanted to keep these for a little bit after all
+        # db.delete_table(u'main_alias')
 
         # Deleting field 'Topic.last_updated'
         db.delete_column(u'main_topic', 'last_updated')

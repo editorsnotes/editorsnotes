@@ -6,7 +6,9 @@ from south.v2 import DataMigration
 from django.db import models
 
 class Migration(DataMigration):
-
+    requires = (
+        ('reversion', '0001_initial'),
+    )
     def forwards(self, orm):
 
         # This content_type does not exist if this migration is being

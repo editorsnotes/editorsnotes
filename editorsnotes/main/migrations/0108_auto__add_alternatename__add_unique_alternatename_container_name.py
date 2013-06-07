@@ -8,59 +8,26 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'User.zotero_key'
-        db.add_column(u'main_user', 'zotero_key',
-                      self.gf('django.db.models.fields.CharField')(max_length='24', null=True, blank=True),
-                      keep_default=False)
+        # Adding model 'AlternateName'
+        db.create_table(u'main_alternatename', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('creator', self.gf('django.db.models.fields.related.ForeignKey')(related_name='created_alternatename_set', to=orm['main.User'])),
+            ('created', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+            ('container', self.gf('django.db.models.fields.related.ForeignKey')(related_name='alternate_names', to=orm['main.ProjectTopicContainer'])),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=200)),
+        ))
+        db.send_create_signal('main', ['AlternateName'])
 
-        # Adding field 'User.zotero_uid'
-        db.add_column(u'main_user', 'zotero_uid',
-                      self.gf('django.db.models.fields.CharField')(max_length='6', null=True, blank=True),
-                      keep_default=False)
-
-        for profile in orm['main.UserProfile'].objects.all():
-            zotero_key = profile.zotero_key
-            zotero_uid = profile.zotero_uid
-            if zotero_key is None and zotero_uid is None:
-                continue
-            new_user = orm['main.User'].objects.get(id=profile.user_id)
-            new_user.zotero_key = zotero_key
-            new_user.zotero_uid = zotero_uid
-            new_user.save()
-
-        # Changing field 'Reversion.revision'
-        db.alter_column(u'reversion_revision', 'user_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['main.User'], null=True, blank=True))
-
-
-        # Update "assigned_user" field of notes by changing the M2M table
-        db.add_column(u'main_note_assigned_users', 'user', models.ForeignKey(orm['main.user'], null=True))
-        db.create_unique(u'main_note_assigned_users', ['note_id', 'user_id'])
-        db.execute("""
-DO $$DECLARE
-    assigned record;
-    new_uid int;
-BEGIN
-    FOR assigned IN SELECT * FROM main_note_assigned_users
-    LOOP
-        SELECT user_id INTO new_uid FROM main_userprofile WHERE id = assigned.userprofile_id;
-        EXECUTE 'UPDATE main_note_assigned_users SET user_id = '
-            || new_uid
-            || ' WHERE id = '
-            || assigned.id;
-    END LOOP;
-    ALTER TABLE main_note_assigned_users ALTER COLUMN user_id SET NOT NULL;
-END$$
-""")
-        db.delete_unique(u'main_note_assigned_users', ['note_id', 'userprofile_id'])
-        db.delete_column(u'main_note_assigned_users', 'userprofile_id')
+        # Adding unique constraint on 'AlternateName', fields ['container', 'name']
+        db.create_unique(u'main_alternatename', ['container_id', 'name'])
 
 
     def backwards(self, orm):
-        # Deleting field 'User.zotero_key'
-        db.delete_column(u'main_user', 'zotero_key')
+        # Removing unique constraint on 'AlternateName', fields ['container', 'name']
+        db.delete_unique(u'main_alternatename', ['container_id', 'name'])
 
-        # Deleting field 'User.zotero_uid'
-        db.delete_column(u'main_user', 'zotero_uid')
+        # Deleting model 'AlternateName'
+        db.delete_table(u'main_alternatename')
 
 
     models = {
@@ -83,6 +50,14 @@ END$$
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'model': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
+        },
+        'main.alternatename': {
+            'Meta': {'unique_together': "(('container', 'name'),)", 'object_name': 'AlternateName'},
+            'container': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'alternate_names'", 'to': "orm['main.ProjectTopicContainer']"}),
+            'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_alternatename_set'", 'to': "orm['main.User']"}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '200'})
         },
         'main.citation': {
             'Meta': {'ordering': "['ordering']", 'object_name': 'Citation'},
@@ -221,8 +196,9 @@ END$$
             'last_updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'last_updater': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'last_to_update_projecttopiccontainer_set'", 'to': "orm['main.User']"}),
             'merged_into': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.ProjectTopicContainer']", 'null': 'True', 'blank': 'True'}),
-            'project': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Project']"}),
-            'topic': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.TopicNode']"})
+            'preferred_name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            'project': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'topic_containers'", 'to': "orm['main.Project']"}),
+            'topic': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'project_containers'", 'to': "orm['main.TopicNode']"})
         },
         'main.scan': {
             'Meta': {'ordering': "['ordering']", 'object_name': 'Scan'},
@@ -245,46 +221,36 @@ END$$
             'preferred_name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': "'80'"}),
             'slug': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': "'80'", 'db_index': 'True'})
         },
-        'main.topicname': {
-            'Meta': {'unique_together': "(('container', 'name'),)", 'object_name': 'TopicName'},
-            'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_topicname_set'", 'to': u"orm['main.User']"}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'is_preferred': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': "'200'"}),
-            'container': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'names'", 'null': 'True', 'to': "orm['main.ProjectTopicContainer']"})
-        },
         'main.topicnode': {
             'Meta': {'object_name': 'TopicNode'},
             '_preferred_name': ('django.db.models.fields.CharField', [], {'max_length': "'200'"}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_topicnode_set'", 'to': u"orm['main.User']"}),
+            'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_topicnode_set'", 'to': "orm['main.User']"}),
             'deleted': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'last_updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'last_updater': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'last_to_update_topicnode_set'", 'to': u"orm['main.User']"}),
+            'last_updater': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'last_to_update_topicnode_set'", 'to': "orm['main.User']"}),
             'merged_into': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.TopicNode']", 'null': 'True', 'blank': 'True'}),
-            'type': ('django.db.models.fields.CharField', [], {'max_length': '3', 'blank': 'True'})
+            'type': ('django.db.models.fields.CharField', [], {'max_length': '3', 'null': 'True', 'blank': 'True'})
         },
         'main.topicnodeassignment': {
             'Meta': {'unique_together': "(('content_type', 'object_id', 'container'),)", 'object_name': 'TopicNodeAssignment'},
+            'container': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'assignments'", 'null': 'True', 'to': "orm['main.ProjectTopicContainer']"}),
             'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['contenttypes.ContentType']"}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_topicnodeassignment_set'", 'to': u"orm['main.User']"}),
+            'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_topicnodeassignment_set'", 'to': "orm['main.User']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'object_id': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'container': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'assignments'", 'null': 'True', 'to': "orm['main.ProjectTopicContainer']"}),
-            'topic_name': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.TopicName']", 'null': 'True', 'blank': 'True'})
+            'object_id': ('django.db.models.fields.PositiveIntegerField', [], {})
         },
         'main.topicsummary': {
             'Meta': {'object_name': 'TopicSummary'},
+            'container': ('django.db.models.fields.related.OneToOneField', [], {'blank': 'True', 'related_name': "'summary'", 'unique': 'True', 'null': 'True', 'to': "orm['main.ProjectTopicContainer']"}),
             'content': ('editorsnotes.main.fields.XHTMLField', [], {}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_topicsummary_set'", 'to': u"orm['main.User']"}),
+            'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_topicsummary_set'", 'to': "orm['main.User']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'last_updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'last_updater': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'last_to_update_topicsummary_set'", 'to': u"orm['main.User']"}),
-            'container': ('django.db.models.fields.related.OneToOneField', [], {'unique': 'True', 'blank': 'True', 'related_name': "'summary'", 'null': 'True', 'to': "orm['main.ProjectTopicContainer']"})
+            'last_updater': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'last_to_update_topicsummary_set'", 'to': "orm['main.User']"})
         },
         'main.transcript': {
             'Meta': {'object_name': 'Transcript'},
@@ -311,13 +277,6 @@ END$$
             'password': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
             'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['auth.Permission']", 'symmetrical': 'False', 'blank': 'True'}),
             'username': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '30'}),
-            'zotero_key': ('django.db.models.fields.CharField', [], {'max_length': "'24'", 'null': 'True', 'blank': 'True'}),
-            'zotero_uid': ('django.db.models.fields.CharField', [], {'max_length': "'6'", 'null': 'True', 'blank': 'True'})
-        },
-        'main.userprofile': {
-            'Meta': {'object_name': 'UserProfile'},
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.User']", 'unique': 'True'}),
             'zotero_key': ('django.db.models.fields.CharField', [], {'max_length': "'24'", 'null': 'True', 'blank': 'True'}),
             'zotero_uid': ('django.db.models.fields.CharField', [], {'max_length': "'6'", 'null': 'True', 'blank': 'True'})
         }

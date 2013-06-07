@@ -15,6 +15,7 @@ TIME_FMT = '%Y-%m-%d %H:%M:%S'
 
 tmap = {}
 tmap_id = {}
+container_creation = {}
 assignmentmap = {}
 stale_revisions = set()
 
@@ -133,6 +134,7 @@ def get_or_create_project_container(topic, project_id, user_id, timestamp):
             'RETURNING id;',
             params=[user_id, timestamp, user_id, timestamp, project_id, topic_node_id])
         container_id, = container_insert[0]
+        container_creation[(container_id, project_id)] = (user_id, timestamp)
         name_insert = db.execute(
             u'INSERT INTO main_topicname '
             'VALUES (DEFAULT, %s, %s, %s, %s, True) '
@@ -263,11 +265,14 @@ def update_topic(topic, orm):
         new_revision_id = create_new_revision(
             topic.creator_id, topic.created, revision_comment)
 
+        container_creator, container_created_time = \
+                container_creation[(container_id, project_id)]
         data = {}
-        data['creator'] = data['last_updater'] = topic.creator_id
-        data['created'] = data['last_updated'] = topic.created.strftime(TIME_FMT)
+        data['creator'] = data['last_updater'] = container_creator
+        data['created'] = data['last_updated'] = container_created_time.strftime(TIME_FMT)
         data['topic'] = topic_node_id
         data['project'] = project_id
+        data['preferred_name'] = topic.preferred_name
         create_version(
             new_revision_id, container_id, 'projecttopiccontainer', data,
             u'ProjectTopicContainer <project={}> <topic_id={}>'.format(
@@ -291,11 +296,14 @@ def update_topic(topic, orm):
         new_revision_id = create_new_revision(user_id, version_dt, revision_comment)
 
         if container_created:
+            container_creator, container_created_time = \
+                    container_creation[(container_id, project_id)]
             data = {}
-            data['creator'] = data['last_updater'] = topic.creator_id
-            data['created'] = data['last_updated'] = topic.created.strftime(TIME_FMT)
+            data['creator'] = data['last_updater'] = container_creator
+            data['created'] = data['last_updated'] = container_created_time.strftime(TIME_FMT)
             data['topic'] = topic_node_id
             data['project'] = project_id
+            data['preferred_name'] = topic.preferred_name
             create_version(
                 new_revision_id, container_id, 'projecttopiccontainer', data,
                 u'ProjectTopicContainer {} ({})'.format(

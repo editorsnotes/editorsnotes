@@ -12,6 +12,8 @@ class Migration(DataMigration):
 
     def forwards(self, orm):
         "Write your forwards methods here."
+
+        db.execute('DROP TABLE IF EXISTS django_admin_log;')
         db.rename_table('auth_user', 'main_user')
         db.rename_table('auth_user_groups', 'main_user_groups')
         db.rename_table('auth_user_user_permissions', 'main_user_user_permissions')

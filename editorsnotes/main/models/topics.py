@@ -184,6 +184,16 @@ class ProjectTopicContainer(LastUpdateMetadata, URLAccessible, ProjectPermission
 
         return target
 
+class AlternateName(CreationMetadata, ProjectPermissionsMixin):
+    container = models.ForeignKey(ProjectTopicContainer, 
+                              related_name='alternate_names')
+    name = models.CharField(max_length=200)
+    class Meta:
+        app_label = 'main'
+        unique_together = ('container', 'name',)
+    def __unicode__(self):
+            return self.name
+
 class TopicSummaryManager(models.Manager):
     use_for_related_fields = True
     def get_query_set(self):
