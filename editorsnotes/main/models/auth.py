@@ -114,8 +114,8 @@ class Project(models.Model, URLAccessible, ProjectPermissionsMixin):
     class Meta:
         app_label = 'main'
         permissions = (
-            (u'view_roster', u'Can view project roster.'),
-            (u'edit_roster', u'Can edit project roster.'),
+            (u'view_project_roster', u'Can view project roster.'),
+            (u'change_project_roster', u'Can edit project roster.'),
         )
     @models.permalink
     def get_absolute_url(self):
@@ -272,7 +272,7 @@ def activity_for(model, max_count=50):
     if isinstance(model, User):
         user_ids = [model.id]
     elif isinstance(model, Project):
-        user_ids = [u.user_id for u in model.members.all()]
+        user_ids = [u.id for u in model.members.all()]
     else:
         raise TypeError(
             'Argument must either be an instance of a User or a Project')

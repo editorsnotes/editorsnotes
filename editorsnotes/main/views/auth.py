@@ -74,9 +74,18 @@ def project(request, project_slug):
     o = {}
     o['project'] = get_object_or_404(Project, slug=project_slug)
     o['log_entries'], ignored = Project.get_activity_for(o['project'], max_count=10)
+
     if request.user.is_authenticated():
-        o['can_change'] = o['project'].attempt('change', request.user)
-        o['project_role'] = request.user.get_project_role(o['project'])
+        o['project_role'] = o['project'].get_role_for(request.user)
+        o['can_view_roster'] = request.user.has_project_perm(
+            o['project'], 'main.view_project_roster')
+        o['can_change_roster'] = request.user.has_project_perm(
+            o['project'], 'main.change_project_roster')
+        o['can_change_featured_items'] = request.user.has_project_perm(
+            o['project'], 'main.change_featureditem')
+        o['show_edit_row'] = any((
+            o['can_view_roster'], o['can_change_roster'],
+            o['can_change_featured_items']))
     return render_to_response(
         'project.html', o, context_instance=RequestContext(request))
 
