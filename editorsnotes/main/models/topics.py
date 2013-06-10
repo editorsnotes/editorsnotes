@@ -3,6 +3,7 @@
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
+from django.core.urlresolvers import reverse
 from django.db import models, transaction
 import reversion
 
@@ -113,7 +114,8 @@ class ProjectTopicContainerManager(models.Manager):
                     'preferred_name': name or topic.preferred_name}
         return self.get_or_create(topic=topic, project=project, defaults=defaults)
 
-class ProjectTopicContainer(LastUpdateMetadata, URLAccessible, ProjectPermissionsMixin):
+class ProjectTopicContainer(LastUpdateMetadata, URLAccessible,
+                            ProjectPermissionsMixin, Administered):
     project = models.ForeignKey('Project', related_name='topic_containers')
     topic = models.ForeignKey(TopicNode, related_name='project_containers')
     preferred_name = models.CharField(max_length=200)
@@ -129,6 +131,9 @@ class ProjectTopicContainer(LastUpdateMetadata, URLAccessible, ProjectPermission
     @models.permalink
     def get_absolute_url(self):
         return ('project_topic', [self.project.slug, self.topic_id])
+    def get_admin_url(self):
+        return reverse(
+            'admin:main_topic_change', args=(self.project.slug, self.topic_id))
     def has_summary(self):
         return hasattr(self, 'summary')
     @transaction.commit_on_success

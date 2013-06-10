@@ -27,7 +27,9 @@
 {% endblock %}
 
 {% block content %}
+  {% block page_title %}
   <h2>{% if form.instance.id %}Change{% else %}Add{% endif %} {{ form.Meta.model|object_name|lower }}</h2>
+  {% endblock %}
 
   {% block admin %}
   {% endblock %}

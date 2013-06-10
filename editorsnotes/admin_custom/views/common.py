@@ -75,6 +75,10 @@ class BaseAdminView(ProcessInlineFormsetsView, ModelFormMixin, TemplateResponseM
                 raise PermissionDenied(
                     'You are not a member of {}.'.format(self.project.name))
         return super(BaseAdminView, self).dispatch(*args, **kwargs)
+    def get_context_data(self, **kwargs):
+        context = super(BaseAdminView, self).get_context_data(**kwargs)
+        context['project'] = self.project
+        return context
     def get(self, request, *args, **kwargs):
         self.object = self.get_object(**kwargs)
         self.check_perms()
@@ -107,7 +111,7 @@ class BaseAdminView(ProcessInlineFormsetsView, ModelFormMixin, TemplateResponseM
 
     def save_object(self, form, formsets):
         obj = form.save(commit=False)
-        self.set_additional_object_properties(obj)
+        self.set_additional_object_properties(obj, form)
         action = 'add' if not obj.id else 'change'
         if action == 'add':
             obj.creator = self.request.user

@@ -1,9 +1,20 @@
 {% extends "admin_base.html" %}
 
+{% block page_title %}
+<h3>{% if form.instance.id %}Change {% else %}Add {% endif %}topic</h3>
+{% endblock %}
+
 {% block admin %}
   <form method="post" class="form-horizontal">{% csrf_token %}
 
     {% include "includes/bootstrap_errors.html" with errors=form.non_field_errors %}
+
+    <fieldset>
+      <legend>Project</legend>
+      <div class="fieldset-content">
+        {{ project }}
+      </div>
+    </fieldset>
 
     <fieldset name="preferred_name_fields">
       <legend>Name</legend>
@@ -17,11 +28,11 @@
       <legend>Type</legend>
       {% include "includes/bootstrap_errors.html" with errors=form.type.errors %}
       <div class="fieldset-content">
-        {{ form.type }}
+        {{ form.topic_type }}
       </div>
     </fieldset>
 
-    {% with formset=formsets.alias %}
+    {% with formset=formsets.alternatename %}
     <fieldset name="alternate_forms_fields">
       <legend>Alternate forms</legend>
       {% include "includes/bootstrap_formset.html" %}
@@ -40,7 +51,7 @@
       {% include "includes/bootstrap_errors.html" with errors=form.summary.errors %}
       <div class="fieldset-content article">
         {% include "includes/wysihtml5_full_toolbar.html" with toolbar_id="summary-toolbar" %}
-        {{ form.summary }}
+        {{ formsets.topicsummary.0.content }}
       </div>
 
       <div class="article-citations" style="margin: 1em .5em;">

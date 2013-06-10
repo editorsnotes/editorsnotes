@@ -50,10 +50,11 @@ def all_topics(request, project_slug=None):
 def topic_node(request, topic_node_id):
     o = {}
     node_qs = TopicNode.objects\
-            .prefetch_related('project_containers')\
+            .prefetch_related('project_containers__project')\
             .select_related('creator', 'last_updater',
                             'project_containers__sumary')
     o['topic'] = topic = get_object_or_404(node_qs, id=topic_node_id)
+    o['projects'] = [c.project for c in o['topic'].project_containers.all()]
     o['related_topics'] = topic.related_objects(TopicNode)
     o['notes'] = topic.related_objects(Note)\
             .select_related('project')\
@@ -67,6 +68,11 @@ def topic_node(request, topic_node_id):
     o['summaries'] = [container.summary for container in
                       topic.project_containers.all() 
                       if container.has_summary()]
+    o['editable_project_containers'] = [
+        container for container in topic.project_containers.all()
+        if request.user.is_authenticated() and request.user.has_project_perm(
+            container.project, 'main.change_projecttopiccontainer')]
+            
     return render_to_response(
         'topic2.html', o, context_instance=RequestContext(request))
 

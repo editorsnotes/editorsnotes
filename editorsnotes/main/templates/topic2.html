@@ -19,6 +19,27 @@
       {% include "includes/related_topics_header.html" %}
     </header>
 
+    {% if editable_project_containers %}
+    <section class="well">
+      {% if editable_project_containers|length > 1 %}
+        You can edit the following connections to this topic:
+        <ul>
+        {% for container in editable_project_containers %}
+        <li style="padding-top: 7px;">
+          {{ container.project }} 
+          <a class="btn btn-small" href="{{ container.get_admin_url }}">Edit</a>
+        </li>
+        {% endfor %}
+        </ul>
+      {% else %}
+        {% with container=editable_project_containers.0 %}
+        <a class="btn" href="{{ container.get_admin_url }}">Edit topic</a>
+        as a member of the {{ container.project }}
+        {% endwith %}
+      {% endif %}
+    </section>
+    {% endif %}
+
     <ul id="tabs" class="nav nav-tabs">
       <li class="active"><a href="#article-tab">Article</a></li>
       <li><a href="#notes-tab">Related Notes <span class="alt">&amp;</span> Queries ({{ notes|length }})</a></li>
