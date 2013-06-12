@@ -51,8 +51,7 @@ def topic_node(request, topic_node_id):
     o = {}
     node_qs = TopicNode.objects\
             .prefetch_related('project_containers__project')\
-            .select_related('creator', 'last_updater',
-                            'project_containers__sumary')
+            .select_related('creator', 'last_updater', 'project_containers')
     o['topic'] = topic = get_object_or_404(node_qs, id=topic_node_id)
     o['projects'] = [c.project for c in o['topic'].project_containers.all()]
     o['related_topics'] = topic.related_objects(TopicNode)

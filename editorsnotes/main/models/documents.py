@@ -104,7 +104,7 @@ class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectPermissio
         return r
     def get_all_related_topics(self):
         topic_ct = ContentType.objects.get(
-            app_label='main', model='topicsummary')
+            app_label='main', model='projecttopiccontainer')
 
         topic_citations = self.citations.filter(content_type_id=topic_ct.id)
         citation_note_sections = self.citationns_set.all()
@@ -115,10 +115,10 @@ class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectPermissio
             self.topics.all(),
 
             # The topic of any TopicSummary objects citing this doc
-            [cite.content_object.container for cite in topic_citations],
+            [cite.content_object for cite in topic_citations],
 
             # The related topics of the topic gotten previously
-            chain(*[cite.content_object.container.assignments.all()
+            chain(*[cite.content_object.assignments.all()
                    for cite in topic_citations]),
 
             # Topics related to sections citing to this doc

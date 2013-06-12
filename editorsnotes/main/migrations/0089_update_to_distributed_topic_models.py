@@ -16,6 +16,7 @@ TIME_FMT = '%Y-%m-%d %H:%M:%S'
 tmap = {}
 tmap_id = {}
 container_creation = {}
+summary_creation = {}
 assignmentmap = {}
 stale_revisions = set()
 
@@ -151,7 +152,7 @@ def get_or_create_project_container(topic, project_id, user_id, timestamp):
                 'SET last_updated = %s, last_updater_id = %s '
                 'WHERE id = %s',
                 params=[timestamp, user_id, container_id])
-    return container_id, created_topic_name_id
+    return container_id, created_topic_name_id, created
 
 summaries = {}
 def update_project_topic_summary(topic, container_id, summary_text, user_id,
@@ -190,6 +191,10 @@ def update_project_topic_summary(topic, container_id, summary_text, user_id,
             topic_summary_id, = topic_summary_update[0]
 
     summaries[container_id] = hashlib.md5(summary_text).hexdigest()
+
+    if created:
+        summary_creation[topic_summary_id] = (user_id, timestamp)
+
     return topic_summary_id, created, edited
 
 def create_version(revision_id, object_id, model, fields, object_repr,
@@ -253,9 +258,8 @@ def update_topic(topic, orm):
     # handle them separately.
     if not topic_versions or topic.created < topic_versions[0].revision.date_created:
         project_id = pid_for_uid(topic.creator_id)
-        container_id, topic_name_id = get_or_create_project_container(
+        container_id, topic_name_id, container_created = get_or_create_project_container(
             topic, project_id, topic.creator_id, topic.created)
-        container_created = topic_name_id is not None
 
         revision_comment = (
             u'[Generated in data migration on {}] '
@@ -275,8 +279,9 @@ def update_topic(topic, orm):
         data['preferred_name'] = topic.preferred_name
         create_version(
             new_revision_id, container_id, 'projecttopiccontainer', data,
-            u'ProjectTopicContainer <project={}> <topic_id={}>'.format(
-                project_id, topic_node_id), typ=0)
+            u'ProjectTopicContainer {} ({})'.format(
+                topic.preferred_name, pslug_for_pid(project_id, orm)),
+            typ=0)
 
     # For items that do have version data, work from that.
     for version in topic_versions:
@@ -288,9 +293,8 @@ def update_topic(topic, orm):
         # Get or create a project container for this topic. This will create a
         # TopicName if it does not exist for this project as well.
         project_id = pid_for_uid(user_id)
-        container_id, topic_name_id = get_or_create_project_container(
+        container_id, topic_name_id, container_created = get_or_create_project_container(
             topic, project_id, user_id, version_dt)
-        container_created = bool(topic_name_id)
 
         revision_comment = u'[Generated in data migration on {}]'.format(datetime.datetime.now())
         new_revision_id = create_new_revision(user_id, version_dt, revision_comment)
@@ -345,8 +349,16 @@ def update_topic(topic, orm):
                 citation.revision_id = new_revision_id
                 citation.save()
         if summary_edited or summary_created:
+            creator, created = summary_creation[summary_id]
+            data = {}
+            data['creator'] = creator
+            data['created'] = created.strftime(TIME_FMT)
+            data['last_updater'] = user_id
+            data['last_updated'] = version_dt.strftime(TIME_FMT)
+            data['container'] = container_id
+            data['content'] = version_summary
             create_version(
-                new_revision_id, container_id, 'topicsummary', data,
+                new_revision_id, summary_id, 'topicsummary', data,
                 u'Summary for {} by {}.'.format(topic.preferred_name,
                                                pslug_for_pid(project_id, orm)),
                 typ=0 if summary_created else 1)
@@ -495,14 +507,35 @@ class Migration(DataMigration):
 
         for ta in orm['main.topicassignment'].objects.all():
             project = pid_for_uid(ta.creator_id)
-            container_id, created_topic_name_id = get_or_create_project_container(
-                ta.topic, project, ta.creator_id,  ta.created)
+            container_id, created_topic_name_id, container_created = \
+                    get_or_create_project_container(ta.topic, project,
+                                                    ta.creator_id,  ta.created)
             topic_node_assignment_insert = db.execute(
                 u'INSERT INTO main_topicnodeassignment '
                 'VALUES (DEFAULT, %s, %s, %s, %s, %s, %s) '
                 'RETURNING id;',
                 params=[ta.creator_id, ta.created, container_id, None,
                         ta.content_type_id, ta.object_id])
+            if container_created:
+                revision_id = create_new_revision(
+                    ta.creator_id, ta.created,
+                    'TopicContainer created for topic {} by project {}.'.format(
+                        ta.topic.preferred_name, pslug_for_pid(project, orm)))
+                container_creator, container_created_time = \
+                        container_creation[(container_id, project)]
+                data = {}
+                data['creator'] = data['last_updater'] = container_creator
+                data['created'] = data['last_updated'] = \
+                        container_created_time.strftime(TIME_FMT)
+                data['topic'] = container_id
+                data['project'] = project
+                data['preferred_name'] = ta.topic.preferred_name
+                create_version(
+                    revision_id, container_id, 'projecttopiccontainer', data,
+                    u'ProjectTopicContainer {} ({})'.format(
+                        ta.topic.preferred_name, pslug_for_pid(project, orm)),
+                    typ=0)
+
             topic_node_assignment_id, = topic_node_assignment_insert[0]
 
             ta_versions = versions_for('topicassignment', ta.id, orm)

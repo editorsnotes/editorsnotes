@@ -120,6 +120,9 @@ class ProjectTopicContainer(LastUpdateMetadata, URLAccessible,
     topic = models.ForeignKey(TopicNode, related_name='project_containers')
     preferred_name = models.CharField(max_length=200)
 
+    summary = fields.XHTMLField(blank=True, null=True)
+    summary_cites = generic.GenericRelation('Citation')
+
     deleted = models.BooleanField(default=False, editable=False)
     merged_into = models.ForeignKey('self', blank=True, null=True, editable=False)
 
@@ -135,7 +138,7 @@ class ProjectTopicContainer(LastUpdateMetadata, URLAccessible,
         return reverse(
             'admin:main_topic_change', args=(self.project.slug, self.topic_id))
     def has_summary(self):
-        return hasattr(self, 'summary')
+        return self.summary is not None
     @transaction.commit_on_success
     def merge_into(self, target):
         """
@@ -152,8 +155,10 @@ class ProjectTopicContainer(LastUpdateMetadata, URLAccessible,
             if target.has_summary():
                 raise TopicMergeError(
                     'Can\'t merge two summaries. Delete a summary before continuing.')
-            self.summary.container_id = target.id
-            self.summary.save()
+            target.summary = self.summary
+        for cite in self.summary_cites.all():
+            cite.object_id = target.id
+            cite.save()
 
         # Move topic assignments to the new container, but only if those
         # assignments don't already exist in the target.
@@ -212,7 +217,7 @@ class TopicSummary(LastUpdateMetadata, ProjectPermissionsMixin):
 
     Projects may only create one summary for a topic.
     """
-    container = models.OneToOneField(ProjectTopicContainer, related_name='summary',
+    container = models.OneToOneField(ProjectTopicContainer, related_name='old_summary',
                                      blank=True, null=True)
     citations = generic.GenericRelation('Citation')
     content = fields.XHTMLField()

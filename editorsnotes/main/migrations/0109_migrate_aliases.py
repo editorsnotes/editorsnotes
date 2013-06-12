@@ -23,7 +23,6 @@ class Migration(DataMigration):
                 '(DEFAULT, %s, %s, %s, %s) '
                 'RETURNING id;',
                 params=[alias.creator_id, alias.created, container.id, alias.name])
-        db.delete_table(u'main_alias')
 
     def backwards(self, orm):
         "Write your backwards methods here."
