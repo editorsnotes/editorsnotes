@@ -34,7 +34,7 @@
             ]
           ], 
           "user_permissions": [], 
-          "password": "barry",
+          "password": "pbkdf2_sha256$10000$VcD9Mj2AtdVS$K7YHU0wf5dUsDozJ6U9EnflPATW3R+nge2YAJCl9CJc=",
           "email": "fake2@example.com", 
           "date_joined": "2013-04-01T14:26:46"
       }
@@ -56,7 +56,7 @@
               ]
             ],
           "user_permissions": [], 
-          "password": "esther",
+          "password": "pbkdf2_sha256$10000$Y3E5kejpOLr0$Aj9kBn1R2WD37qEcPmxhCfSFt0SmjiuI92QdyEv8Nro=",
           "email": "fake3@example.com", 
           "date_joined": "2013-04-01T14:26:46"
       }

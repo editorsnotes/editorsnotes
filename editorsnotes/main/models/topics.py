@@ -129,6 +129,7 @@ class ProjectTopicContainer(LastUpdateMetadata, URLAccessible,
     objects = ProjectTopicContainerManager()
     class Meta:
         app_label = 'main'
+        unique_together = ('project', 'preferred_name')
     def as_text(self):
         return '({}): {}'.format(self.project.slug, self.preferred_name)
     @models.permalink
@@ -139,6 +140,16 @@ class ProjectTopicContainer(LastUpdateMetadata, URLAccessible,
             'admin:main_topic_change', args=(self.project.slug, self.topic_id))
     def has_summary(self):
         return self.summary is not None
+    def validate_unique(self, exclude=None):
+        super(ProjectTopicContainer, self).validate_unique(exclude)
+        qs = self.__class__.objects.filter(preferred_name=self.preferred_name)
+        if self.id:
+            qs = qs.exclude(id=self.id)
+        if qs.exists():
+            raise ValidationError({
+                'preferred_name': [u'Topic with this preferred name '
+                                   'already exists.']
+            })
     @transaction.commit_on_success
     def merge_into(self, target):
         """
@@ -238,7 +249,8 @@ class TopicNodeAssignment(CreationMetadata, ProjectPermissionsMixin):
     Optionally, a specific name can be used for an assignment, otherwise the
     projects' preferred name for that topic will be used.
     """
-    container = models.ForeignKey(ProjectTopicContainer, blank=True, null=True, related_name='assignments')
+    container = models.ForeignKey(ProjectTopicContainer, blank=True, null=True,
+                                  related_name='related_topics')
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     content_object = generic.GenericForeignKey()
