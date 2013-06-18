@@ -35,10 +35,11 @@ def document(request, project_slug, document_id):
     note_topics = [ [ ta.topic for ta in n.topics.all() ] for n in notes ]
     o['notes'] = zip(notes, note_topics)
 
-    if o['document'].zotero_link():
-        o['zotero_data'] = as_readable(o['document'].zotero_link().zotero_data)
-        o['zotero_url'] = o['document'].zotero_link().zotero_url
-        o['zotero_date_information'] = o['document'].zotero_link().date_information
+    if o['document'].zotero_data:
+        o['zotero_data'] = as_readable(o['document'].zotero_data)
+        if o['document'].zotero_link:
+            o['zotero_url'] = o['document'].zotero_link.zotero_url
+            o['zotero_date_information'] = o['document'].zotero_link.date_information
     return render_to_response(
         'document.html', o, context_instance=RequestContext(request))
 

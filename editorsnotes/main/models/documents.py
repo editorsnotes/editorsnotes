@@ -12,6 +12,8 @@ from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from lxml import etree
 
+from editorsnotes.djotero.models import ZoteroItem
+
 from .. import fields, utils
 from auth import ProjectPermissionsMixin
 from base import CreationMetadata, LastUpdateMetadata, URLAccessible, Administered
@@ -21,7 +23,7 @@ class DocumentManager(models.Manager):
     # Include whether or not documents have scans/transcripts in default query.
     def get_query_set(self):
         return super(DocumentManager, self).get_query_set()\
-            .select_related('_transcript', '_zotero_link', 'project')\
+            .select_related('_transcript', 'zotero_link', 'project')\
             .extra(select = { 'link_count': '''SELECT COUNT(*) 
 FROM main_documentlink WHERE main_documentlink.document_id = main_document.id''',
                               'scan_count': '''SELECT COUNT(*) 
@@ -31,7 +33,8 @@ FROM main_document AS part WHERE part.collection_id = main_document.id''',
                               '_has_transcript': '''EXISTS ( SELECT 1 
 FROM main_transcript WHERE main_transcript.document_id = main_document.id )''' })
 
-class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectPermissionsMixin):
+class Document(LastUpdateMetadata, Administered, URLAccessible, 
+               ProjectPermissionsMixin, ZoteroItem):
     u"""
     Anything that can be taken as evidence for (documentation of) something.
 
@@ -88,11 +91,6 @@ class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectPermissio
         if hasattr(self, '_has_transcript'):
             return self._has_transcript
         return self.transcript is not None
-    def zotero_link(self):
-        try:
-            return self._zotero_link
-        except:
-            return None
     def get_all_representations(self):
         r = []
         if self.has_transcript():
@@ -146,10 +144,10 @@ class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectPermissio
         return changed
         
     def as_html(self):
-        if self.zotero_link():
+        if self.zotero_data is not None:
             data_attributes = ''.join(
                 [ ' data-%s="%s"' % (k, escape(v)) 
-                  for k, v in self.zotero_link().get_zotero_fields() if v and k not in ['tags', 'extra'] ])
+                  for k, v in self.get_zotero_fields() if v and k not in ['tags', 'extra'] ])
         else:
             data_attributes = ''
         if self.edtf_date:

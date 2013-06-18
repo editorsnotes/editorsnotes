@@ -28,27 +28,22 @@ class DocumentForm(ModelForm):
 
         if kwargs.has_key('instance'):
             document = kwargs['instance']
-            self.initial['zotero_string'] = (
-                document.zotero_link().zotero_data
-                if document.zotero_link() else '')
+            self.initial['zotero_string'] = document.zotero_data or ''
 
     def save_zotero_data(self):
         document = self.instance
         if self.data.get('zotero-data-DELETE', '') == 'DELETE':
-            if document.zotero_link():
-                z = document.zotero_link()
-                z.delete()
-        if self.changed_data is not None and 'zotero_string' in self.changed_data:
-            if document.zotero_link():
-                z = document.zotero_link()
-                z.zotero_data = self.cleaned_data['zotero_string']
-                z.save()
-            else:
-                z = ZoteroLink.objects.create(
-                    doc=document, zotero_data=self.cleaned_data['zotero_string'])
-            return z
-        else:
-            return None
+            document.zotero_data = None
+            document.save()
+            if document.zotero_link is not None:
+                document.zotero_link.delete()
+        elif self.changed_data is not None and 'zotero_string' in self.changed_data:
+            document.zotero_data = self.cleaned_data['zotero_string']
+            document.save()
+            link, created = ZoteroLink.objects.get_or_create(zotero_item=document)
+            if not created:
+                link.save()
+        return document
 
 class DocumentLinkForm(ModelForm):
     class Meta:
