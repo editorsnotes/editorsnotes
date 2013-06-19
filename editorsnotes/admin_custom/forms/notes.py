@@ -15,13 +15,11 @@ class NoteForm(ModelForm):
             'assigned_users': forms.CheckboxSelectMultiple()
         }
 
-class NoteSectionForm(ModelForm):
+class CitationSectionForm(ModelForm):
     class Meta:
         model = CitationNS
-        fields = ('document', 'content',)
+        fields = ('document', 'content', 'ordering',)
         widgets = {'document' : forms.widgets.HiddenInput()}
 
-NoteSectionFormset = inlineformset_factory(
-    Note, CitationNS, form=NoteSectionForm, extra=1)
-
-
+CitationSectionFormset = inlineformset_factory(
+    Note, CitationNS, form=CitationSectionForm, extra=1)

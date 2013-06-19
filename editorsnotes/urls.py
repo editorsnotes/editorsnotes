@@ -19,7 +19,7 @@ urlpatterns += patterns('',
     url(r'^accounts/logout/$', 'user_logout', name='user_logout_view'),
     url(r'^accounts/profile/$', 'editorsnotes.main.views.auth.user'),
     url(r'^accounts/browserid/$', CustomBrowserIDVerify.as_view(), name='browserid_verify'),
-    url(r'^user/(?P<username>[\w@\+\.\-]+)/$', 'user', name='user_view'),
+    url(r'^user/(?P<username>[\w@\+\.\-]+)/$', 'editorsnotes.main.views.auth.user', name='user_view'),
 )
 
 # Base patterns
@@ -40,19 +40,19 @@ urlpatterns += patterns('',
     url(r'^', include('editorsnotes.main.urls')),
 )
 
-#urlpatterns += patterns('editorsnotes.djotero.views',
+urlpatterns += patterns('editorsnotes.djotero.views',
 #    url(r'^document/upload/$', 'import_zotero', name='import_zotero_view'),
 #    url(r'^document/upload/libraries/$', 'libraries', name='libraries_view'),
 #    url(r'^document/upload/collections/$', 'collections', name='collections_view'),
 #    url(r'^document/upload/items/$', 'items', name='items_view'),
 #    url(r'^document/upload/continue/$', 'items_continue', name='items_continue_view'),
 #    url(r'^document/upload/import/$', 'import_items', name='import_items_view'),
-#    url(r'^user/zotero_info$', 'update_zotero_info', name='update_zotero_info_view'),
-#    url(r'^api/document/template/', 'zotero_template'),
-#    url(r'^api/document/blank/$', 'get_blank_item', name='get_blank_item_view'),
-#    url(r'^api/document/csl/$', 'zotero_json_to_csl', name='zotero_json_to_csl_view'),
-#    url(r'^api/document/archives/$', 'api_archives', name='api_archives_view'),
-#)
+    url(r'^user/zotero_info$', 'update_zotero_info', name='update_zotero_info_view'),
+    url(r'^api/document/template/', 'zotero_template'),
+    url(r'^api/document/blank/$', 'get_blank_item', name='get_blank_item_view'),
+    url(r'^api/document/csl/$', 'zotero_json_to_csl', name='zotero_json_to_csl_view'),
+    url(r'^api/document/archives/$', 'api_archives', name='api_archives_view'),
+)
 #urlpatterns += patterns('editorsnotes.refine.views',
 #    url(r'^topics/clusters/$', 'show_topic_clusters', name='show_topic_clusters_view'),
 #    url(r'^topics/merge/(?P<cluster_id>\d+)/$', 'merge_topic_cluster', name='merge_topic_cluster_view'),

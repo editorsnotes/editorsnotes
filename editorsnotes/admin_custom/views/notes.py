@@ -50,10 +50,10 @@ def note_sections(request, project_slug, note_id):
             raise PermissionDenied(
                     'You are not a member of {}.'.format(self.project.name))
     if request.method == 'POST':
-        o['citations_formset'] = forms.CitationFormset(
+        o['sections_formset'] = forms.notes.CitationSectionFormset(
             request.POST, instance=note, prefix='citation')
-        if o['citations_formset'].is_valid():
-            for form in o['citations_formset']:
+        if o['sections_formset'].is_valid():
+            for form in o['sections_formset']:
                 if not form.has_changed() or not form.is_valid():
                     continue
                 if form.cleaned_data['DELETE']:
@@ -62,7 +62,6 @@ def note_sections(request, project_slug, note_id):
                     continue
                 obj = form.save(commit=False)
                 if not obj.id:
-                    obj.content_object = note
                     obj.creator = request.user
                 obj.last_updater = request.user
                 obj.save()
@@ -72,7 +71,7 @@ def note_sections(request, project_slug, note_id):
                 request, messages.SUCCESS, 'Note %s updated' % note.title)
             return HttpResponseRedirect(note.get_absolute_url())
     else:
-        o['citations_formset'] = forms.CitationFormset(
+        o['sections_formset'] = forms.notes.CitationSectionFormset(
             prefix='citation', instance=note)
     return render_to_response(
         'note_sections_admin.html', o, context_instance=RequestContext(request))

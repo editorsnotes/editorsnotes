@@ -139,7 +139,7 @@ function reorderSections() {
 function editSection($section) {
   var editor
     , toolbar
-    , textarea = $section.find('textarea[name$="notes"]')
+    , textarea = $section.find('textarea[name$="content"]')
     , $content = $section.find('.citation-notes');
 
   $section.addClass('citation-edit-active');
@@ -212,10 +212,11 @@ function addSection(after) {
       case 'id':
         $(this).remove();
         break;
-      case 'notes':
+      case 'content':
         $(this).val('').html('').css('height', '1px');
         break;
       case 'note':
+        $(this).remove();
         break;
       case 'DELETE':
         $(this).val('').prop('checked', false);
@@ -351,21 +352,20 @@ function saveDocument($modal) {
     
   $.ajax({
     type: 'POST',
-    url: '/admin/main/document/add/',
+    url: '/api' + document.location.pathname.replace(/notes.*/, 'documents/'),
     data: data,
     success: function (newDocument) {
-      var newDocumentObj = JSON.parse(newDocument)
-        , oldInput = $modal.data('sourceInput');
+      var oldInput = $modal.data('sourceInput');
 
       oldInput
         .siblings('.add-new-document').remove();
       
       oldInput
         .closest('.citation-edit').find('input[name$="document"]')
-          .val(newDocumentObj.id);
+          .val(newDocument.id);
 
       oldInput
-        .replaceWith(' ' + newDocumentObj.value)
+        .replaceWith(' ' + newDocument.description)
 
       $modal.modal('hide').remove();
     },
