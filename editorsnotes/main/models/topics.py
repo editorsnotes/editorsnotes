@@ -62,9 +62,7 @@ class TopicNode(LastUpdateMetadata, URLAccessible):
     def related_objects(self, model=None):
         qs = TopicNodeAssignment.objects.filter(container__topic_id=self.id)
         if model is not None:
-            model_ct = ContentType.objects.get(
-                app_label=model._meta.app_label,
-                model=model._meta.module_name)
+            model_ct = ContentType.objects.get_for_model(model)
             model_assignments = qs.filter(content_type_id=model_ct.id)
             return model.objects.filter(
                 id__in=model_assignments.values_list('object_id', flat=True)
@@ -85,7 +83,7 @@ class ProjectTopicContainerManager(models.Manager):
 
         Returns the node and the container.
         """
-        topic_node = TopicNode.objects.create(preferred_name=name, creator=user,
+        topic_node = TopicNode.objects.create(_preferred_name=name, creator=user,
                                               last_updater=user, type=topic_type)
         return topic_node, self.create(topic_id=topic_node.id,
                                        project_id=project.id, preferred_name=name,
@@ -100,6 +98,12 @@ class ProjectTopicContainerManager(models.Manager):
         return self.create(topic=topic, project=project,
                            creator=user, last_updater=user,
                            preferred_name=name or topic.preferred_name)
+    def get_or_create_by_name(self, name, project, user):
+        qs = self.filter(preferred_name=name)
+        if qs.exists():
+            return qs.get()
+        node, container = self.create_along_with_node(name, project, user)
+        return container
     def get_or_create_from_node(self, topic, project, user, name=None):
         """
         Given a topic node, get or create a container for a project.
@@ -120,6 +124,8 @@ class ProjectTopicContainer(LastUpdateMetadata, URLAccessible,
     topic = models.ForeignKey(TopicNode, related_name='project_containers')
     preferred_name = models.CharField(max_length=200)
 
+    topics = generic.GenericRelation('TopicNodeAssignment')
+
     summary = fields.XHTMLField(blank=True, null=True)
     summary_cites = generic.GenericRelation('Citation')
 
@@ -134,7 +140,7 @@ class ProjectTopicContainer(LastUpdateMetadata, URLAccessible,
         return '({}): {}'.format(self.project.slug, self.preferred_name)
     @models.permalink
     def get_absolute_url(self):
-        return ('project_topic', [self.project.slug, self.topic_id])
+        return ('project_topic_view', [self.project.slug, self.topic_id])
     def get_admin_url(self):
         return reverse(
             'admin:main_topic_change', args=(self.project.slug, self.topic_id))

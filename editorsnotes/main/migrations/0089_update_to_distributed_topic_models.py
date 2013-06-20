@@ -419,12 +419,15 @@ def update_topic(topic, orm):
                          if tid in final_topicreltopics]
         new_reltopics = set(new_reltopics) - existing_topicreltopics
         for assignment in new_reltopics:
+            related_container_id, _, _ = get_or_create_project_container(
+                tmap[assignment], project_id, user_id, version_dt)
             assignment_insert = db.execute(
                 u'INSERT INTO main_topicnodeassignment '
                 'VALUES (DEFAULT, %s, %s, %s, %s, %s, %s) '
                 'RETURNING id;',
                 params=[user_id, version_dt, container_id, None,
-                        ct_for_model('topicnode'), tmap_id[assignment]])
+                        ct_for_model('projecttopiccontainer'),
+                        related_container_id])
             assignment_id, = assignment_insert[0]
             existing_topicreltopics.add(assignment)
             fields = {
@@ -432,8 +435,8 @@ def update_topic(topic, orm):
                 'created': version_dt.strftime(TIME_FMT),
                 'container': container_id,
                 'topicname': None,
-                'content_type': ct_for_model('topicnode'),
-                'object_id': tmap_id[assignment]
+                'content_type': ct_for_model('projecttopiccontainer'),
+                'object_id': related_container_id
             }
             create_version(
                 new_revision_id, assignment_id, 'topicnodeassignment', fields,

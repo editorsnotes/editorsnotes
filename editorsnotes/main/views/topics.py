@@ -75,5 +75,5 @@ def topic_node(request, topic_node_id):
     return render_to_response(
         'topic2.html', o, context_instance=RequestContext(request))
 
-def project_topic(request, project_slug, topic_node):
+def project_topic(request, project_slug, topic_node_id):
     return HttpResponse('hi')

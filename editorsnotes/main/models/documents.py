@@ -103,9 +103,8 @@ class Document(LastUpdateMetadata, Administered, URLAccessible, ProjectPermissio
             r.append('External Link')
         return r
     def get_all_related_topics(self):
-        topic_ct = ContentType.objects.get(
-            app_label='main', model='projecttopiccontainer')
-
+        topic_ct = ContentType.objects.get_by_natural_key(
+            'main', 'projecttopiccontainer')
         topic_citations = self.citations.filter(content_type_id=topic_ct.id)
         citation_note_sections = self.citationns_set.all()
         notes = {ns.note for ns in citation_note_sections}
