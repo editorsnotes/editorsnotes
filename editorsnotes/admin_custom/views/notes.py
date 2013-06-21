@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
+from django.contrib.auth.decorators import login_required
 import reversion
 
 from editorsnotes.main.models.notes import Note
@@ -35,11 +37,18 @@ class NoteAdminView(BaseAdminView):
         obj.save()
 
 @reversion.create_revision()
+@login_required
 def note_sections(request, project_slug, note_id):
     note = get_object_or_404(
         Note, id=note_id, project__slug=project_slug)
     o = {}
     o['note'] = note
+    user = request.user
+    if user and user.is_authenticated():
+        can_access = user.is_superuser or user.belongs_to(note.project)
+        if not can_access:
+            raise PermissionDenied(
+                    'You are not a member of {}.'.format(self.project.name))
     if request.method == 'POST':
         o['citations_formset'] = forms.CitationFormset(
             request.POST, instance=note, prefix='citation')
