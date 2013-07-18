@@ -419,8 +419,9 @@ def update_topic(topic, orm):
                          if tid in final_topicreltopics]
         new_reltopics = set(new_reltopics) - existing_topicreltopics
         for assignment in new_reltopics:
+            old_topic = orm['main.topic'].objects.get(id=assignment)
             related_container_id, _, _ = get_or_create_project_container(
-                tmap[assignment], project_id, user_id, version_dt)
+                old_topic, project_id, user_id, version_dt)
             assignment_insert = db.execute(
                 u'INSERT INTO main_topicnodeassignment '
                 'VALUES (DEFAULT, %s, %s, %s, %s, %s, %s) '
@@ -488,6 +489,7 @@ def update_topic(topic, orm):
 
         stale_revisions.add(version.revision_id)
         version.delete()
+
     return
 
 class Migration(DataMigration):

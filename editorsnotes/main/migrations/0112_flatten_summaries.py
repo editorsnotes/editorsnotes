@@ -33,8 +33,13 @@ class Migration(DataMigration):
             has_summary = hasattr(topic, 'old_summary') \
                     and topic.old_summary.content is not None
 
-            container_version, = db.execute(
+            container_version = db.execute(
                 base_select, params=[container_ct.id, topic.id])
+
+            if not container_version:
+                continue
+            else:
+                container_version = container_version[0]
 
             t_vid, t_data, t_rid, t_created = container_version
             data = json.loads(t_data)
@@ -57,7 +62,7 @@ class Migration(DataMigration):
 
             summary_versions = db.execute(
                 base_select, params=[summary_ct.id, topic.old_summary.id])
-            print summary_versions
+
             for s_vid, s_data, s_rid, s_vcreated in summary_versions:
                 summary_data = json.loads(s_data)
                 summary_text = summary_data[0]['fields']['content']
