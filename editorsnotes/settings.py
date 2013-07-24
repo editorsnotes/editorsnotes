@@ -121,6 +121,7 @@ INSTALLED_APPS = (
     'south',
     'haystack',
     'compressor',
+    'licensing',
     'editorsnotes.main',
     'editorsnotes.djotero',
     #'editorsnotes.refine',

@@ -4,6 +4,8 @@ from django.conf import settings
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
+
+from licensing.models import License
 from lxml import etree
 from model_utils.managers import InheritanceManager
 from reversion.models import Revision
@@ -29,6 +31,7 @@ class Note(LastUpdateMetadata, Administered, URLAccessible, ProjectPermissionsMi
     project = models.ForeignKey('Project', related_name='notes')
     assigned_users = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, null=True)
     status = models.CharField(choices=NOTE_STATUS_CHOICES, max_length=1, default='1')
+    license = models.ForeignKey(License, blank=True, null=True)
     topics = generic.GenericRelation('TopicNodeAssignment')
     sections_counter = models.PositiveIntegerField(default=0)
     class Meta:

@@ -10,15 +10,20 @@ from ..models.topics import TopicNode
 
 def note(request, note_id, project_slug=None):
     o = {}
-    o['note'] = get_object_or_404(Note, id=note_id)
-    o['history'] = reversion.get_unique_for_object(o['note'])
+    qs = Note.objects\
+            .select_related('license', 'project__default_license')\
+            .prefetch_related('topics')
+    note = get_object_or_404(qs, id=note_id)
+
+    o['note'] = note
+    o['license'] = note.license or note.project.default_license
+    o['history'] = reversion.get_unique_for_object(note)
     o['topics'] = [ta.topic for ta in o['note'].topics.all()]
-    o['sections'] = o['note'].sections\
+    o['sections'] = note.sections\
             .order_by('ordering', 'note_section_id')\
             .select_subclasses()\
             .select_related('citationns__document__project',
                             'notereferencens__note_reference__project')
-
     o['can_edit'] = request.user.is_authenticated() and \
             request.user.has_project_perm(o['note'].project, 'main.change_note')
 
