@@ -16,7 +16,7 @@ urlpatterns = patterns('',
 # Auth patterns
 urlpatterns += patterns('',
     url(r'^accounts/login/$', 'django.contrib.auth.views.login'),
-    url(r'^accounts/logout/$', 'user_logout', name='user_logout_view'),
+    url(r'^accounts/logout/$', 'editorsnotes.main.views.auth.user_logout', name='user_logout_view'),
     url(r'^accounts/profile/$', 'editorsnotes.main.views.auth.user'),
     url(r'^accounts/browserid/$', CustomBrowserIDVerify.as_view(), name='browserid_verify'),
     url(r'^user/(?P<username>[\w@\+\.\-]+)/$', 'editorsnotes.main.views.auth.user', name='user_view'),
