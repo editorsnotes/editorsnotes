@@ -6,32 +6,34 @@
 <h1>{{ project.name }}</h1>
 <hr/>
 
-{% if project_role or can_change %}
+{% if show_edit_row %}
 <div class="well">
   {% if project_role %}
   <p>
-  You are a member of this project. As a{% if project_role == 'editor' %}n{% endif %} {{ project_role }}, you can perform the following actions:
+  You are a member of this project, with the role: <strong>{{ project_role.role }}</strong>. You may perform the following actions.
   </p>
   {% endif %}
   <div>
-  {% if can_change %}
-    <a class="btn" href="{% url "project_roster_view" project_id=project.id %}">
+    {% if can_change_roster or can_view_roster %}
+    <a class="btn" href="{% url "admin:main_project_roster_change" project.slug %}">
       <i class="icon-user"></i>
-      Edit roster
+      {% if can_change_roster %}Edit{% else %}View{% endif %} roster
     </a>
-    <a class="btn" href="{% url "change_featured_items_view" project_id=project.id %}">
+    {% endif %}
+
+    {% if can_change_featured_items %}
+    <a class="btn" href="{% url "admin:main_featured_items_change" project.slug %}">
       <i class="icon-star"></i>
       Select featured items
     </a>
+    {% endif %}
+
+    {% if can_change_project %}
     <a class="btn" href="{% url "project_edit_view" project_id=project.id %}?return_to={{ request.path }}">
       <i class="icon-edit"></i>
       Edit project description
     </a>
-  {% else %}
-    {% if project_role %}
-      <a class="btn" href="{% url "project_roster_view" project_id=project.id %}">View roster</a>
     {% endif %}
-  {% endif %}
   </div>
 </div>
 {% endif %}

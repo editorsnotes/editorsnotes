@@ -13,8 +13,8 @@
       <ul class="unstyled">
       {% for p, count in project_facets %}
       <li>
-        <input type="checkbox" name="project" value="{{ p.id }}">&nbsp;
-        {{ p|as_link }} ({{ count}})
+        <input type="checkbox" name="project" value="{{ p.slug }}">&nbsp;
+        {{ p|as_link }} ({{ count }})
       </li>
       {% endfor %}
       </ul>
@@ -58,7 +58,7 @@
     <ul class="unstyled span6" id="note-list-1">
     {% for note in notes %}
     <li class="note" date-modified="{{ note.last_updated|date:"Ymd" }}">
-        <a href="{% url "note_view" note_id=note.pk %}">
+        <a href="{% url "note_view" note_id=note.pk project_slug=note.project_slug.0 %}">
           {{ note.title }}
         </a>
       </li>

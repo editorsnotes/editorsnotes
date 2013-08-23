@@ -1,4 +1,0 @@
-{% load display %}
-{{ object.preferred_name }}
-{{ object.get_aliases }}
-{{ object.summary|as_text }}

@@ -22,6 +22,9 @@
 
 {% block css %}
   <link rel="stylesheet" href="{% static "style/bootstrap-admin.css" %}" type="text/css" />
+  <style type="text/css">
+    .citation-edit .citation-document * { display: inline !important }
+  </style>
 {% endblock %}
 
 
@@ -38,7 +41,7 @@
       <button class="btn btn-primary pull-right" type="submit">Save changes</button>
     </div>
 
-    {% include "includes/citation_formset.html" %}
+    {% include "includes/sections_formset.html" %}
 
   </form>
 
