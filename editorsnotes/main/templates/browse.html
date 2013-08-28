@@ -29,7 +29,7 @@
       <section id="topics" class="span6 model-list">
         <h4>Recently Edited Topics</h4>
         <ul class="unstyled">
-          {% for topic in topic_list %}
+          {% for topic in topicnode_list %}
           <li>{{ topic|as_link|typogrify }}</li>
           {% endfor %}
           {% if topic_list %}

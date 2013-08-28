@@ -1,0 +1,13 @@
+{% load display %}
+
+<div class="citation">
+  <div class="citation-document">
+    <i class="icon-file"></i>
+    <a href="{{ section.document.get_absolute_url }}">{{ section.document.as_html }}</a>
+  </div>
+  {% if section.has_content %}
+  <div class="citation-notes">
+    {{ section.content|as_html }}
+  </div>
+  {% endif %}
+</div>

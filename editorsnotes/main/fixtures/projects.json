@@ -1,0 +1,112 @@
+[
+
+  {
+    "pk": 1,
+    "model": "auth.group",
+    "fields": {
+      "name": "emma-Editor",
+      "permissions": []
+    }
+  },
+  {
+    "pk": 2,
+    "model": "auth.group",
+    "fields": {
+      "name": "sanger-Editor",
+      "permissions": []
+    }
+  },
+
+  {
+      "pk": 1, 
+      "model": "main.user", 
+      "fields": {
+          "username": "barry", 
+          "first_name": "Barry", 
+          "last_name": "Pateman", 
+          "is_active": true, 
+          "is_superuser": true, 
+          "is_staff": true, 
+          "last_login": "2013-04-05T11:13:49.329", 
+          "groups": [
+            [
+              "emma-Editor"
+            ]
+          ], 
+          "user_permissions": [], 
+          "password": "pbkdf2_sha256$10000$VcD9Mj2AtdVS$K7YHU0wf5dUsDozJ6U9EnflPATW3R+nge2YAJCl9CJc=",
+          "email": "fake2@example.com", 
+          "date_joined": "2013-04-01T14:26:46"
+      }
+  },
+  {
+      "pk": 2, 
+      "model": "main.user", 
+      "fields": {
+          "username": "esther", 
+          "first_name": "Esther", 
+          "last_name": "Katz", 
+          "is_active": true, 
+          "is_superuser": true, 
+          "is_staff": true, 
+          "last_login": "2013-04-05T11:13:49.329", 
+          "groups": [
+              [
+                "sanger-Editor"
+              ]
+            ],
+          "user_permissions": [], 
+          "password": "pbkdf2_sha256$10000$Y3E5kejpOLr0$Aj9kBn1R2WD37qEcPmxhCfSFt0SmjiuI92QdyEv8Nro=",
+          "email": "fake3@example.com", 
+          "date_joined": "2013-04-01T14:26:46"
+      }
+  },
+
+  {
+    "pk": 1, 
+    "model": "main.project", 
+    "fields": {
+      "image": "", 
+      "description": "We are collecting the papers of Emma Goldman.", 
+      "name": "The Emma Goldman Papers", 
+      "slug": "emma"
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "main.project", 
+    "fields": {
+      "image": "", 
+      "description": "We are collecting the papers of Margaret Sanger", 
+      "name": "The Margaret Sanger Papers", 
+      "slug": "sanger"
+    }
+  },
+  {
+    "pk": 1,
+    "model": "main.projectrole",
+    "fields": {
+      "project": 1,
+      "group": [
+        "emma-Editor"
+      ],
+      "is_super_role": true,
+      "role": "Editor"
+    }
+  },
+  {
+    "pk": 2,
+    "model": "main.projectrole",
+    "fields": {
+      "project": 2,
+      "group": [
+        "sanger-Editor"
+      ],
+      "is_super_role": true,
+      "role": "Editor"
+    }
+  }
+
+
+
+]

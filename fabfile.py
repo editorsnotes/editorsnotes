@@ -42,9 +42,9 @@ def test():
 def sync_database():
     "Sync db, make cache tables, and run South migrations"
     with lcd(PROJ_ROOT):
-        local('./bin/python manage.py syncdb')
+        local('./bin/python manage.py syncdb --noinput')
         create_cache_tables()
-        local('./bin/python manage.py migrate')
+        local('./bin/python manage.py migrate --noinput')
 
 @task
 def runserver():

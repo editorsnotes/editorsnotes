@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="{% static "style/main.less" %}" type="text/less"/>
     <link rel="stylesheet" href="{% static "style/jquery-ui/jquery-ui-1.8.10.custom.css" %}" type="text/css"/>
     <link rel="stylesheet" href="{% static "style/font-awesome/font-awesome.css" %}" type="text/css"/>
+    <link rel="stylesheet" href="{% static "style/openwebicons/css/openwebicons-bootstrap.css" %}" type="text/css"/>
     <link rel="stylesheet" href="{% static "style/bootstrap-custom.css" %}" type="text/css"/>
     {% endcompress %}
 
@@ -62,18 +63,17 @@
             </ul>
 
             {% if user.is_authenticated %}
-            {% with profile=user.get_profile %}
             {% if user.email %}
             <input type="hidden" id="logged-in-user-email" value="{{ user.email }}" />
             {% endif %}
             <ul class="nav pull-right">
               <li class="dropdown">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                  {{ profile.display_name }}
+                  {{ user.display_name }}
                   <b class="caret"></b>
                 </a>
                 <ul class="dropdown-menu">
-                  <li><a href="{{ profile.get_absolute_url }}">My profile</a></li>
+                  <li><a href="{{ user.get_absolute_url }}">My profile</a></li>
                   <li><a {% if browserid_authenticated %}class="browserid-logout" {% endif %}href="{% url "user_logout_view" %}">Log out</a></li>
                 </ul>
               </li>
@@ -85,14 +85,13 @@
                 </a>
                 <ul class="dropdown-menu" style="right: 0; left: auto;">
                   {% block extra_edit_actions %}{% endblock %}
-                  <li><a href="{% url "admin:main_note_add" %}">Add note</a></li>
-                  <li><a href="{% url "admin:main_document_add" %}">Add document</a></li>
-                  <li><a href="{% url "admin:main_topic_add" %}">Add topic</a></li>
+                  <li><a href="#">Add note</a></li>
+                  <li><a href="#">Add document</a></li>
+                  <li><a href="#">Add topic</a></li>
                 </ul>
               </div>
               </li>
             </ul>
-            {% endwith %}
             {% else %}
             <ul class="nav pull-right">
               <li><a href="/accounts/login/">Log in</a></li>

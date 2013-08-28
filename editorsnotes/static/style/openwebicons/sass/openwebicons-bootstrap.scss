@@ -1,0 +1,20 @@
+@import "vars";
+@import "mixins";
+
+@include font_face;
+
+%mapper {
+  font-family: 'OpenWeb Icons';
+  font-smoothing: antialiased;
+  -webkit-font-smoothing: antialiased;
+}
+
+@each $icon in $icons {
+  [class^="#{$prefix}-#{nth($icon, 1)}"], [class*=" #{$prefix}-#{nth($icon, 1)}"] {
+    &:before {
+      @extend %mapper;
+    }
+  }
+}
+
+@include icon_list;

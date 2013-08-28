@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load typogrify display %}
+
+{% block title %}: {{ topic.preferred_name }}{% endblock %}
+
+{% block js %}
+<script type="text/javascript" src="{{ STATIC_URL }}function/topic.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}function/facets.js"></script>
+{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ STATIC_URL }}style/topic.css" type="text/css"/>
+<link rel="stylesheet" href="{{ STATIC_URL }}style/facets.css" type="text/css" />
+{% endblock %}
+
+{% block content %}
+    <header>
+      <h2 id="topic-name">{{ topic.preferred_name }}</h2>
+      {% include "includes/related_topics_header.html" %}
+    </header>
+
+    {% if editable_project_containers %}
+    <section class="well">
+      {% if editable_project_containers|length > 1 %}
+        You can edit the following connections to this topic:
+        <ul>
+        {% for container in editable_project_containers %}
+        <li style="padding-top: 7px;">
+          {{ container.project }} 
+          <a class="btn btn-small" href="{{ container.get_admin_url }}">Edit</a>
+        </li>
+        {% endfor %}
+        </ul>
+      {% else %}
+        {% with container=editable_project_containers.0 %}
+        <a class="btn" href="{{ container.get_admin_url }}">Edit topic</a>
+        as a member of the {{ container.project }}
+        {% endwith %}
+      {% endif %}
+    </section>
+    {% endif %}
+
+    <ul id="tabs" class="nav nav-tabs">
+      <li class="active"><a href="#article-tab">Article</a></li>
+      <li><a href="#notes-tab">Related Notes <span class="alt">&amp;</span> Queries ({{ notes|length }})</a></li>
+      <li><a href="#documents-tab">Related Documents ({{ documents|length }})</a></li>
+    </ul>
+
+    <div class="tab-content">
+      <section id="article-tab" class="tab-pane active">
+        <article id="{{ topic.slug }}-summary" class="note">
+
+          {% for summary in summaries %}
+            {% include "includes/topic_summary.html" with display_project=True %}
+          {% empty %}
+            <div>There is no article about <em>{{ topic.preferred_name }}</em> yet.</div>
+          {% endfor %}
+
+          <div class="row edit-row">
+            <div class="span6 edit-button">
+              {% if request.user.is_authenticated %}
+              <a class="btn" href="{{ topic.get_admin_url }}?return_to={{ topic.get_absolute_url }}">Edit</a>
+              {% endif %}
+            </div>
+            <div class="span6 edit-history">
+              {{ topic|display_edit_history }}
+            </div>
+          </div>
+
+        </article>
+      </section>
+
+      <section id="notes-tab" class="tab-pane">
+        {% if notes %}
+          {% for note in notes %}
+          <div id="note-{{ note.id }}" class="related-note">
+            <div class="note-link">
+              <a href="{{ note.get_absolute_url }}">{{ note.title}}</a>
+            </div>
+            <div class="note-last-modified">
+              <span class="quiet">Last modified: </span><span>{{ note.last_updated|date:"F j, Y" }}</span>
+            </div>
+            {% include "includes/related_topics_header.html" with related_topics=note.topics.all %}
+          </div>
+          {% endfor %}
+        {% else %}
+          There are no notes or queries related to <em>{{ topic.preferred_name }}</em>.
+        {% endif %}
+      </section>
+
+      <section id="documents-tab" class="tab-pane">
+        {% if documents %}
+        <ul id="document-list" class="model-list unstyled">
+          {% for document in documents %}
+          <li class="document-list-item">
+            {{ document|as_link|typogrify }}
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+          There are no documents related to <em>{{ topic.preferred_name }}</em>.
+        {% endif %}
+      </section>
+    </div>
+{% endblock %}
