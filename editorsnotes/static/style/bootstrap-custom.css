@@ -29,14 +29,6 @@ ul.model-item-list > li * {
     line-height: inherit;
   }
 
-/*
-.citation div, .citation p {
-    display: inline;
-}
-.citation {
-    margin-bottom: 1em;
-}
-*/
 .edit-history {
     text-align: right;
 }
@@ -70,21 +62,6 @@ ul .document-link p {
     overflow-x: hidden;
 }
 
-
-/****************************
- * Inline document editing
- ****************************/
-.modal.add-document-modal {
-    position: absolute !important,
-    border-radius: 2px,
-    margin: 0,
-    top: 0,
-    left: 0
-    overflow-y: hide;
-}
-.modal.add-document-modal .modal-footer {
-    padding: 10px 15px;
-}
 
 /****************************
  * Zotero form sizes
@@ -121,46 +98,6 @@ ul .document-link p {
     padding-top: 6px;
 }
 
-
-/****************************
- * Note sections
- ****************************/
-
-.note-section {
-    /* Spacing between note sections */
-    margin-bottom: 1em;
-}
-.note-section-document * {
-    /* display all elements in a citation inline, except icons */
-    display: inline;
-    margin: 0px;
-    padding: 0px;
-}
-.note-section-document i[class^="icon"] {
-    display: inline-block;
-}
-.note-section.has-document .note-section-content {
-    margin: 2px 0 1.25em 0;
-    padding: 3px 0px 0px 7px;
-    border-left: 1px dashed #ccc;
-    border-top: 1px dashed #ccc;
-} 
-#sort-by-date.inactive i {
-    display: none;
-}
-.sort {
-    margin-bottom: 2em;
-}
-.sort li {
-    display: inline-block;
-}
-.sort li a:hover {
-    text-decoration: none;
-}
-.sort li span {
-    padding-right: 8px;
-    font-weight: bold;
-}
 
 
 .related-note {

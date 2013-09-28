@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, 2011 and 2012 Frank G. Bennett, Jr. All Rights
+ * Copyright (c) 2009-2013 Frank G. Bennett, Jr. All Rights
  * Reserved.
  *
  * The contents of this file are subject to the Common Public
@@ -31,7 +31,7 @@
  *
  * The Initial Developer of the Original Code is Frank G. Bennett,
  * Jr. All portions of the code written by Frank G. Bennett, Jr. are
- * Copyright (c) 2009, 2010, 2011, and 2012 Frank G. Bennett, Jr. All Rights Reserved.
+ * Copyright (c) 2009-2013 Frank G. Bennett, Jr. All Rights Reserved.
  *
  * Alternatively, the contents of this file may be used under the
  * terms of the GNU Affero General Public License (the [AGPLv3]
@@ -45,9 +45,16 @@
  * recipient may use your version of this file under either the CPAL
  * or the [AGPLv3] License.”
  */
+
+/**
+ * Functions for parsing an XML object using E4X.
+ */
+
+// Don't clobber an existing value if this has already been declared.
 if ("undefined" === typeof CSL_IS_IE) {
     var CSL_IS_IE;
 };
+
 var CSL_CHROME = function () {
     if ("undefined" == typeof DOMParser || CSL_IS_IE) {
         CSL_IS_IE = true;
@@ -81,6 +88,11 @@ var CSL_CHROME = function () {
             return ret;
         };
     } else {
+        /*
+        this.hasAttributes = function (node) {
+            return node["hasAttributes"]();
+        };
+        */
         this.hasAttributes = function (node) {
             var ret;
             if (node.attributes && node.attributes.length) {
@@ -99,8 +111,13 @@ var CSL_CHROME = function () {
         }
         return ret;
     };
+    // In case importNode is not available.
+    // Thx + hat tip to Anthony T. Holdener III
+    // http://www.alistapart.com/articles/crossbrowserscripting
+    // cases 3, 4, 8 = text, cdata, comment
     this._importNode = function(doc, node, allChildren) {
         switch (node.nodeType) {
+            // element node
             case 1:
                 var newNode = doc.createElement(node.nodeName);
                 if (node.attributes && node.attributes.length > 0)
@@ -114,9 +131,15 @@ var CSL_CHROME = function () {
             case 3:
             case 4:
             case 8:
+                // Drop comments on the floor as well.
+                //return doc.createTextNode(node.nodeValue);
+                //break;
         }
     };
     this.parser = new DOMParser();
+
+    // This seems horribly tormented, but there might be a reason for it.
+    // Perhaps this was the only way I found to get namespacing to work ... ?
     var str = "<docco><institution institution-parts=\"long\" delimiter=\", \" substitute-use-first=\"1\" use-last=\"1\"><institution-part name=\"long\"/></institution></docco>";
     var inst_doc = this.parser.parseFromString(str, "text/xml");
     var inst_node = inst_doc.getElementsByTagName("institution");
@@ -125,6 +148,11 @@ var CSL_CHROME = function () {
     this.institutionpart = inst_part_node.item(0);
     this.ns = "http://purl.org/net/xbiblio/csl";
 };
+
+/**
+ * No need for cleaning with the DOM, I think.  This will probably just be a noop.
+ * But first, let's get XML mode switching up and running.
+ */
 CSL_CHROME.prototype.clean = function (xml) {
     xml = xml.replace(/<\?[^?]+\?>/g, "");
     xml = xml.replace(/<![^>]+>/g, "");
@@ -133,6 +161,11 @@ CSL_CHROME.prototype.clean = function (xml) {
     xml = xml.replace(/^\n*/, "");
     return xml;
 };
+
+
+/**
+ * Methods to call on a node.
+ */
 CSL_CHROME.prototype.getStyleId = function (myxml) {
     var text = "";
     var node = myxml.getElementsByTagName("id");
@@ -140,16 +173,20 @@ CSL_CHROME.prototype.getStyleId = function (myxml) {
         node = node.item(0);
     }
     if (node) {
+        // W3C conformant browsers
         text = node.textContent;
     }
     if (!text) {
+        // Opera, IE 6 & 7
         text = node.innerText;
     }
     if (!text) {
+        // Safari
         text = node.innerHTML;
     }
     return text;
 };
+
 CSL_CHROME.prototype.children = function (myxml) {
     var children, pos, len, ret;
     if (myxml) {
@@ -165,10 +202,12 @@ CSL_CHROME.prototype.children = function (myxml) {
         return [];
     }
 };
+
 CSL_CHROME.prototype.nodename = function (myxml) {
     var ret = myxml.nodeName;
     return ret;
 };
+
 CSL_CHROME.prototype.attributes = function (myxml) {
     var ret, attrs, attr, key, xml, pos, len;
     ret = new Object();
@@ -181,6 +220,8 @@ CSL_CHROME.prototype.attributes = function (myxml) {
     }
     return ret;
 };
+
+
 CSL_CHROME.prototype.content = function (myxml) {
     var ret;
     if ("undefined" != typeof myxml.textContent) {
@@ -192,9 +233,12 @@ CSL_CHROME.prototype.content = function (myxml) {
     }
     return ret;
 };
+
+
 CSL_CHROME.prototype.namespace = {
     "xml":"http://www.w3.org/XML/1998/namespace"
 }
+
 CSL_CHROME.prototype.numberofnodes = function (myxml) {
     if (myxml) {
         return myxml.length;
@@ -202,10 +246,12 @@ CSL_CHROME.prototype.numberofnodes = function (myxml) {
         return 0;
     }
 };
+
 CSL_CHROME.prototype.getAttributeName = function (attr) {
     var ret = attr.name;
     return ret;
 }
+
 CSL_CHROME.prototype.getAttributeValue = function (myxml,name,namespace) {
     var ret = "";
     if (namespace) {
@@ -216,6 +262,10 @@ CSL_CHROME.prototype.getAttributeValue = function (myxml,name,namespace) {
     }
     return ret;
 }
+
+//
+// Can't this be, you know ... simplified?
+//
 CSL_CHROME.prototype.getNodeValue = function (myxml,name) {
     var ret = "";
     if (name){
@@ -243,6 +293,7 @@ CSL_CHROME.prototype.getNodeValue = function (myxml,name) {
     }
     return ret;
 }
+
 CSL_CHROME.prototype.setAttributeOnNodeIdentifiedByNameAttribute = function (myxml,nodename,partname,attrname,val) {
     var pos, len, xml, nodes, node;
     if (attrname.slice(0,1) === '@'){
@@ -257,6 +308,7 @@ CSL_CHROME.prototype.setAttributeOnNodeIdentifiedByNameAttribute = function (myx
         node.setAttribute(attrname, val);
     }
 }
+
 CSL_CHROME.prototype.deleteNodeByNameAttribute = function (myxml,val) {
     var pos, len, node, nodes;
     nodes = myxml.childNodes;
@@ -270,22 +322,30 @@ CSL_CHROME.prototype.deleteNodeByNameAttribute = function (myxml,val) {
         }
     }
 }
+
 CSL_CHROME.prototype.deleteAttribute = function (myxml,attr) {
     myxml.removeAttribute(attr);
 }
+
 CSL_CHROME.prototype.setAttribute = function (myxml,attr,val) {
     if (!myxml.ownerDocument) {
         myxml = myxml.firstChild;
     }
+    // "unknown" to satisfy IE8, which crashes when setAttribute
+    // is checked directly as a property, and report its type as
+    // "unknown".
+    // Many thanks to Phil Lord for tracing the cause of the fault.
     if (["function", "unknown"].indexOf(typeof myxml.setAttribute) > -1) {
         myxml.setAttribute(attr, val);
     }
     return false;
 }
+
 CSL_CHROME.prototype.nodeCopy = function (myxml) {
     var cloned_node = myxml.cloneNode(true);
     return cloned_node;
 }
+
 CSL_CHROME.prototype.getNodesByName = function (myxml,name,nameattrval) {
     var ret, nodes, node, pos, len;
     ret = [];
@@ -293,18 +353,21 @@ CSL_CHROME.prototype.getNodesByName = function (myxml,name,nameattrval) {
     for (pos = 0, len = nodes.length; pos < len; pos += 1) {
         node = nodes.item(pos);
         if (nameattrval && !(this.hasAttributes(node) && node.getAttribute("name") == nameattrval)) {
+//        if (nameattrval && !(this.attributes && node.attributes.name && node.attributes.name.value == nameattrval)) {
             continue;
         }
         ret.push(node);
     }
     return ret;
 }
+
 CSL_CHROME.prototype.nodeNameIs = function (myxml,name) {
     if (name == myxml.nodeName) {
         return true;
     }
     return false;
 }
+
 CSL_CHROME.prototype.makeXml = function (myxml) {
     var ret, topnode;
     if (!myxml) {
@@ -314,12 +377,14 @@ CSL_CHROME.prototype.makeXml = function (myxml) {
     var nodetree = this.parser.parseFromString(myxml, "application/xml");
     return nodetree.firstChild;
 };
+
 CSL_CHROME.prototype.insertChildNodeAfter = function (parent,node,pos,datexml) {
     var myxml, xml;
     myxml = this.importNode(node.ownerDocument, datexml);
     parent.replaceChild(myxml, node);
      return parent;
 };
+
 CSL_CHROME.prototype.insertPublisherAndPlace = function(myxml) {
     var group = myxml.getElementsByTagName("group");
     for (var i = 0, ilen = group.length; i < ilen; i += 1) {
@@ -358,6 +423,7 @@ CSL_CHROME.prototype.insertPublisherAndPlace = function(myxml) {
         }
     }
 };
+
 CSL_CHROME.prototype.addMissingNameNodes = function(myxml) {
     var nameslist = myxml.getElementsByTagName("names");
     for (var i = 0, ilen = nameslist.length; i < ilen; i += 1) {
@@ -365,12 +431,15 @@ CSL_CHROME.prototype.addMissingNameNodes = function(myxml) {
         var namelist = names.getElementsByTagName("name");
         if ((!namelist || namelist.length === 0)
             && names.parentNode.tagName.toLowerCase() !== "substitute") {
+            
             var doc = names.ownerDocument;
             var name = doc.createElement("name");
             names.appendChild(name);
         }
     }
 };
+
+
 CSL_CHROME.prototype.addInstitutionNodes = function(myxml) {
     var names, thenames, institution, theinstitution, name, thename, xml, pos, len;
     names = myxml.getElementsByTagName("names");
@@ -408,6 +477,8 @@ CSL_CHROME.prototype.addInstitutionNodes = function(myxml) {
         }
     }
 };
+
+
 CSL_CHROME.prototype.flagDateMacros = function(myxml) {
     var pos, len, thenode, thedate;
     nodes = myxml.getElementsByTagName("macro");
@@ -419,3 +490,4 @@ CSL_CHROME.prototype.flagDateMacros = function(myxml) {
         }
     }
 };
+

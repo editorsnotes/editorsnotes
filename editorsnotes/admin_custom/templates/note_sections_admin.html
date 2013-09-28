@@ -8,22 +8,19 @@
   <script src="{% static "function/citeproc-js/xmldom.js" %}"></script>
   <script src="{% static "function/citeproc-js/citeproc.js" %}"></script>
   <script src="{% static "function/zotero.jquery.js" %}"></script>
+  <script src="{% static "function/zotero-jquery/zotero-functions.js" %}"></script>
   <script src="{% static "function/admin-bootstrap-base.js" %}"></script>
   <script src="{% static "function/admin-bootstrap-note-sections.js" %}"></script>
-{% endblock %}
-
-{% block js_nocompress %}
-  {% comment %}
-  This guy doesn't work on all browsers (or maybe any browsers?), so we're
-  keeping it separate to prevent any errors from stopping everything else.
-  {% endcomment %}
-  <script src="{% static "function/citeproc-js/xmle4x.js" %}"></script>
+  <script src="{% static "function/backbone/app.js" %}"></script>
+  <script src="{% static "function/backbone/models.js" %}"></script>
+  <script src="{% static "function/backbone/templates.js" %}"></script>
+  <script src="{% static "function/backbone/views.js" %}"></script>
 {% endblock %}
 
 {% block css %}
   <link rel="stylesheet" href="{% static "style/bootstrap-admin.css" %}" type="text/css" />
   <style type="text/css">
-    .citation-edit .citation-document * { display: inline !important }
+    #note-sections-container { padding: inherit 25px; }
   </style>
 {% endblock %}
 
@@ -33,16 +30,11 @@
 
   <div>{{ note.content|as_html }}</div>
 
-  <form method="post"> {% csrf_token %}
+  <div id="note-sections-edit-blah">
+    {% csrf_token %}
+    <div id="note-sections-container"></div>
+  </div>
 
-    <div style="margin: 1.75em 0 1em 0; padding: .75em; border: 1px solid #999;">
-      <h4 style="display: inline-block; margin: 0px 3px 0 0;">Add section:</h4>
-      <a class="btn" id="add-citation" href="#">Document citation</a>
-      <button class="btn btn-primary pull-right" type="submit">Save changes</button>
-    </div>
-
-    {% include "includes/sections_formset.html" %}
-
-  </form>
+  {% include "includes/wysihtml5_full_toolbar.html" with toolbar_id="note-section-toolbar"%}
 
 {% endblock %}

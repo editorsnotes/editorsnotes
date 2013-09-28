@@ -8545,6 +8545,11 @@ wysihtml5.views.View = Base.extend(
       }, 0);
     });
 
+    // -- proxy events --
+    dom.observe(element, ["keyup", "keydown", "keypress", "input"], function (event) {
+      that.parent.fire(event.type, event).fire(event.type + ':composer', event);
+    });
+
     // --------- neword event ---------
     dom.observe(element, "keyup", function(event) {
       var keyCode = event.keyCode;
@@ -8811,7 +8816,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
          * Calling focus() or blur() on an element doesn't synchronously trigger the attached focus/blur events
          * This is the case for focusin and focusout, so let's use them whenever possible, kkthxbai
          */
-        events = wysihtml5.browser.supportsEvent("focusin") ? ["focusin", "focusout", "change"] : ["focus", "blur", "change"];
+        events = wysihtml5.browser.supportsEvent("focusin") ? ["focusin", "focusout", "change", "keyup", "keydown", "keypress"] : ["focus", "blur", "change", "keyup", "keydown", "keypress"];
     
     parent.on("beforeload", function() {
       wysihtml5.dom.observe(element, events, function(event) {
@@ -9501,9 +9506,6 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
         }
       });
       
-      try {
-        console.log("Heya! This page is using wysihtml5 for rich text editing. Check out https://github.com/xing/wysihtml5");
-      } catch(e) {}
     },
     
     isCompatible: function() {

@@ -40,6 +40,12 @@ urlpatterns += patterns('',
     url(r'^', include('editorsnotes.main.urls')),
 )
 
+# API
+urlpatterns += patterns('',
+    url(r'^api/', include('editorsnotes.api.urls', namespace='api', app_name='api')),
+)
+
+
 urlpatterns += patterns('editorsnotes.djotero.views',
 #    url(r'^document/upload/$', 'import_zotero', name='import_zotero_view'),
 #    url(r'^document/upload/libraries/$', 'libraries', name='libraries_view'),
@@ -50,6 +56,7 @@ urlpatterns += patterns('editorsnotes.djotero.views',
     url(r'^user/zotero_info$', 'update_zotero_info', name='update_zotero_info_view'),
     url(r'^api/document/template/', 'zotero_template'),
     url(r'^api/document/blank/$', 'get_blank_item', name='get_blank_item_view'),
+    url(r'^api/document/itemtypes/$', 'get_item_types'),
     url(r'^api/document/csl/$', 'zotero_json_to_csl', name='zotero_json_to_csl_view'),
     url(r'^api/document/archives/$', 'api_archives', name='api_archives_view'),
 )

@@ -95,16 +95,28 @@ EditorsNotes.zotero.zoteroFormToObject = function ($form, sorted) {
       zoteroObject.itemType = fieldValue;
       sortedZoteroObject.fields.push({'itemType': fieldValue});
       break;
-    case 'creators':
     case 'tags':
+    case 'creators':
       if (!zoteroObject[fieldKey]) {
         zoteroObject[fieldKey] = [];
         fieldObject[fieldKey] = [];
         indexes[fieldKey] = sortedZoteroObject.fields.push(fieldObject);
       }
-      fieldValue = $field.find('input:hidden').val();
-      zoteroObject[fieldKey].push(JSON.parse(fieldValue));
-      sortedZoteroObject.fields[indexes[fieldKey] - 1].creators.push(JSON.parse(fieldValue));
+      if (fieldKey === 'tags') {
+        fieldValue = JSON.parse( $field.find('input:hidden').val() );
+      } else {
+        fieldValue = (function ($field) {
+          var creatorObj = {}
+            , attrs = $field.closest('.zotero-entry').find('.creator-attr')
+
+          attrs.each(function (idx, el) {
+            creatorObj[el.getAttribute('data-creator-key')] = el.value;
+          });
+          return creatorObj;
+        })($field);
+      }
+      zoteroObject[fieldKey].push(fieldValue);
+      sortedZoteroObject.fields[indexes[fieldKey] - 1].creators.push(fieldValue);
       break;
     default:
       fieldValue = $field.find('textarea').val();

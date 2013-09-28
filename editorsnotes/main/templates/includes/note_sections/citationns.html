@@ -1,13 +1,17 @@
 {% load display %}
 
-<div class="citation">
-  <div class="citation-document">
-    <i class="icon-file"></i>
-    <a href="{{ section.document.get_absolute_url }}">{{ section.document.as_html }}</a>
+<div class="note-section note-section-citation" id="citation-{{ section.document_id }}-{{ section.note_section_id }}">
+
+  <div class="citation-side">
+    <a href="#citation-{{ section.document_id }}-{{ section.note_section_id }}"><i class="icon-file"></i></a>
   </div>
-  {% if section.has_content %}
-  <div class="citation-notes">
-    {{ section.content|as_html }}
+
+  <div class="citation-main">
+    <div class="citation-document">
+      <a href="{{ section.document.get_absolute_url }}">{{ section.document.description|as_html }}</a>
+    </div>
+
+    <div class="note-section-text-content">{% if section.has_content %}{{ section.content|as_html }}{% endif %}</div>
   </div>
-  {% endif %}
+
 </div>

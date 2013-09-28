@@ -15,7 +15,7 @@ from lxml import etree
 from editorsnotes.djotero.models import ZoteroItem
 
 from .. import fields, utils
-from auth import ProjectPermissionsMixin
+from auth import ProjectPermissionsMixin, UpdatersMixin
 from base import CreationMetadata, LastUpdateMetadata, URLAccessible, Administered
 
 class DocumentManager(models.Manager):
@@ -34,7 +34,7 @@ FROM main_document AS part WHERE part.collection_id = main_document.id''',
 FROM main_transcript WHERE main_transcript.document_id = main_document.id )''' })
 
 class Document(LastUpdateMetadata, Administered, URLAccessible, 
-               ProjectPermissionsMixin, ZoteroItem):
+               ProjectPermissionsMixin, UpdatersMixin, ZoteroItem):
     u"""
     Anything that can be taken as evidence for (documentation of) something.
 

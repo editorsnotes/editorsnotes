@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from collections import Counter
+
 from django.contrib.auth.models import AbstractUser, Group
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
@@ -85,6 +87,19 @@ class User(AbstractUser, URLAccessible):
     @staticmethod
     def get_activity_for(user, max_count=50):
         return activity_for(user, max_count=50)
+
+class UpdatersMixin(object):
+    """
+    Mixin with method for determining all updaters of a model.
+    """
+    def get_all_updaters(self):
+        ct = ContentType.objects.get_for_model(self.__class__)
+        qs = reversion.models.Revision.objects\
+                .select_related('user', 'version')\
+                .filter(version__content_type_id=ct.id,
+                        version__object_id_int=self.id)
+        user_counter = Counter([revision.user for revision in qs])
+        return [user for user, count in user_counter.most_common()]
 
 class ProjectPermissionsMixin(object):
     """

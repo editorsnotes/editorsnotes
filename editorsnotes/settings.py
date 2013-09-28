@@ -122,10 +122,13 @@ INSTALLED_APPS = (
     'haystack',
     'compressor',
     'licensing',
+    'rest_framework',
+    'rest_framework.authtoken',
     'editorsnotes.main',
     'editorsnotes.djotero',
     #'editorsnotes.refine',
     'editorsnotes.admin_custom',
+    'editorsnotes.api',
 )
 
 STATICFILES_FINDERS = (
@@ -136,6 +139,14 @@ STATICFILES_FINDERS = (
 BROWSERID_CREATE_USER = 'editorsnotes.main.views.create_invited_user'
 
 LESSC_BINARY = 'lessc'
+
+REST_FRAMEWORK = {
+    'FILTER_BACKEND': 'editorsnotes.api.filters.HaystackFilterBackend',
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication'
+    )
+}
 
 # Add in local settings
 from settings_local import *

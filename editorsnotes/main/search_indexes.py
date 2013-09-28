@@ -33,12 +33,12 @@ class DocumentIndex(RealTimeSearchIndex):
     def prepare_project_slug(self, obj):
         return [obj.project.slug]
     def prepare(self, obj):
+
         self.prepared_data = super(DocumentIndex, self).prepare(obj)
 
-        if obj.zotero_data is None:
-            return self.prepared_data
+        zotero_data = json.loads(obj.zotero_data) \
+                if obj.zotero_data is not None else {}
 
-        zotero_data = json.loads(obj.zotero_data)
         for field in ['archive', 'publicationTitle', 'itemType']:
             if field in zotero_data:
                 self.prepared_data[field] = zotero_data[field]

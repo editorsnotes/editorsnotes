@@ -15,7 +15,6 @@
 
     {% compress css %}
     <link rel="stylesheet" href="{% static "style/main.less" %}" type="text/less"/>
-    <link rel="stylesheet" href="{% static "style/jquery-ui/jquery-ui-1.8.10.custom.css" %}" type="text/css"/>
     <link rel="stylesheet" href="{% static "style/font-awesome/font-awesome.css" %}" type="text/css"/>
     <link rel="stylesheet" href="{% static "style/openwebicons/css/openwebicons-bootstrap.css" %}" type="text/css"/>
     <link rel="stylesheet" href="{% static "style/bootstrap-custom.css" %}" type="text/css"/>
@@ -26,8 +25,9 @@
 
     {% compress js %}
     <script type="text/javascript" src="{% static "function/jquery/jquery-1.8.2.min.js" %}"></script>
-    <script type="text/javascript" src="{% static "function/jquery/jquery-ui-1.8.24.custom.min.js" %}"></script>
-    <script type="text/javascript" src="{% static "function/underscore-min.js" %}"></script>
+    <script type="text/javascript" src="{% static "function/jquery/jquery-ui-1.10.3.custom.min.js" %}"></script>
+    <script type="text/javascript" src="{% static "function/underscore.js" %}"></script>
+    <script type="text/javascript" src="{% static "function/backbone.js" %}"></script>
     <script type="text/javascript" src="{% static "function/jquery/jquery.timeago.js" %}"></script>
     <script type="text/javascript" src="{% static "function/jquery/jquery.ba-bbq.min.js" %}"></script>
     <script type="text/javascript" src="{% static "function/base.js" %}"></script>
@@ -62,6 +62,7 @@
             </form> 
             </ul>
 
+            {% with user=request.user %}
             {% if user.is_authenticated %}
             {% if user.email %}
             <input type="hidden" id="logged-in-user-email" value="{{ user.email }}" />
@@ -97,6 +98,7 @@
               <li><a href="/accounts/login/">Log in</a></li>
             </ul>
             {% endif %}
+            {% endwith %}
           </div>
         </div>
       </div>

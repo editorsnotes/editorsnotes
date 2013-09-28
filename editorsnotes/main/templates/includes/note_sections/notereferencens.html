@@ -1,0 +1,13 @@
+{% load display %}
+
+<div class="note-section note-reference-section">
+  <div class="note-reference-note">
+    <i class="icon-pencil"></i>
+    <a href="{{ section.note_reference.get_absolute_url }}">{{ section.note_reference.as_html|safe }}</a>
+  </div>
+  {% if section.has_content %}
+  <div class="note-section-content">
+    {{ section.content|as_html }}
+  </div>
+  {% endif %}
+</div>

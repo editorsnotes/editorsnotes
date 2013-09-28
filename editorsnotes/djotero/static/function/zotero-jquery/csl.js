@@ -5,7 +5,7 @@ EditorsNotes.CSL.createCSLEngine = function (format) {
     , citeproc
     , dateParser
     , bibdata = {}
-    , locales = EditorsNotes.CSL.locales
+    , locales = EditorsNotes.CSL.JSONLocales
     , runCite
 
   sys = {
@@ -19,7 +19,8 @@ EditorsNotes.CSL.createCSLEngine = function (format) {
 
   CSL.Output.Formats.text['@font-style/italic'] = '<em>%%STRING%%</em>';
 
-  citeproc = new CSL.Engine(sys, EditorsNotes.CSL.formats[format]);
+  citeproc = new CSL.Engine(sys, EditorsNotes.CSL.JSONFormats[format]);
+  EditorsNotes.CSL.currentEngine = citeproc;
   citeproc.setOutputFormat('text');
 
   dateParser = new CSL.DateParser();

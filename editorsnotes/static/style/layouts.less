@@ -1,8 +1,6 @@
 // Our layouts
 
-#main {
-  margin-bottom: 18px;
-}
+#main { margin-bottom: 18px; }
 
 // Navbars
 //---------
@@ -54,23 +52,15 @@
 
 // Tabs
 // -----
-.nav-tabs a {
-  color: @textColor;
-}
+.nav-tabs a { color: @textColor; }
 
 
 // Lists of models
 // ----------------
-.model-list > h4 {
-  margin-bottom: 1px;
-}
+.model-list > h4 { margin-bottom: 1px; }
 .model-list {
-  a {
-    color: @textColor;
-  }
-  li.show-all-link {
-    margin-top: 4px;
-  }
+  a { color: @textColor; }
+  li.show-all-link { margin-top: 4px; }
 }
 
 
@@ -89,6 +79,109 @@ td.zotero-key {
 #document-header {
   font-size: @fontSizeLarge;
   line-height: 22px;
+}
+
+// Note page
+// ----------
+span[class*="note-status-"] { font-weight: bold; }
+.note-status-hibernating { color: black; }
+.note-status-open { color: green; }
+.note-status-closed { color: red; }
+
+a.license-link {
+  color: black;
+  &:hover { color: black; }
+}
+
+.license-symbol {
+  display: inline-block;
+
+  font-style: normal;
+  font-weight: normal;
+  font-family: "OpenWeb Icons";
+  font-size: 28px;
+
+  position: relative;
+  left: -2px;
+  top: 6px;
+  margin-top: -5px;
+}
+
+#note-details {
+  .makeRow();
+  .well;
+  margin-left: 0 !important;
+
+  .about-license { 
+    border-bottom: 1px dashed @linkColor;
+    &:hover { text-decoration: none; color: @linkColor; }
+  }
+
+  #note-about {
+    .makeColumn(6);
+    width: 420px;
+    > div { padding: 6px 0; }
+    ul { margin-bottom: 0; }
+  }
+
+  #note-about, #note-authorship {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  #note-related-topics {
+    > span {
+      font-weight: bold;
+      border-bottom: 1px solid #999;
+      padding-bottom: 1px;
+      margin-bottom: 1px;
+      display: inline-block;
+      width: 240px;
+    }
+
+    li {
+      margin-bottom: 2px;
+      margin-left: 2em;
+      text-indent: -2em;
+    }
+  }
+
+  #note-authorship {
+    .makeColumn(5);
+    width: 420px;
+    .dl-horizontal;
+    ul { margin: 0; }
+    dt { width: 88px; }
+    dd { margin-left: 97px; }
+    dd, dt { padding: 6px 0; }
+  }
+}
+
+#note-description {
+  border: 1px solid #999;
+  border-radius: 2px;
+  padding: 0px 20px 18px;
+  margin: 2em 0;
+
+  p:last-of-type { margin-bottom: 0; }
+
+  &:before { 
+    content: "Description";
+
+    font-variant: small-caps;
+    font-weight: bold;
+    letter-spacing: 1px;
+
+    background-color: #fff;
+    border: 1px solid #999;
+    border-radius: 2px;
+    padding: 2px 4px;
+
+    position: relative;
+    top: -10px;
+    left: -6px;
+  }
+
 }
 
 
@@ -179,137 +272,146 @@ td.zotero-key {
 }
 
 
-// Admin
-//-------
+/*
+ * Note editing page
+ * ===================
+ */
 
-/******************************************************************** 
- * Citation formsets
- ********************************************************************/
-
-.content-separation-border {
-  border-top: 1px dotted #c0c0c0;
-  margin-top: 6px;
-  padding-top: 6px;
+// Mixin for any item that can be edited when clicked
+.editing-affordance {
+  cursor: pointer;
+  background-color: #f0f0f0;
 }
 
-// For editing & viewing citations (and editing footnotes)
-.citation,
-.footnote-edit {
-  margin-bottom: 4px;
-  border-radius: 2px;
-
-  .citation-document {
-    * {
-      display: inline;
-    }
-    a {
-      color: @textColor;
-    }
-    .icon-file {
-      margin: 0 2px;
-      color: #444;
-      font-size: 20px;
-      position: relative;
-      top: 1px;
-    }
-  }
-
-  .citation-notes,
-  .footnote-content {
-    border: 1px solid darken(@grayLighter, 7%);
-    padding : 3px 10px 6px;
-    margin-top: 2px;
-
-    &:empty {
-      border: none;
-      padding-bottom: 0px;
-      margin-bottom: -5px;
-    }
-    > last-child,
-    > div > :last-child {
-      margin-bottom: 0px;
-    }
-  }
-
-  .btn-toolbar {
-    .content-separation-border;
-  }
+// The placeholder the appears note sections are being sorted, or when a new
+// section is being created via dragging
+.section-placeholder {
+  display: block;
+  height: 64px;
+  margin: 8px 0;
+  text-align: center;
+  background: #f0f0f0;
 }
 
-.citation:not(.citation-edit):not(:last-of-type) {
-  margin-bottom: 1.25em;
-  &:after {
-    text-align: center;
-  }
+// Icon that, when clicked, triggers a modal to add a new object (i.e. a
+// note or document)
+.add-new-object {
+  text-indent: 0;
+  font-size: 18px;
+  padding: 5px;
+  position: relative;
+  top: 2px;
+  &:hover { color: @linkColor !important; text-decoration: none; }
 }
 
-// For editing citations and editing footnotes
-.citation-edit,
-.footnote-edit {
-  padding: 10px;
+// OK / Cancel row under wysihtml5 instances
+.edit-row {
+  .makeColumn(12);
+  width: 100%;
+  margin-left: 0;
+  margin-top: 12px;
+}
 
-  // Space at the bottom of editing citations & footnotes
-  &:last-child {
-    margin-bottom: 50px;
+/*---- NOTE SECTIONS ----*/
+  .note-section { .object-reference; }
+
+  // Don't let bottom margin of, say, <p> elements bleed out over the end of a
+  // note section. This might be a global rule somewhere.
+  .note-section-text-content > :last-child { margin-bottom: 0px; }
+
+  .add-section-icon {
   }
 
-  &:not([class*="active"]):hover {
-    cursor: pointer;
-  }
-
-  &:hover, &-active {
-    border-width: 2px;
+  // "Add section" toolbar
+  #citation-edit-bar {
+    margin-bottom: 1em;
+    padding: .75em;
     border: 1px solid #999;
-    padding: 9px;
-  }
 
-  [class$="-fields"] {
-    input, textarea {
+    i { vertical-align: middle; font-size: 22px; color: #333; }
+
+    .drag-placeholder {
+      position: absolute;
+      padding: 1.3em 0;
+      border: 1px solid #999;
+      background: #fff;
+      text-align: center;
+    }
+
+    h4 { display: inline-block; margin: 0 12px 0 0; }
+    .add-section {
+      .btn;
+      margin-right: 18px;
+      line-height: 26px;
+      padding-left: 20px;
+      padding-right: 20px;
+      min-width: 100px;
+    }
+    img.loader {
       display: none;
+      position: relative;
+      float: right;
+      top: 6px;
+      left: -10px;
     }
+    span.status-message {
+      display: none;
+      float: right;
+      font-size: 15px;
+      margin-top: 4px;
+      margin-right: 5px;
+    }
+
   }
 
-  .btn-toolbar {
-    padding-top: 8px;
+
+  // Only applies to note sections when the page is being edited
+  body.editing {
+
+    // Editing affordance when hovering over non-active section
+    .note-section:not([class*="active"]):hover { .editing-affordance; }
+    
+    #note-description:not([class*="active"]):hover { .editing-affordance; }
+
+    // Adjust margin & padding to allow for a border
+    .note-section[class*="active"] {
+      padding: 12px;
+      margin: 1.2em 0;
+      border: 1px solid black;
+    }
+
+    // For text-only sections, don't need a margin above the editing toolbar,
+    // since there's nothing above it.
+    .note-section-text .btn-toolbar { margin-top: 0px; }
+
+    // Include some whitespace at the bottom of the note section container
+    .note-section-list { padding-bottom: 200px; }
+
   }
 
+  #note-sections .ui-autocomplete-input { margin-bottom: 0; }
+
+/*---- END NOTE SECTIONS ----*/
+
+// Common item types in the zotero modal
+.common-item-types {
+  li {
+    .btn;
+    display: inline-block;
+    width: 175px;
+    margin: 8px 12px 12px;
+    padding: 8px 12px;
+  }
+
+  a { color: black; }
+  a:hover { text-decoration: none; }
 }
 
-// Specific to editing citations
-#citation-items {
-  .citation div, .citation p {
-    display: block;
+.add-document-zotero-data {
+  .zotero-entry {
+    margin-bottom: 0 !important;
+    label, div { display: inline-block; }
+    label { width: 150px; }
   }
-  &.sort-active .citation-edit {
-    max-height: 100px;
-    overflow: hidden;
-  }
-  .citation-placeholder {
-    height: 50px;
-    border-radius: 2px;
-    border: 1px dashed black;
-    margin: 8px 0;
-    text-align: center;
-    opacity: .5;
-
-    &:after {
-      position: relative;
-      top: 16px;
-      content: '(reposition here)';
-    }
-  }
-
-  .citation-document a.add-new-document {
-    color: black;
-    &:hover {
-      text-decoration: none;
-    }
-    i.icon-plus-sign {
-      font-size: 18px;
-      position: relative;
-      top: 2px;
-      left: 2px;
-    }
-  }
-
 }
+

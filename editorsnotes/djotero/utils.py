@@ -1,9 +1,12 @@
-from django.core.cache import cache
-from collections import OrderedDict
-from urllib2 import urlopen, HTTPError
-from lxml import etree
-import re
 import json
+import re
+from collections import Counter, OrderedDict
+from urllib2 import urlopen, HTTPError, Request
+
+from lxml import etree
+import requests
+
+from django.core.cache import cache
 
 NS = {'xhtml': 'http://www.w3.org/1999/xhtml',
       'zot' : "http://zotero.org/ns/api",
@@ -32,6 +35,28 @@ def get_libraries(zotero_uid, zotero_key):
         loc = x.xpath('./atom:link[@rel="self"]', namespaces=NS)[0].attrib['href'].replace(ZOTERO_BASE_URL, '')
         access['libraries'].append({'title' : title, 'location' : loc })
     return access
+
+def get_item_types():
+    url = ZOTERO_BASE_URL + '/itemTypes'
+    if not cache.get('item_types'):
+        resp = urlopen(url)
+        data = resp.read()
+        resp.close()
+        cache.set('item_types', data, 60 * 24 * 7)
+    data = json.loads(cache.get('item_types'))
+
+    from editorsnotes.main.models import Document
+    from haystack.query import SearchQuerySet
+    used_item_types = SearchQuerySet()\
+            .models(Document)\
+            .exclude(itemType='none')\
+            .values_list('itemType', flat=True)
+
+    return {
+        'itemTypes': data,
+        'common': [item_type for item_type, count in
+                   Counter(used_item_types).most_common()[:10]]
+    }
 
 def get_collections(zotero_key, loc, top):
     if top:

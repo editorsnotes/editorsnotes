@@ -1,0 +1,24 @@
+{% verbatim %}
+  <script id="citation-ns-template" type="text/template">
+    <div class="citation-document">
+      <i class="icon-file"></i>
+      <% if (typeof(ns.document) === "undefined") { %>
+        <input type="text"
+               search-target="documents"
+               class="document-autocomplete"
+               placeholder="Type to search for a document, or add a new one by clicking on the icon to the right."
+               style="margin: 0 4px; width: 550px; border-radius: 1px">
+       <a class="add-new-document" href="#">
+         <i class="icon-plus-sign"></i>
+       </a>
+        <div class="citation-document-selector"></div>
+      <% } else { %>
+        <div data-url="<%= ns.document %>" class="citation-document">
+          <%= ns.document_description %>
+        </div>
+      <% } %>
+    </div>
+
+    <div class="note-section-content"><%= ns.content %></div>
+  </script>
+{% endverbatim %}

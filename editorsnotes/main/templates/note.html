@@ -1,120 +1,87 @@
 {% extends "base.html" %}
-{% load typogrify display note_sections %}
+{% load typogrify display note_sections staticfiles %}
 
 {% block title %}: {{ note.title }}{% endblock %}
 
 {% block js %}
-<script type="text/javascript" src="{{ STATIC_URL }}function/jquery/jquery.ba-bbq.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}function/note.js"></script>
-{% endblock %}
 
-{% block css %}
-<style type="text/css">
-  .zotero-information-edit .control-group {
-    margin-bottom: 0px !important;
-  }
-  #id_description {
-    width: 90%;
-    height: 50px;
-  }
-  .note-status {
-    font-weight: bold;
-    padding-bottom: 1em;
-    margin-bottom: 1em;
-  }
-  .note-status-hibernating {
-    color: black;
-  }
-  .note-status-open {
-    color: green;
-  }
-  .note-status-closed {
-    color: red;
-  }
-  .zotero-container {
-    height: 355px;
-    overflow-y: scroll;
-  }
-  
-</style>
+  {% if can_edit %}
+  <script type="text/javascript" src="{% static "function/wysihtml5/wysihtml5-0.3.0.js" %}"></script>
+  <script type="text/javascript" src="{% static "function/wysihtml5/parser_rules.js" %}"></script>
+  <script type="text/javascript" src="{% static "function/zotero-jquery/zotero-functions.js" %}"></script>
+
+  <script type="text/javascript" src="{% static "function/backbone/app.js" %}"></script>
+  <script type="text/javascript" src="{% static "function/backbone/models.js" %}"></script>
+  <script type="text/javascript" src="{% static "function/backbone/templates.js" %}"></script>
+  <script type="text/javascript" src="{% static "function/backbone/views.js" %}"></script>
+  <script type="text/javascript" src="{% static "function/note.js" %}"></script>
+  {% endif %}
+
 {% endblock %}
 
 {% block content %}
-    <header>
-      <h2>{{ note.title|typogrify }}</h2>
-      {% include "includes/related_topics_header.html" with related_topics=topics %}
-    </header>
+    <div id="note">
 
-    <ul id="tabs" class="nav nav-tabs">
-      <li><a href="#about-tab">About</a></li>
-      <li><a href="#note-tab">Note</a></li>
-      <li><a href="#history-tab">History</a></li>
-    </ul>
+      <header><h2>{{ note.title|typogrify }}</h2></header>
 
-    <div class="tab-content">
-      <section id="about-tab" class="tab-pane">
-        <div class="note-status">
-          Note status:
-          {% if note.status == '0' %}<span class="note-status-closed">Closed</span>
-          {% elif note.status == '1' %}<span class="note-status-open">Open</span>
-          {% else %}<span class="note-status-hibernating">Hibernating</span>{% endif %}
-        </div>
+      <section id="note-details">
 
-        {{ note.content|as_html }}
+        <div id="note-about">
 
-        {% if note.assigned_users.all %}
-        <hr/>
-        <strong>Assigned users:</strong>
-
-        <div>
-          <ul class="unstyled">
-            {% for u in note.assigned_users.all %}
-            <li>{{ u|as_link }}</li>
-            {% endfor %}
-          </ul>
-        </div>
-        {% else %}
-        {% endif %}
-
-          <br/>
-
-          <div class="row edit-row">
-            <div class="span6 edit-button">
-              {% if request.user.is_authenticated %}
-              <a class="btn" href="{{ note.get_admin_url }}">Edit note details</a>
-              <a class="btn" href="{% url "admin:main_note_sections_change" note.project.slug note.id %}">Edit note content</a>
-              {% endif %}
-            </div>
-            <div class="span6 edit-history">
-              {{ note|display_edit_history }}
-            </div>
+          <div>
+            <strong>This note is </strong>
+            {% if note.status == '0' %}<span class="note-status-closed">closed</span>
+            {% elif note.status == '1' %}<span class="note-status-open">open</span>
+            {% else %}<span class="note-status-hibernating">hibernating</span>{% endif %}
           </div>
 
-      </section>
+          <div id="note-related-topics">
+            <span>Related topics</span>
+            <ul class="unstyled">
+              {% for topic in topics %}
+              <li>{{ topic|as_link }}</li>
+              {% empty %}
+              <span class="quiet">none</span>
+              {% endfor %}
+            </ul>
+          </div>
 
-      <section id="note-tab" class="tab-pane active">
-        <div id="note-sections">
-          {% for section in sections %}
-          {% include section|ns_template_name %}
-          {% empty %}
-          <span class="quiet">This note is empty</span>
-          {% endfor %}
         </div>
+
+        <dl id="note-authorship" class="dl-horizontal">
+          <dt>Project</dt>
+          <dd>{{ note.project|as_link }}</dd>
+
+          {% with authors=note.get_all_updaters %}
+          <dt>Author{% if authors|length > 1 %}s{% endif %}</dt>
+          <dd>
+            <ul class="unstyled">
+            {% for author in authors %}<li>{{ author|as_link }}</li>{% endfor %}
+            </ul>
+          </dd>
+          {% endwith %}
+
+          <dt>License</dt>
+          <dd>
+          <a class="license-link" href="{{ license.url }}" title="{{ license }}">
+            {% for symbol in license.symbols %}<i class="license-symbol">{{ symbol }}</i>{% endfor %}
+          </a>
+          </dd>
+
+          <dt>Last updated</dt>
+          <dd>{{ note.last_updated }} (<a href="#">view history</a>)</dd>
+        </dl>
       </section>
 
-      <section id="history-tab" class="tab-pane">
-        <p>{{ history|length }} revision{% if history|length == 1 %}{% else %}s{% endif %}; most recent listed first.</p>
-        <ol>
-        {% for version in history %}
-          {% with fields=version.field_dict %}
-          <li>
-            {{ fields.last_updated|date }} by {{ fields.last_updater }}
-            {% comment %}(<a href="history/?compare={{ version.revision_id }}">compare</a>){% endcomment %}
-          </li>
-          {% endwith %}
-        {% endfor %}
-        </ol>
+      <section id="note-description">
+        {{ note.content|as_html }}
+      </section>
+
+      <section id="note-sections">
+        {% for section in sections %}{% include section|ns_template_name %}{% endfor %}
       </section>
     </div>
+
+    {% if can_edit %}<div style="display: none;">{% csrf_token %}</div>{% endif %}
 
 {% endblock %}

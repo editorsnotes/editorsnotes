@@ -1,5 +1,3 @@
-from collections import Counter
-
 from django.conf import settings
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
@@ -8,19 +6,20 @@ from django.db import models, transaction
 from licensing.models import License
 from lxml import etree
 from model_utils.managers import InheritanceManager
-from reversion.models import Revision
+import reversion
 
 from .. import fields
-from auth import ProjectPermissionsMixin
+from auth import ProjectPermissionsMixin, UpdatersMixin
 from base import Administered, LastUpdateMetadata, URLAccessible
 
 NOTE_STATUS_CHOICES = (
-    ('0', 'Closed'),
-    ('1', 'Open'),
-    ('2', 'Hibernating')
+    ('0', 'closed'),
+    ('1', 'open'),
+    ('2', 'hibernating')
 )
 
-class Note(LastUpdateMetadata, Administered, URLAccessible, ProjectPermissionsMixin):
+class Note(LastUpdateMetadata, Administered, URLAccessible,
+           ProjectPermissionsMixin, UpdatersMixin):
     u""" 
     Text written by an editor or curator. The text is stored as XHTML,
     so it may have hyperlinks and all the other features that XHTML
@@ -48,14 +47,6 @@ class Note(LastUpdateMetadata, Administered, URLAccessible, ProjectPermissionsMi
         return topic.id in self.topics\
                 .select_related('container')\
                 .values_list('container__topic_id', flat=True)
-    def get_all_updaters(self):
-        note_ct = ContentType.objects.get_for_model(Note)
-        qs = Revision.objects\
-                .select_related('user', 'version')\
-                .filter(version__content_type_id=note_ct.id,
-                        version__object_id_int=self.id)
-        user_counter = Counter([revision.user for revision in qs])
-        return [user for user, count in user_counter.most_common()]
 
 class NoteSection(LastUpdateMetadata, ProjectPermissionsMixin):
     u"""
@@ -131,3 +122,11 @@ class NoteReferenceNS(NoteSection):
         return u'Note section -- reference -- {}'.format(self.note_reference)
     def has_content(self):
         return self.content is not None
+
+reversion.register(Note)
+
+# to make this extendable to other note sections, should make this introspective
+# or some such eventually
+reversion.register(CitationNS, follow=['notesection_ptr'])
+reversion.register(TextNS, follow=['notesection_ptr'])
+reversion.register(NoteReferenceNS, follow=['notesection_ptr'])

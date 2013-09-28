@@ -177,6 +177,10 @@ def get_blank_item(request):
     new_form = form.render('', blank_item)
     return HttpResponse(new_form, mimetype='text/plain')
 
+def get_item_types(request):
+    types = utils.get_item_types()
+    return HttpResponse(json.dumps(types), mimetype='application/json')
+
 def get_creator_types(request):
     if not request.is_ajax() or not request.GET.get('itemType', False):
         return HttpResponseBadRequest()

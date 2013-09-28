@@ -1,4 +1,3 @@
-
 var EditorsNotes = {};
 
 $(document).ready(function () {
@@ -10,16 +9,10 @@ $(document).ready(function () {
     $('#bottom-nav').toggle();
   }); 
 
-  var truncateChars = function(text, l) {
-    if (typeof(l) == 'undefined') {
-      var l = 100;
-    }
-    if (text.length > l) {
-      return text.substr(0, l/2) + ' ... ' + text.substr(-(l/2));
-    }
-    else {
-      return text;
-    }
+  var truncateChars = function(text, length) {
+    var l = length || 100;
+    return text.length < l ? text : 
+      text.substr(0, l/2) + ' ... ' + text.substr(-(l/2));
   }
 
   var baseAutocompleteOptions = {

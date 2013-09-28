@@ -1,0 +1,18 @@
+{% verbatim %}
+  <script id="note-reference-ns-template" type="text/template">
+      <div class="note-reference-note">
+        <em>Note: </em>
+        <% if (typeof(ns) === "undefined") { %>
+          <div class="note-reference-selector"></div>
+        <% } else { %>
+          <%= ns.note_reference_title %>
+        <% } %>
+      </div>
+
+      <div class="note-section-content">
+        <% if (typeof(ns) !== "undefined" && ns.content !== undefined ) { %>
+        <%= ns.content %>
+        <% } %>
+      </div>
+  </script>
+{% endverbatim %}

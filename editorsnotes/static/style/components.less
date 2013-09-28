@@ -1,0 +1,70 @@
+.object-reference {
+  .makeRow();
+
+  padding: .75em;
+  margin-left: 0;
+
+  > div[class*='-side'] {
+    .makeColumn();
+    width: 16px;
+    margin-left: 0;
+    line-height: 19px;
+    i { font-size: 24px; color: #333; }
+  }
+
+  > div[class*='-main'] {
+
+    .makeColumn(11);
+    width: 880px;
+    margin-left: 6px;
+    padding-left: 6px;
+    border-left: 1px solid #999;
+
+    > :first-child {
+      display: inline-block;
+      text-indent: -2.5em;
+      margin-left: 2.5em;
+      a { color: @textColor; }
+      * { display: inline; }
+    }
+
+    > [class*='-text-content'], > .btn-toolbar {
+      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px dotted #ccc;
+    }
+
+    > .btn-toolbar { padding-top: 7px; margin-bottom: 7px; }
+
+    > [class*='-text-content']:empty {
+      margin: 0;
+      padding: 0;
+      border: none;
+    }
+
+  }
+}
+
+.ui-autocomplete {
+  border: 1px solid #aaa;
+  background: #fff;
+  max-width: 750px;
+  max-height: 300px;
+  border-radius: 2px;
+  left: 0;
+
+  .ui-menu-item {
+    padding: 8px;
+    cursor: pointer;
+    &:hover { background: #f0f0f0; }
+    &:not(:last-of-type) { border-bottom: 1px solid #f0f0f0; }
+
+    a {
+      display: block;
+      color: #333;
+      text-decoration: none;
+    }
+    a * { margin: 0; display: inline; }
+  }
+
+}
