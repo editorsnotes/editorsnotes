@@ -2,7 +2,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
-from haystack.query import SearchQuerySet
 
 from editorsnotes.djotero.utils import as_readable, type_map
 

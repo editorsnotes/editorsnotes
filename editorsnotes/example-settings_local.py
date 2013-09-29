@@ -10,6 +10,16 @@ POSTGRES_DB = {
     'HOST': '',
     'PORT': ''
 }
+
+ELASTICSEARCH_ENABLED = True
+ELASTICSEARCH_INDEX_NAME = 'editorsnotes'
+ELASTICSEARCH_URLS = 'http://127.0.0.1:9200'
+# As defined in pyelasticsearch, ELASTICSEARCH_URLS should be:
+#
+# A URL or iterable of URLs of ES nodes. These are full URLs with port numbers,
+# like ``http://elasticsearch.example.com:9200``.
+#
+
 SITE_URL = '127.0.0.1'
 
 DEBUG = True
@@ -38,7 +48,6 @@ MANAGERS = ADMINS
 
 # MEDIA_ROOT = ''
 # STATIC_ROOT = ''
-# HAYSTACK_XAPIAN_PATH = ''
 
 # Point this to the Less CSS compiler if it is not on PATH
 # LESSC_BINARY = ''

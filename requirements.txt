@@ -3,13 +3,12 @@ Django==1.5.1
 South==0.7.6
 django-browserid==0.7.1
 django_compressor==1.3
-django-haystack==1.2.7
-xapian-haystack==1.1.5beta
 django-model-utils==1.3.0
 django-reversion==1.7
 -e git+ssh://git@github.com/editorsnotes/django-licensing#egg=licensing
 djangorestframework==2.2.5
 
+pyelasticsearch==0.6
 BeautifulSoup<4.0
 lxml==3.0.2
 cssselect==0.8

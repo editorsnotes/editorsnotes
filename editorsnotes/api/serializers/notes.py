@@ -125,8 +125,8 @@ class SectionOrderingField(serializers.WritableField):
         return 
 
 class NoteStatusField(serializers.WritableField):
-    def to_native(self, obj):
-        return self.parent.object.get_status_display().lower()
+    def field_to_native(self, obj, field_name):
+        return obj.get_status_display().lower()
     def from_native(self, data):
         status_choice = [ val for val, label in NOTE_STATUS_CHOICES
                           if label.lower() == data.lower() ]

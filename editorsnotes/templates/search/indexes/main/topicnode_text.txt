@@ -1,8 +1,0 @@
-{% load display %}
-{{ object.preferred_name }}
-{% for container in object.project_containers.all %}
-{{ container.preferred_name }}
-{% if container.has_summay %}
-{{ container.summary|as_text }}
-{% endif %}
-{% endfor %}

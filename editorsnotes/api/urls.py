@@ -17,4 +17,5 @@ urlpatterns = patterns('',
     url(r'^$', views.base.root, name='api-root'),
     url(r'^auth-token/$', 'rest_framework.authtoken.views.obtain_auth_token', name='obtain-auth-token'),
     url(r'^projects/(?P<project_slug>\w+)/', include(project_specific_patterns)),
+    url(r'^search/$', views.SearchView.as_view(), name='api-search')
 )

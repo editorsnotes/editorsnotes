@@ -6,7 +6,7 @@ and make sure you have the following dependencies
 
 * libxml2
 * libxslt
-* [Xapian](http://xapian.org/download) with Python bindings
+* ElasticSearch
 * [Less](http://lesscss.org) CSS compiler
 * Optional: [Watchdog](http://packages.python.org/watchdog/), for use with the `fab watch_static` command to automatically collect and compile static files as they are changed.
 

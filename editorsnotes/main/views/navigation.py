@@ -10,8 +10,9 @@ from django.http import (
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
-from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from PIL import Image, ImageDraw, ImageFont
+
+from editorsnotes.search import en_index
 
 from ..forms import FeedbackForm
 from ..models.auth import Project
@@ -42,30 +43,15 @@ reel_numbers = re.compile(r'(\S+):(\S+)')
 ignored_punctuation = '!#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
 
 def search(request):
-    query = ''
-    results = EmptySearchQuerySet()
 
-    if request.GET.get('q'):
-        query = request.GET.get('q')
-        match = reel_numbers.search(query)
-        if match:
-            # so we can match reel numbers exactly
-            query = reel_numbers.sub(r'"\1 \2"', query)
-        def filter(c):
-            if c in ignored_punctuation: return ' '
-            return c
-        query = ''.join([filter(c) for c in query])
-        if len(query) > 0:
-            results = SearchQuerySet().auto_query(query).load_all()
-        if match:
-            # restore the original form of the query so highlighting works
-            query = query.replace('"%s %s"' % match.group(1,2), match.group(0))
-
-    o = {
-        'results': results,
-        'query': query,
-    }
+    q = request.GET.get('q', {'query': {'match_all': {}}})
+    results = en_index.search(q, highlight=True, size=50)
     
+    o = {
+        'results': results['hits']['hits'],
+        'query': q if isinstance(q, basestring) else None
+    }
+
     return render_to_response(
         'search.html', o, context_instance=RequestContext(request))
 

@@ -1,3 +1,0 @@
-{% load display %}
-{{ object.footnoted_text }}
-{{ object.content|as_text }}

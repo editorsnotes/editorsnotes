@@ -1,6 +1,5 @@
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
-from haystack.query import SearchQuerySet
 import reversion
 
 from ..models.notes import Note

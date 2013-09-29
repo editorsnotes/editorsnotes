@@ -1,9 +1,10 @@
 from editorsnotes.main.models.documents import Document
 
-from .base import BaseListAPIView, BaseDetailView, CreateReversionMixin
+from .base import (BaseListAPIView, BaseDetailView, CreateReversionMixin,
+                   ElasticSearchRetrieveMixin, ElasticSearchListMixin)
 from ..serializers import DocumentSerializer
 
-class DocumentList(BaseListAPIView, CreateReversionMixin):
+class DocumentList(BaseListAPIView, ElasticSearchListMixin, CreateReversionMixin):
     model = Document
     serializer_class = DocumentSerializer
     def pre_save(self, obj):

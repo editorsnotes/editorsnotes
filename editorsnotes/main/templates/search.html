@@ -2,7 +2,7 @@
 
 {% block title %}: Results for '{{ query }}'{% endblock %}
 
-{% load highlight display typogrify %}
+{% load render_search_results display typogrify %}
 
 {% block js %}
 <script type="text/javascript" src="{{ STATIC_URL }}function/facets.js"></script>
@@ -31,6 +31,12 @@
   .searchresult {
     margin-bottom: .75em;
   }
+  .searchresult .fragment {
+    margin-bottom: 4px;
+  }
+  .searchresult .fragment * {
+    display: inline;
+  }
 </style>
 {% endblock %}
 
@@ -41,18 +47,7 @@
   <p id="message">Search results for <em>{{ query }}</em>:</p>
   <ol id="results" class="span-18 last">
     {% for result in results %}
-    <li data-model="{{ result.verbose_name }}" class="searchresult">
-      {{ result.verbose_name }}:
-      {{ result.object|as_link }}
-      <div>
-        {% highlight result.text with query %}
-      </div>
-      {% if result.verbose_name == 'Note' %}
-        {% with result.object as note %}
-          {% include "note_topics.include" %}
-        {% endwith %}
-      {% endif %}
-    </li>
+      {{ result|render_search_result|safe }}
     {% endfor %}
   </ol>
   {% else %}

@@ -5,8 +5,6 @@ from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 from django.views.generic.base import RedirectView
 
-from haystack.query import SearchQuerySet
-
 from .. import utils
 from ..models.auth import Project
 from ..models.documents import Document, Citation

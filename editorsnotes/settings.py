@@ -52,9 +52,6 @@ AUTHENTICATION_BACKENDS = (
     'django_browserid.auth.BrowserIDBackend',
 )
 
-HAYSTACK_SITECONF = 'editorsnotes.search_sites'
-HAYSTACK_SEARCH_ENGINE = 'xapian'
-
 
 #################
 # Path settings #
@@ -76,7 +73,6 @@ try:
 except ImportError:
     STORAGE_PATH = EN_PROJECT_PATH
 
-HAYSTACK_XAPIAN_PATH = os.path.abspath(os.path.join(STORAGE_PATH, 'searchindex'))
 MEDIA_ROOT = os.path.abspath(os.path.join(STORAGE_PATH, 'uploads'))
 STATIC_ROOT = os.path.abspath(os.path.join(STORAGE_PATH, 'static'))
 
@@ -119,7 +115,6 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'reversion',
     'south',
-    'haystack',
     'compressor',
     'licensing',
     'rest_framework',
@@ -129,6 +124,7 @@ INSTALLED_APPS = (
     #'editorsnotes.refine',
     'editorsnotes.admin_custom',
     'editorsnotes.api',
+    'editorsnotes.search',
 )
 
 STATICFILES_FINDERS = (
@@ -141,7 +137,7 @@ BROWSERID_CREATE_USER = 'editorsnotes.main.views.create_invited_user'
 LESSC_BINARY = 'lessc'
 
 REST_FRAMEWORK = {
-    'FILTER_BACKEND': 'editorsnotes.api.filters.HaystackFilterBackend',
+    #'FILTER_BACKEND': 'editorsnotes.api.filters.HaystackFilterBackend',
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication'
