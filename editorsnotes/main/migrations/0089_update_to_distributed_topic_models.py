@@ -524,7 +524,7 @@ class Migration(DataMigration):
             if container_created:
                 revision_id = create_new_revision(
                     ta.creator_id, ta.created,
-                    'TopicContainer created for topic {} by project {}.'.format(
+                    u'TopicContainer created for topic {} by project {}.'.format(
                         ta.topic.preferred_name, pslug_for_pid(project, orm)))
                 container_creator, container_created_time = \
                         container_creation[(container_id, project)]

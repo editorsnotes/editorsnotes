@@ -33,7 +33,7 @@ BEGIN
 			);
             newdata := regexp_replace(
                 newdata,
-                '(?:, )?"affiliated_projects": \[.*?\]',
+                '(?:, )?"affiliated_projects": \[[^\]]+],?',
                 ''
             );
 			EXECUTE 'UPDATE reversion_version SET serialized_data = '
