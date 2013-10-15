@@ -9,12 +9,23 @@
   </div>
   <div class="facets {% if not filtered %}hide{% endif %}">
     <div class="span12" id="note-facets-project">
-      <h6>Projects</h6>
+      <h6>Project</h6>
       <ul class="unstyled">
-      {% for p, count in project_facets %}
+      {% for project in project_facets %}
       <li>
-        <input type="checkbox" name="project" value="{{ p.slug }}">&nbsp;
-        {{ p|as_link }} ({{ count }})
+        <input type="checkbox" name="project" value="{{ project.term }}">&nbsp;
+        {{ project.term }} ({{ project.count }})
+      </li>
+      {% endfor %}
+      </ul>
+    </div>
+    <div class="span12" id="note-facets-project">
+      <h6>Status</h6>
+      <ul class="unstyled">
+      {% for status in status_facets %}
+      <li>
+        <input type="checkbox" name="note_status" value="{{ status.term }}">&nbsp;
+        {{ status.term|title }} ({{ status.count }})
       </li>
       {% endfor %}
       </ul>
@@ -22,18 +33,18 @@
     <div class="span12" id="note-facets-topic">
       <h6>Topics</h6>
       <ul class="span6 unstyled">
-      {% for t, count in topic_facets_1 %} 
+      {% for topic in topic_facets_1 %} 
         <li>
-          <input type="checkbox" name="topic" value="{{ t.id }}">&nbsp;
-          {{ t|as_link }}&nbsp;({{ count }})
+          <input type="checkbox" name="topic" value="{{ topic.term }}">&nbsp;
+          {{ topic.term }}&nbsp;({{ topic.count }})
         </li>
       {% endfor %}
       </ul>
       <ul class="span6 unstyled">
-      {% for t, count in topic_facets_2 %} 
+      {% for topic in topic_facets_2 %} 
         <li>
-          <input type="checkbox" name="topic" value="{{ t.id }}">&nbsp;
-          {{ t|as_link }}&nbsp;({{ count }})
+          <input type="checkbox" name="topic" value="{{ topic.term }}">&nbsp;
+          {{ topic.term }}&nbsp;({{ topic.count }})
         </li>
       {% endfor %}
       </ul>
@@ -57,10 +68,8 @@
   <div class="span12 row">
     <ul class="unstyled span6" id="note-list-1">
     {% for note in notes %}
-    <li class="note" date-modified="{{ note.last_updated|date:"Ymd" }}">
-        <a href="{% url "note_view" note_id=note.pk project_slug=note.project_slug.0 %}">
-          {{ note.title }}
-        </a>
+      <li class="note" date-modified="{{ note.last_updated }}">
+        <a href="{{ note.url }}">{{ note.title }}</a>
       </li>
     {% endfor %}
     </ul>

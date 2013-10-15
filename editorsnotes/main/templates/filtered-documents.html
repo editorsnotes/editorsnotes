@@ -10,8 +10,8 @@
     <div class="facets-available">
       <ul>
         <li data-facet-toggle="itemType"><i class="icon-plus"></i>Item type</li>
-        <li data-facet-toggle="related_topic_id"><i class="icon-plus"></i>Related topic</li>
-        <li data-facet-toggle="project_id"><i class="icon-plus"></i>Project</li>
+        <li data-facet-toggle="topic"><i class="icon-plus"></i>Related topic</li>
+        <li data-facet-toggle="project"><i class="icon-plus"></i>Project</li>
         <li data-facet-toggle="archive"><i class="icon-plus"></i> Archive</li>
         <li data-facet-toggle="creators"> <i class="icon-plus"></i>Creator</li>
         <li data-facet-toggle="publicationTitle"><i class="icon-plus"></i>Publication title</li>
@@ -21,8 +21,8 @@
     <div class="facet-form">
       <div class="facet-selection">
         {% create_facet_field "Item Type" facets.itemType %}
-        {% create_facet_field "Related Topic" facets.related_topic_id %}
-        {% create_facet_field "Project" facets.project_id %}
+        {% create_facet_field "Related Topic" facets.topic %}
+        {% create_facet_field "Project" facets.project %}
         {% create_facet_field "Containing Archive" facets.archive %}
         {% create_facet_field "Creator" facets.creators %}
         {% create_facet_field "Publication Title" facets.publicationTitle %}
@@ -47,7 +47,7 @@
     <ul class="unstyled model-list" id="document-list">
     {% for document in documents %}
     <li class="document">
-      <a href="{% url "document_view" project_slug=document.project_slug document_id=document.pk %}">{{ document.title }}</a>
+      <a href="{{ document.url }}">{{ document.description|safe }}</a>
     </li>
     {% endfor %}
     </ul>

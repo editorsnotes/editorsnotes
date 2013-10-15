@@ -145,8 +145,8 @@ class NoteSerializer(ReversionSerializerMixin, RelatedTopicSerializerMixin,
     sections = NoteSectionField(many=True)
     class Meta:
         model = Note
-        fields = ('id', 'title', 'url', 'project', 'updaters', 'topics',
-                  'content', 'status', 'section_ordering', 'sections',)
+        fields = ('id', 'title', 'url', 'project', 'last_updated', 'updaters',
+                  'topics', 'content', 'status', 'section_ordering', 'sections',)
 
 class MinimalNoteSerializer(ReversionSerializerMixin, RelatedTopicSerializerMixin,
                             serializers.ModelSerializer):

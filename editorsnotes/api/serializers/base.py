@@ -16,7 +16,8 @@ class ProjectSlugField(Field):
     read_only = True
     def field_to_native(self, obj, field_name):
         project = obj.get_affiliation()
-        return project.slug
+        return { 'name': project.name,
+                 'url': project.get_absolute_url() }
 
 class UpdatersField(Field):
     read_only = True

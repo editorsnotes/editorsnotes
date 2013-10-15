@@ -5,11 +5,13 @@ from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 from django.views.generic.base import RedirectView
 
+from editorsnotes.search import en_index
+
 from .. import utils
 from ..models.auth import Project
 from ..models.documents import Document, Citation
 from ..models.notes import Note
-from ..models.topics import Topic, TopicNode
+from ..models.topics import Topic, TopicNode, ProjectTopicContainer
 
 def _sort_citations(instance):
     cites = { 'all': [] }
@@ -47,31 +49,30 @@ def all_topics(request, project_slug=None):
 
 def topic_node(request, topic_node_id):
     o = {}
-    node_qs = TopicNode.objects\
-            .prefetch_related('project_containers__project')\
-            .select_related('creator', 'last_updater', 'project_containers')
-    o['topic'] = topic = get_object_or_404(node_qs, id=topic_node_id)
-    o['projects'] = [c.project for c in o['topic'].project_containers.all()]
-    o['related_topics'] = topic.related_objects(TopicNode)
-    o['notes'] = topic.related_objects(Note)\
-            .select_related('project')\
-            .prefetch_related('topics__container__project',
-                              'topics__container__topic')
-    document_ids = SearchQuerySet()\
-            .models(Document)\
-            .filter(related_topic_id=topic.id)\
-            .values_list('pk', flat=True)
-    o['documents'] = Document.objects.filter(id__in=document_ids)
-    o['summaries'] = [container.summary for container in
-                      topic.project_containers.all() 
-                      if container.has_summary()]
-    o['editable_project_containers'] = [
-        container for container in topic.project_containers.all()
-        if request.user.is_authenticated() and request.user.has_project_perm(
-            container.project, 'main.change_projecttopiccontainer')]
-            
+    node_qs = TopicNode.objects.select_related()
+    o['topic_node'] = get_object_or_404(node_qs, id=topic_node_id)
     return render_to_response(
-        'topic2.html', o, context_instance=RequestContext(request))
+        'topic_node.html', o, context_instance=RequestContext(request))
 
-def project_topic(request, project_slug, topic_node_id):
-    return HttpResponse('hi')
+def topic(request, project_slug, topic_node_id):
+    o = {}
+    topic_qs = ProjectTopicContainer.objects\
+            .select_related('creator', 'last_updater', 'project')
+    o['topic'] = topic = get_object_or_404(topic_qs,
+                                           topic_id=topic_node_id,
+                                           project__slug=project_slug)
+    o['projects'] = topic.project
+
+    topic_query = {'query': {'term': {'serialized.topics.url':
+                                      topic.get_absolute_url() }}}
+
+    model_searches = ( en_index.search_model(model, topic_query) for model in
+                       (Document, Note, ProjectTopicContainer) )
+
+    o['documents'], o['notes'], o['related_topics'] = (
+        [ result['_source']['serialized'] for result in search['hits']['hits'] ]
+        for search in model_searches
+    )
+
+    return render_to_response(
+        'topic.html', o, context_instance=RequestContext(request))

@@ -137,13 +137,15 @@ class ProjectTopicContainer(LastUpdateMetadata, URLAccessible,
         app_label = 'main'
         unique_together = ('project', 'preferred_name')
     def as_text(self):
-        return '({}): {}'.format(self.project.slug, self.preferred_name)
+        return self.preferred_name
     @models.permalink
     def get_absolute_url(self):
-        return ('project_topic_view', [self.project.slug, self.topic_id])
+        return ('topic_view', [self.project.slug, self.topic_id])
     def get_admin_url(self):
         return reverse(
             'admin:main_topic_change', args=(self.project.slug, self.topic_id))
+    def get_affiliation(self):
+        return self.project
     def has_summary(self):
         return self.summary is not None
     def validate_unique(self, exclude=None):

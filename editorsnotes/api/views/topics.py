@@ -1,10 +1,20 @@
 from django.shortcuts import get_object_or_404
+
 from rest_framework.mixins import CreateModelMixin
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 
 from editorsnotes.main.models.topics import ProjectTopicContainer, TopicNode
 
 from .base import BaseListAPIView, BaseDetailView
-from ..serializers.topics import TopicSerializer
+from ..serializers.topics import TopicSerializer, TopicNodeSerializer
+
+class TopicNodeList(ListAPIView):
+    model = TopicNode
+    serializer_class = TopicNodeSerializer
+
+class TopicNodeDetail(RetrieveAPIView):
+    model = TopicNode
+    serializer_class = TopicNodeSerializer
 
 class TopicList(BaseListAPIView):
     model = ProjectTopicContainer

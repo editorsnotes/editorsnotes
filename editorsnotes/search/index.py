@@ -37,7 +37,7 @@ class ENIndex(object):
             doc_type = DocumentTypeAdapter(self.es, self.name, model,
                                            highlight_fields, display_field)
         else:
-            doc_type = adapter(model)
+            doc_type = adapter(self.es, self.name, model)
         self.document_types[model] = doc_type
 
     def data_for_object(self, obj):
@@ -82,8 +82,6 @@ class ENIndex(object):
 
     def create(self):
         created = self.es.create_index(self.name)
-        for doc_type in self.document_types.values():
-            self.es.put_mapping(doc_type.get_mapping())
         return created
 
     def delete(self):

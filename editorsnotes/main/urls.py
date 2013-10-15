@@ -28,6 +28,6 @@ urlpatterns += patterns('editorsnotes.main.views.notes',
 urlpatterns += patterns('editorsnotes.main.views.topics',
     url(r'^(?:projects/(?P<project_slug>\w+)/)?topics/$', 'all_topics', name='all_topics_view'),
     url(r'^topics/(?P<topic_node_id>\d+)/$', 'topic_node', name='topic_node_view'),
-    url(r'^projects/(?P<project_slug>\w+)/topics/(?P<topic_node_id>\d+)/$', 'project_topic', name='project_topic_view'),
-    url(r'^topic/(?P<topic_slug>[\w\-,]+)/$', LegacyTopicRedirectView.as_view(), name='topic_view'),
+    url(r'^projects/(?P<project_slug>\w+)/topics/(?P<topic_node_id>\d+)/$', 'topic', name='topic_view'),
+    url(r'^topic/(?P<topic_slug>[\w\-,]+)/$', LegacyTopicRedirectView.as_view(), name='legacy_topic_view'),
 )
