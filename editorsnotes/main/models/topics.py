@@ -124,7 +124,7 @@ class ProjectTopicContainer(LastUpdateMetadata, URLAccessible,
     topic = models.ForeignKey(TopicNode, related_name='project_containers')
     preferred_name = models.CharField(max_length=200)
 
-    topics = generic.GenericRelation('TopicNodeAssignment')
+    related_topics = generic.GenericRelation('TopicNodeAssignment')
 
     summary = fields.XHTMLField(blank=True, null=True)
     summary_cites = generic.GenericRelation('Citation')
@@ -184,12 +184,12 @@ class ProjectTopicContainer(LastUpdateMetadata, URLAccessible,
         assignments = (
             ta for ta in self.assignments.all()
             if (ta.content_type_id, ta.object_id) not in
-            target.assignments.values_list('content_type_id', 'object_id')
+            target.related_topics.values_list('content_type_id', 'object_id')
         )
         for assignment in assignments:
             assignment.container_id = target.id
             assignment.save()
-        for stale_assignment in self.assignments.all():
+        for stale_assignment in self.related_topics.all():
             stale_assignment.delete()
 
         # Save the topic to check if it should be deleted as well (see below).
@@ -258,7 +258,7 @@ class TopicNodeAssignment(CreationMetadata, ProjectPermissionsMixin):
     projects' preferred name for that topic will be used.
     """
     container = models.ForeignKey(ProjectTopicContainer, blank=True, null=True,
-                                  related_name='related_topics')
+                                  related_name='assignments')
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     content_object = generic.GenericForeignKey()
@@ -272,11 +272,10 @@ class TopicNodeAssignment(CreationMetadata, ProjectPermissionsMixin):
     def topic_id(self):
         return self.container.topic.id
     def __unicode__(self):
-        return u'{} --> {}: {} ({})'.format(
-            self.container.topic.preferred_name,
+        return u'{} --> {}: {}'.format(
+            self.container.preferred_name,
             self.content_object._meta.module_name,
-            self.content_object,
-            self.container.project.slug)
+            self.content_object)
     def get_affiliation(self):
         return self.project
 reversion.register(TopicNodeAssignment)

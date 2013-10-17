@@ -80,7 +80,7 @@
             <div class="note-last-modified">
               <span class="quiet">Last modified: </span><span>{{ note.last_updated|date:"F j, Y" }}</span>
             </div>
-            {% include "includes/related_topics_header.html" with related_topics=note.topics.all %}
+            {% include "includes/related_topics_header.html" with related_topics=note.related_topics.all %}
           </div>
           {% endfor %}
         {% else %}

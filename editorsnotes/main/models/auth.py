@@ -56,7 +56,7 @@ class User(AbstractUser, URLAccessible):
         this method to a custom backend.
         """
         role = self._get_project_role(project)
-        if self.is_superuser or role.is_super_role:
+        if self.is_superuser or (role is not None and role.is_super_role):
             perm_list = get_all_project_permissions()
         elif role is None:
             perm_list = []
@@ -77,9 +77,6 @@ class User(AbstractUser, URLAccessible):
         permissions in its admin: `{app_label}.{permission.codename}`
         """
         if self.is_superuser:
-            return True
-        role = self._get_project_role(project)
-        if role.is_super_role:
             return True
         return perm in self.get_project_permissions(project)
     def has_project_perms(self, project, perm_list):

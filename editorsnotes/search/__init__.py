@@ -7,6 +7,8 @@ from editorsnotes.main import models as main_models
 from .index import ENIndex
 from .types import DocumentTypeAdapter
 
+__all__ = ['en_index']
+
 class DocumentAdapter(DocumentTypeAdapter):
     display_field = 'serialized.description'
     highlight_fields = ('serialized.description',)
@@ -54,7 +56,7 @@ def update_elastic_search_handler(sender, instance, created, **kwargs):
             document_type.index(instance)
         else:
             document_type.update(instance)
-    elif isinstance(klass, main_models.notes.NoteSection):
+    elif isinstance(instance, main_models.notes.NoteSection):
         update_elastic_search_handler(sender, instance.note, False)
 
 @receiver(post_delete)

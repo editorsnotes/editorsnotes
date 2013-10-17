@@ -47,7 +47,7 @@ class TopicSerializer(RelatedTopicSerializerMixin, serializers.ModelSerializer):
     project = ProjectSlugField()
     class Meta:
         model = ProjectTopicContainer
-        fields = ('id', 'preferred_name', 'type', 'url', 'topics', 'project',
+        fields = ('id', 'preferred_name', 'type', 'url', 'related_topics', 'project',
                   'last_updated', 'summary')
     def save_object(self, obj, **kwargs):
         if not obj.id:

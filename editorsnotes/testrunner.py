@@ -1,22 +1,29 @@
-from django.test import TestCase
+from django.conf import settings
 from django.test.simple import DjangoTestSuiteRunner
 
-# custom test runner only sets up test DB if necessary.
-class CustomTestSuiteRunner(DjangoTestSuiteRunner):
-    def run_tests(self, test_labels, extra_tests=None, **kwargs):
-        self.setup_test_environment()
-        suite = self.build_suite(test_labels, extra_tests)
-        need_database = False
-        for test in suite:
-            if isinstance(test, TestCase):
-                need_database = True
-                break
-        if need_database:
-            old_config = self.setup_databases()
-        result = self.run_suite(suite)
-        if need_database:
-            self.teardown_databases(old_config)
-        self.teardown_test_environment()
-        return self.suite_result(suite, result)
+from pyelasticsearch.exceptions import IndexAlreadyExistsError
 
-    
+# custom test changes elasticsearch index name
+class CustomTestSuiteRunner(DjangoTestSuiteRunner):
+    def setup_test_environment(self, **kwargs):
+        super(CustomTestSuiteRunner, self).setup_test_environment(**kwargs)
+
+        test_index_name = 'test-' + settings.ELASTICSEARCH_INDEX_NAME
+
+        from editorsnotes.search import en_index
+        en_index.name = settings.ELASTICSEARCH_INDEX_NAME = test_index_name
+
+        for doctype in en_index.document_types.values():
+            doctype.index_name = test_index_name
+
+        try:
+            en_index.create()
+        except IndexAlreadyExistsError:
+            en_index.delete()
+            en_index.create()
+
+    def teardown_test_environment(self, **kwargs):
+        super(CustomTestSuiteRunner, self).teardown_test_environment(**kwargs)
+
+        from editorsnotes.search import en_index
+        z = en_index.delete()

@@ -36,10 +36,7 @@ class Migration(DataMigration):
             params=[topicassignment_ct])
         for version_id, version_data_str in assignment_versions:
             version_data = json.loads(version_data_str)
-            try:
-                version_data[0]['fields'].pop('topicname', None)
-            except:
-                import pdb; pdb.set_trace()
+            version_data[0]['fields'].pop('topicname', None)
             db.execute(
                 u'UPDATE reversion_version '
                 'SET serialized_data = %s '

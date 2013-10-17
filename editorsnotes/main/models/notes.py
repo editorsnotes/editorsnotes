@@ -31,7 +31,7 @@ class Note(LastUpdateMetadata, Administered, URLAccessible,
     assigned_users = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, null=True)
     status = models.CharField(choices=NOTE_STATUS_CHOICES, max_length=1, default='1')
     license = models.ForeignKey(License, blank=True, null=True)
-    topics = generic.GenericRelation('TopicNodeAssignment')
+    related_topics = generic.GenericRelation('TopicNodeAssignment')
     sections_counter = models.PositiveIntegerField(default=0)
     class Meta:
         app_label = 'main'
@@ -43,10 +43,9 @@ class Note(LastUpdateMetadata, Administered, URLAccessible,
         return ('note_view', [self.project.slug, self.id])
     def get_affiliation(self):
         return self.project
-    def has_topic(self, topic):
-        return topic.id in self.topics\
-                .select_related('container')\
-                .values_list('container__topic_id', flat=True)
+    def has_topic(self, project_topic):
+        return project_topic.id in \
+                self.related_topics.values_list('container_id', flat=True)
 
 class NoteSection(LastUpdateMetadata, ProjectPermissionsMixin):
     u"""
@@ -56,7 +55,7 @@ class NoteSection(LastUpdateMetadata, ProjectPermissionsMixin):
     note = models.ForeignKey(Note, related_name='sections')
     note_section_id = models.PositiveIntegerField(blank=True, null=True)
     ordering = models.PositiveIntegerField(blank=True, null=True)
-    topics = generic.GenericRelation('TopicNodeAssignment')
+    related_topics = generic.GenericRelation('TopicNodeAssignment')
     objects = InheritanceManager()
     class Meta:
         app_label = 'main'
@@ -127,6 +126,7 @@ reversion.register(Note)
 
 # to make this extendable to other note sections, should make this introspective
 # or some such eventually
+reversion.register(NoteSection)
 reversion.register(CitationNS, follow=['notesection_ptr'])
 reversion.register(TextNS, follow=['notesection_ptr'])
 reversion.register(NoteReferenceNS, follow=['notesection_ptr'])

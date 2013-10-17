@@ -17,7 +17,7 @@ def note(request, note_id, project_slug=None):
     o['note'] = note
     o['license'] = note.license or note.project.default_license
     o['history'] = reversion.get_unique_for_object(note)
-    o['topics'] = [ta.container for ta in o['note'].topics.all()]
+    o['topics'] = [ta.container for ta in o['note'].related_topics.all()]
     o['sections'] = note.sections\
             .order_by('ordering', 'note_section_id')\
             .select_subclasses()\
@@ -46,7 +46,7 @@ def all_notes(request, project_slug=None):
                 'terms': { 'field': 'serialized.project.name', 'size': 8 }
             },
             'topic_facet': {
-                'terms': { 'field': 'serialized.topics.name', 'size': 16 }
+                'terms': { 'field': 'serialized.related_topics.name', 'size': 16 }
             },
             'status_facet': {
                 'terms': { 'field': 'serialized.status' }
@@ -58,7 +58,7 @@ def all_notes(request, project_slug=None):
     # Filter query based on facets
     filters = []
     for topic in request.GET.getlist('topic'):
-        filters.append({ 'term': { 'serialized.topics.name': topic } })
+        filters.append({ 'term': { 'serialized.related_topics.name': topic } })
 
     project = request.GET.get('project')
     if project:

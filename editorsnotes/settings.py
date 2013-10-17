@@ -81,6 +81,8 @@ STATIC_ROOT = os.path.abspath(os.path.join(STORAGE_PATH, 'static'))
 # Everything else #
 ###################
 
+TEST_RUNNER = 'editorsnotes.testrunner.CustomTestSuiteRunner'
+
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',

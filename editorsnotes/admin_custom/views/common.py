@@ -140,7 +140,7 @@ class BaseAdminView(ProcessInlineFormsetsView, ModelFormMixin, TemplateResponseM
             return
         if form.instance and form.instance.id:
             return
-        if form.cleaned_data['topic'] in self.object.topics.all():
+        if form.cleaned_data['topic'] in self.object.related_topics.all():
             return
         ta = form.save(commit=False)
         ta.creator = self.request.user

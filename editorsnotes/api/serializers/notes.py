@@ -146,11 +146,11 @@ class NoteSerializer(ReversionSerializerMixin, RelatedTopicSerializerMixin,
     class Meta:
         model = Note
         fields = ('id', 'title', 'url', 'project', 'last_updated', 'updaters',
-                  'topics', 'content', 'status', 'section_ordering', 'sections',)
+                  'related_topics', 'content', 'status', 'section_ordering', 'sections',)
 
 class MinimalNoteSerializer(ReversionSerializerMixin, RelatedTopicSerializerMixin,
                             serializers.ModelSerializer):
     status = NoteStatusField()
     class Meta:
         model = Note
-        fields = ('id', 'title', 'topics', 'content', 'status',)
+        fields = ('id', 'title', 'related_topics', 'content', 'status',)

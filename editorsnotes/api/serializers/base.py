@@ -31,7 +31,7 @@ class TopicAssignmentField(RelatedField):
     def field_to_native(self, obj, field_name):
         return [{'name': ta.container.preferred_name,
                  'url': ta.container.get_absolute_url()}
-                for ta in obj.topics.all()]
+                for ta in obj.related_topics.all()]
     def field_from_native(self, data, files, field_name, into):
         if self.read_only:
             return
@@ -74,7 +74,7 @@ class RelatedTopicSerializerMixin(object):
         to_create = topics[:]
         to_delete = []
 
-        for assignment in obj.topics.select_related('container').all():
+        for assignment in obj.related_topics.select_related('container').all():
             topic_name = assignment.container.preferred_name
             if topic_name in topics:
                 to_create.remove(topic_name)
@@ -90,12 +90,12 @@ class RelatedTopicSerializerMixin(object):
         for topic_name in to_create:
             container = ProjectTopicContainer.objects.get_or_create_by_name(
                 topic_name, project, user)
-            obj.topics.create(container=container, creator_id=user.id)
+            obj.related_topics.create(container=container, creator_id=user.id)
 
     def save_object(self, obj, **kwargs):
         # Need to change to allow partial updates, etc.
         topics = []
         if getattr(obj, '_m2m_data', None):
-            topics = obj._m2m_data.pop('topics')
+            topics = obj._m2m_data.pop('related_topics')
         super(RelatedTopicSerializerMixin, self).save_object(obj, **kwargs)
         self.save_related_topics(obj, topics)

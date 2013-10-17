@@ -23,7 +23,7 @@ class DocumentSerializer(RelatedTopicSerializerMixin,
     class Meta:
         model = Document
         fields = ('id', 'description', 'url', 'project', 'last_updated',
-                  'topics', 'zotero_data',)
+                  'related_topics', 'zotero_data',)
     def validate_zotero_data(self, attrs, source):
         value = attrs.get(source, None)
         if value is not None:

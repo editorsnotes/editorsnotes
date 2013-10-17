@@ -156,7 +156,7 @@ class Command(LabelCommand):
             document.save()
 
             # Set document topics.
-            for topic_assignment in document.topics.all():
+            for topic_assignment in document.related_topics.all():
                 topic_assignment.delete()
             def assign_topic(document, user, topic_name, topic_type=''):
                 topic, topic_created = Topic.objects.get_or_create(

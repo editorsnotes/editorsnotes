@@ -8,7 +8,7 @@ from editorsnotes.djotero.utils import as_readable
 from editorsnotes.search import en_index
 
 from ..models.documents import Document, Footnote, Transcript
-from ..models.topics import Topic
+from ..models.topics import Topic, ProjectTopicContainer
 from ..models.notes import CitationNS
 
 def footnote(request, project_slug, document_id, footnote_id):
@@ -23,16 +23,16 @@ def document(request, project_slug, document_id):
     o = {}
     o['document'] = get_object_or_404(Document, id=document_id)
     o['topics'] = (
-        [ ta.topic for ta in o['document'].topics.all() ] +
+        [ ta.container for ta in o['document'].related_topics.all() ] +
         [ c.content_object for c in o['document'].citations.filter(
-                content_type=ContentType.objects.get_for_model(Topic)) ])
+                content_type=ContentType.objects.get_for_model(ProjectTopicContainer)) ])
     o['scans'] = o['document'].scans.all()
     o['domain'] = Site.objects.get_current().domain
 
     notes = [ns.note for ns in CitationNS.objects\
             .select_related('note')\
             .filter(document=o['document'])]
-    note_topics = [ [ ta.topic for ta in n.topics.all() ] for n in notes ]
+    note_topics = [ [ ta.topic for ta in n.related_topics.all() ] for n in notes ]
     o['notes'] = zip(notes, note_topics)
 
     if o['document'].zotero_data:
@@ -58,7 +58,7 @@ def all_documents(request, project_slug=None):
 
     facet_fields = (
         ('project', 'serialized.project.name'),
-        ('topic', 'serialized.topics.name'),
+        ('topic', 'serialized.related_topics.name'),
         ('archive', 'serialized.zotero_data.archive'),
         ('publicationTitle', 'serialized.zotero_data.publicationTitle'),
         ('itemType', 'serialized.zotero_data.itemType'),

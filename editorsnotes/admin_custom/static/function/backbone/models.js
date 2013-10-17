@@ -129,7 +129,7 @@ EditorsNotes.Models['Note'] = Backbone.Model.extend({
   },
 
   parse: function (response) {
-    var topicNames = response.topics.map(function (t) { return t.name });
+    var topicNames = response.related_topics.map(function (t) { return t.name });
 
     this.sections.set(response.sections);
     this.set('topics', topicNames);

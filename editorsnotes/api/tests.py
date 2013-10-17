@@ -4,7 +4,6 @@ import json
 
 from lxml import etree
 
-from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 
@@ -15,13 +14,13 @@ from editorsnotes.main import models
 TEST_TOPIC = {
     'preferred_name': u'Patrick Golden',
     'type': u'PER',
-    'topics': [],
+    'related_topics': [],
     'summary': u'<p>A writer of tests</p>'
 }
 
 TEST_DOCUMENT = {
     'description': u'<div>Draper, Theodore. <em>Roots of American Communism</em></div>',
-    'topics': [],
+    'related_topics': [],
     'zotero_data': json.dumps({
         'itemType': 'book',
         'title': 'Roots of American Communism',
@@ -35,7 +34,7 @@ TEST_DOCUMENT = {
 
 TEST_NOTE = {
     'title': u'Is testing good?',
-    'topics': [u'Testing', u'Django'],
+    'related_topics': [u'Testing', u'Django'],
     'content': u'<p>We need to figure out if it\'s worth it to write tests.</p>',
     'status': 'open'
 }
@@ -58,7 +57,7 @@ class TopicAPITestCase(TestCase):
         )
         self.assertEqual(response.status_code, 201)
 
-        new_topic_id = response.data.get('topic_node_id')
+        new_topic_id = response.data.get('id')
         new_topic = models.topics.ProjectTopicContainer.objects.get(
             topic_id=new_topic_id, project=self.project)
         self.assertEqual(etree.tostring(new_topic.summary),
@@ -171,7 +170,7 @@ class NoteAPITestCase(TestCase):
         self.assertEqual(new_note.get_status_display(), response.data.get('status'))
         self.assertEqual(new_note.get_status_display(), data['status'])
 
-        self.assertEqual(new_note.topics.count(), 2)
+        self.assertEqual(new_note.related_topics.count(), 2)
 
         # Attempting to make a note with the same title should return a 400 err
         response = self.client.post(

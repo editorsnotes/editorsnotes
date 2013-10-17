@@ -50,7 +50,7 @@ class Document(LastUpdateMetadata, Administered, URLAccessible,
     collection = models.ForeignKey('self', related_name='parts', blank=True, null=True)
     ordering = models.CharField(max_length=32, editable=False)
     language = models.CharField(max_length=32, default='English')
-    topics = generic.GenericRelation('TopicNodeAssignment')
+    related_topics = generic.GenericRelation('TopicNodeAssignment')
     objects = DocumentManager()
     edtf_date = models.TextField(blank=True, null=True)
     class Meta:
@@ -107,9 +107,9 @@ class Document(LastUpdateMetadata, Administered, URLAccessible,
         citation_note_sections = self.citationns_set.all()
         notes = {ns.note for ns in citation_note_sections}
 
-        return {ta.topic for ta in set(chain(
+        return {ta.container for ta in set(chain(
             # Explicitly related topics
-            self.topics.all(),
+            self.related_topics.all(),
 
             # The topic of any TopicSummary objects citing this doc
             [cite.content_object for cite in topic_citations],
@@ -119,10 +119,10 @@ class Document(LastUpdateMetadata, Administered, URLAccessible,
                    for cite in topic_citations]),
 
             # Topics related to sections citing to this doc
-            chain(*[sec.topics.all() for sec in citation_note_sections]),
+            chain(*[sec.related_topics.all() for sec in citation_note_sections]),
 
             # Topics relate to the note citing this doc
-            chain(*[n.topics.all() for n in notes])
+            chain(*[n.related_topics.all() for n in notes])
         ))}
     def get_metadata(self):
         metadata = {}

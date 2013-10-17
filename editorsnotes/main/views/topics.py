@@ -63,7 +63,7 @@ def topic(request, project_slug, topic_node_id):
                                            project__slug=project_slug)
     o['projects'] = topic.project
 
-    topic_query = {'query': {'term': {'serialized.topics.url':
+    topic_query = {'query': {'term': {'serialized.related_topics.url':
                                       topic.get_absolute_url() }}}
 
     model_searches = ( en_index.search_model(model, topic_query) for model in

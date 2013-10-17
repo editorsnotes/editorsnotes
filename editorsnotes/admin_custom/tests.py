@@ -75,16 +75,16 @@ class TopicAdminTestCase(TestCase):
             'topicassignment-0-topic': self.topics[0].id
         })
         response = self.client.post(topic.get_admin_url(), data)
-        self.assertEqual(topic.topics.count(), 1)
+        self.assertEqual(topic.related_topics.count(), 1)
 
         data.update({
             'topicassignment-INITIAL_FORMS': 1,
             'topicassignment-TOTAL_FORMS': 2,
-            'topicassignment-0-id': topic.topics.all()[0].id,
+            'topicassignment-0-id': topic.related_topics.all()[0].id,
             'topicassignment-0-topic': self.topics[0].id,
             'topicassignment-0-DELETE': True,
             'topicassignment-1-id': u'',
             'topicassignment-1-topics': u''
         })
         response = self.client.post(topic.get_admin_url(), data)
-        self.assertEqual(topic.topics.count(), 0)
+        self.assertEqual(topic.related_topics.count(), 0)
